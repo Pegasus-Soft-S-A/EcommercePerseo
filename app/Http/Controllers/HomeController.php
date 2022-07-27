@@ -421,6 +421,15 @@ class HomeController extends Controller
         $array['telefono'] = $user->telefono1;
         $array['razonsocial'] = $user->razonsocial;
 
+        if (get_setting('controla_stock') == 2) {
+            $almacenes = DB::connection('empresa')->table('facturadores_almacenes')
+                ->where('facturadoresid', get_setting('facturador'))
+                ->where('principal', '1')
+                ->first();
+
+            session(['almacenesid' => $almacenes->almacenesid]);
+        }
+
         Mail::to($user->email_login)->queue(new Registro($array));
         flash('Registrado Correctamente')->success();
         return redirect()->route("home");
