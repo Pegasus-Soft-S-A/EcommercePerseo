@@ -216,7 +216,8 @@ class HomeController extends Controller
                         "productos_disponibles" => 'En Stock',
                         "productos_no_disponibles" => 'Bajo Pedido',
                         "ver_codigo" => 0,
-                        "tipo_tienda" => 'publico'
+                        "tipo_tienda" => 'publico',
+                        "controla_stock" => 0
 
                     ];
                     $integracion->parametros = json_encode($parametros);
@@ -313,7 +314,8 @@ class HomeController extends Controller
                             "productos_disponibles" => 'En Stock',
                             "productos_no_disponibles" => 'Bajo Pedido',
                             "ver_codigo" => 0,
-                            "tipo_tienda" => 'publico'
+                            "tipo_tienda" => 'publico',
+                            "controla_stock" => 0,
 
                         ];
                         $integraciones->parametros = json_encode($parametros);

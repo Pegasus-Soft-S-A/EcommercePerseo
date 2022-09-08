@@ -9,5 +9,7 @@ class Integraciones extends Model
 {
     use HasFactory;
     protected $connection = "empresa";
+    protected $table = 'integraciones';
+    protected $primaryKey = 'integracionesid';
     public $timestamps = false;
 }
