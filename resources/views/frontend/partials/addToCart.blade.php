@@ -200,8 +200,8 @@ $user = Session::get('user');
                     @endphp
                     <form id="option-choice-form">
                         @csrf
-                        <input type="hidden" id="variableinicio" name="variableinicio" @if
-                            (get_setting('controla_stock')==2) value="{{ session('almacenesid') }}" @else
+                        <input type="hidden" id="variableinicio" name="variableinicio" 
+                        @if (get_setting('controla_stock')==2) value="{{ session('almacenesid') }}" @else
                             value="{{ $almacenes->almacenesid }}" @endif>
                         <input type="hidden" id="existencias" name="existencias" value="">
                         <input type="hidden" id="id" name="id" value="{{ $product->productosid }}">
