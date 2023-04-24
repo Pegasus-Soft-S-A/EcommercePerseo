@@ -15,18 +15,18 @@
 
 
     <!-- Favicon -->
-    <link rel="icon" type="image/png" sizes="32x32"
-        href="data:image/jpg;base64,{{ get_setting('icono_sitio') }}">
+    <link rel="icon" type="image/png" sizes="32x32" href="data:image/jpg;base64,{{ get_setting('icono_sitio') }}">
 
     <link
         href="https://fonts.googleapis.com/css?family=Open+Sans:300,300i,400,400i,600,600i,700,700i,800,800i&display=swap"
         rel="stylesheet">
 
     <!-- CSS Files -->
+    {{--
     <link rel="stylesheet" href="{{ static_asset('assets/css/vendors.css') }}">
     <link rel="stylesheet" href="{{ static_asset('assets/css/aiz-core.css') }}">
-    <link rel="stylesheet" href="{{ static_asset('assets/css/custom-style.css') }}">
-    <link href="{{ static_asset('assets/css/datatables.bundle.css') }}" rel="stylesheet" type="text/css" />
+    <link rel="stylesheet" href="{{ static_asset('assets/css/custom-style.css') }}"> --}}
+    <link href="{{ static_asset('css/plugins.css') }}" rel="stylesheet" type="text/css" />
     <script>
         var AIZ = AIZ || {};
         AIZ.local = {
@@ -69,24 +69,24 @@
     </style>
 
     @if (get_setting('google_analytics') == 1)
-        <!-- Global site tag (gtag.js) - Google Analytics -->
-        <script async src="https://www.googletagmanager.com/gtag/js?id={{ get_setting('TRACKING_ID') }}"></script>
+    <!-- Global site tag (gtag.js) - Google Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id={{ get_setting('TRACKING_ID') }}"></script>
 
-        <script>
-            window.dataLayer = window.dataLayer || [];
+    <script>
+        window.dataLayer = window.dataLayer || [];
 
             function gtag() {
                 dataLayer.push(arguments);
             }
             gtag('js', new Date());
             gtag('config', '{{ get_setting('TRACKING_ID') }}');
-        </script>
+    </script>
     @endif
 
     @if (get_setting('facebook_pixel') == 1)
-        <!-- Facebook Pixel Code -->
-        <script>
-            ! function(f, b, e, v, n, t, s) {
+    <!-- Facebook Pixel Code -->
+    <script>
+        ! function(f, b, e, v, n, t, s) {
                 if (f.fbq) return;
                 n = f.fbq = function() {
                     n.callMethod ?
@@ -106,16 +106,16 @@
                 'https://connect.facebook.net/en_US/fbevents.js');
             fbq('init', '{{ get_setting('FACEBOOK_PIXEL_ID') }}');
             fbq('track', 'PageView');
-        </script>
-        <noscript>
-            <img height="1" width="1" style="display:none"
-                src="https://www.facebook.com/tr?id={{ get_setting('FACEBOOK_PIXEL_ID') }}&ev=PageView&noscript=1" />
-        </noscript>
-        <!-- End Facebook Pixel Code -->
+    </script>
+    <noscript>
+        <img height="1" width="1" style="display:none"
+            src="https://www.facebook.com/tr?id={{ get_setting('FACEBOOK_PIXEL_ID') }}&ev=PageView&noscript=1" />
+    </noscript>
+    <!-- End Facebook Pixel Code -->
     @endif
 
     @php
-        echo get_setting('header_script');
+    echo get_setting('header_script');
     @endphp
 
 </head>
@@ -149,61 +149,61 @@
         </div>
     </div>
     @if (get_setting('controla_stock') == 2 && Auth::check())
-        <div class="modal almacen" id="modal-almacen" tabindex="-1" role="dialog" aria-hidden="true">
-            <div class="modal-dialog modal-lg">
-                <div class="modal-content">
+    <div class="modal almacen" id="modal-almacen" tabindex="-1" role="dialog" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
 
-                    <div class="modal-header">
+                <div class="modal-header">
 
-                        <h4 class="modal-title" id="myModalLabel">Cambiar Sucursal</h4>
-                        <button type="button" class="close" data-dismiss="modal" aria-hidden="true"
-                            aria-label="Close"></button>
-                    </div>
+                    <h4 class="modal-title" id="myModalLabel">Cambiar Sucursal</h4>
+                    <button type="button" class="close" data-dismiss="modal" aria-hidden="true"
+                        aria-label="Close"></button>
+                </div>
 
-                    <div class="modal-body">
-                        <table class="table table-bordered table-head-custom table-hover w-100 text-center"
-                            id="kt_datatable">
-                            <thead>
-                                <tr>
+                <div class="modal-body">
+                    <table class="table table-bordered table-head-custom table-hover w-100 text-center"
+                        id="kt_datatable">
+                        <thead>
+                            <tr>
 
-                                    <th>id</th>
-                                    <th data-priority="1">Almacen</th>
-                                    <th data-priority="2">Existencias</th>
-                                    <th data-priority="3">Accion</th>
+                                <th>id</th>
+                                <th data-priority="1">Almacen</th>
+                                <th data-priority="2">Existencias</th>
+                                <th data-priority="3">Accion</th>
 
-                                </tr>
-                            </thead>
-                        </table>
-                    </div>
+                            </tr>
+                        </thead>
+                    </table>
+                </div>
 
-                    <div class="modal-footer">
+                <div class="modal-footer">
 
-                    </div>
                 </div>
             </div>
         </div>
+    </div>
     @endif
 
     @if (get_setting('controla_stock') == 2 && Auth::check())
-        <style>
-            .modal:nth-of-type(even) {
-                z-index: 1052 !important;
-            }
+    <style>
+        .modal:nth-of-type(even) {
+            z-index: 1052 !important;
+        }
 
-            .modal-backdrop.show:nth-of-type(even) {
-                z-index: 1051 !important;
-            }
-        </style>
+        .modal-backdrop.show:nth-of-type(even) {
+            z-index: 1051 !important;
+        }
+    </style>
     @endif
 
     @yield('modal')
 
-    <script src="{{ static_asset('assets/js/vendors.js') }}"></script>
-    <script src="{{ static_asset('assets/js/aiz-core.js') }}"></script>
-    <script src="{{ static_asset('assets/js/datatables.bundle.js') }}"></script>
+    {{-- <script src="{{ static_asset('assets/js/vendors.js') }}"></script> --}}
+    {{-- <script src="{{ static_asset('assets/js/aiz-core.js') }}"></script> --}}
+    <script src="{{ static_asset('js/plugins.js') }}"></script>
 
     @if (get_setting('pago_plux') == 'on')
-        <script src="https://paybox.pagoplux.com/paybox/index.js"></script>
+    <script src="https://paybox.pagoplux.com/paybox/index.js"></script>
     @endif
     <script>
         @foreach (session('flash_notification', collect())->toArray() as $message)
@@ -590,7 +590,7 @@
     @yield('script')
 
     @php
-        echo get_setting('footer_script');
+    echo get_setting('footer_script');
     @endphp
 
 </body>

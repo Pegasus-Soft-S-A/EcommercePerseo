@@ -94,7 +94,7 @@ class ConfiguracionesController extends Controller
         if ($request->file('header_logo')) {
             $settings->header_logo = base64_encode(file_get_contents($request->file('header_logo')));
             $imagen = $request->header_logo;
-            copy($imagen->getRealPath(), public_path("assets/img/") . 'logo-' . sis_cliente() . '.png');
+            move_uploaded_file($imagen->getRealPath(), public_path("assets/img/") . 'logo-' . sis_cliente() . '.png');
         }
 
         Integraciones::where('tipo', 5)

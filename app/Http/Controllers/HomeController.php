@@ -22,6 +22,7 @@ use App\Models\Subcategorias;
 use App\Models\Subgrupos;
 use App\Models\User;
 use App\Models\Usuarios;
+use Carbon\Carbon;
 use Illuminate\Auth\Events\PasswordReset;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -135,7 +136,10 @@ class HomeController extends Controller
     public function admin_login(Request $request)
     {
         $identificacionIngresada = substr($request->identificacion, 0, 10);
-        $usuario = Usuarios::where(DB::raw('substr(identificacion, 1, 10)'), $identificacionIngresada)->where('sis_clientesid', sis_cliente())->first();
+        $usuario = Usuarios::where(DB::raw('substr(identificacion, 1, 10)'), $identificacionIngresada)
+            ->where('sis_clientesid', sis_cliente())
+            ->where('sis_licenciasid', sis_licencia())
+            ->first();
 
         if ($usuario != null) {
 
@@ -611,70 +615,55 @@ class HomeController extends Controller
 
     public function load_best_selling_section()
     {
+        $fecha_inicio = Carbon::now()->subDays(30); // 30 días hacia atrás desde la fecha actual
+        // Subconsulta para las ventas
+        $ventasSubquery = DB::table('facturas_detalles as fd')
+            ->select('fd.productosid', DB::raw('SUM(CASE WHEN (f.sri_documentoscodigo = \'04\') THEN (fd.cantidad * -1) ELSE fd.cantidad END) AS total_cantidad'))
+            ->join('facturas as f', 'fd.facturasid', '=', 'f.facturasid')
+            ->where('f.emision', '>=', Carbon::now()->subDays(30))
+            ->groupBy('fd.productosid')
+            ->orderBy('total_cantidad', 'desc')
+            ->limit(10);
+
         $parametros = ParametrosEmpresa::first();
+
         if (Auth::check()) {
             if ($parametros->tipopresentacionprecios == 1) {
-                $products = DB::connection('empresa')->table('facturas_detalles')
-                    ->select('productos.productosid', 'productos.productocodigo', 'productos.descripcion', 'productos_tarifas.precioiva as precio2', 'productos_imagenes.imagen', 'productos.parametros_json', DB::raw("SUM(CASE WHEN ( facturas.sri_documentoscodigo = '04' ) THEN ( facturas_detalles.cantidad * -( 1 ) ) ELSE		facturas_detalles.cantidad END ) AS total_cantidad"), DB::raw("(SELECT tarifain.precioiva FROM productos_tarifas as tarifain WHERE tarifain.tarifasid = " . auth()->user()->tarifasid . " and tarifain.productosid = productos.productosid AND tarifain.medidasid = productos.unidadinterna) AS precio"));
+                $products = DB::table('productos as p')
+                    ->select('p.productosid', 'p.productocodigo', 'p.descripcion', 'pt.precioiva as precio2', 'pi.imagen', 'p.parametros_json', 'ventas.total_cantidad', DB::raw("(SELECT tarifain.precioiva FROM productos_tarifas as tarifain WHERE tarifain.tarifasid = " . auth()->user()->tarifasid . " and tarifain.productosid = p.productosid AND tarifain.medidasid = p.unidadinterna) AS precio"));
             } else {
-                $products = DB::connection('empresa')->table('facturas_detalles')
-                    ->select('productos.productosid', 'productos.productocodigo', 'productos.descripcion', 'productos_tarifas.precio as precio2', 'productos_imagenes.imagen', 'productos.parametros_json', DB::raw("SUM(CASE WHEN ( facturas.sri_documentoscodigo = '04' ) THEN ( facturas_detalles.cantidad * -( 1 ) ) ELSE		facturas_detalles.cantidad END ) AS total_cantidad"), DB::raw("(SELECT tarifain.precio FROM productos_tarifas as tarifain WHERE tarifain.tarifasid = " . auth()->user()->tarifasid . " and tarifain.productosid = productos.productosid AND tarifain.medidasid = productos.unidadinterna) AS precio"));
+                $products = DB::table('productos as p')
+                    ->select('p.productosid', 'p.productocodigo', 'p.descripcion', 'pt.precio as precio2', 'pi.imagen', 'p.parametros_json', 'ventas.total_cantidad', DB::raw("(SELECT tarifain.precio FROM productos_tarifas as tarifain WHERE tarifain.tarifasid = " . auth()->user()->tarifasid . " and tarifain.productosid = p.productosid AND tarifain.medidasid = p.unidadinterna) AS precio"));
             }
-            $products = $products->join('productos', 'productos.productosid', '=', 'facturas_detalles.productosid')
-                ->join('facturas', 'facturas_detalles.facturasid', '=', 'facturas.facturasid')
-                ->join('productos_tarifas', 'productos_tarifas.productosid', '=', 'productos.productosid')
-                ->leftJoin('productos_imagenes', function ($products) {
-                    $products->on('productos_imagenes.productosid', '=', 'productos.productosid')
-                        ->where('productos_imagenes.principal', '=', "1");
-                })
-                ->whereIn('productos.ecommerce_estado', array(1, 2))
-                ->when(get_setting('productos_existencias') != "todos", function ($products) {
-                    return $products->where('productos.existenciastotales', '>', '0');
-                })
-                ->where([
-                    ['productos_tarifas.tarifasid', '=', get_setting('tarifa_productos')],
-                    ['productos.venta', '=', '1'],
-                    ['productos.servicio', '=', '0'],
-                    ['productos.bien', '=', '0'],
-                    ['productos_tarifas.medidasid', '=', DB::raw('productos.unidadinterna')],
-                ])
-                ->groupBy('productos.productosid')
-                ->orderBy('total_cantidad', 'desc')
-                ->take(10)
-                ->get();
         } else {
-
             if ($parametros->tipopresentacionprecios == 1) {
-                $products = DB::connection('empresa')->table('facturas_detalles')
-                    ->select('productos.productosid', 'productos.productocodigo', 'productos.descripcion', 'productos_tarifas.precioiva as precio', 'productos_imagenes.imagen', 'productos.parametros_json', DB::raw("SUM(CASE WHEN ( facturas.sri_documentoscodigo = '04' ) THEN ( facturas_detalles.cantidad * -( 1 ) ) ELSE		facturas_detalles.cantidad END ) AS total_cantidad"));
+                $products = DB::table('productos as p')
+                    ->select('p.productosid', 'p.productocodigo', 'p.descripcion', 'pt.precioiva as precio', 'pi.imagen', 'p.parametros_json', 'ventas.total_cantidad');
             } else {
-                $products = DB::connection('empresa')->table('facturas_detalles')
-                    ->select('productos.productosid', 'productos.productocodigo', 'productos.descripcion', 'productos_tarifas.precio', 'productos_imagenes.imagen', 'productos.parametros_json', DB::raw("SUM(CASE WHEN ( facturas.sri_documentoscodigo = '04' ) THEN ( facturas_detalles.cantidad * -( 1 ) ) ELSE		facturas_detalles.cantidad END ) AS total_cantidad"));
+                $products = DB::table('productos as p')
+                    ->select('p.productosid', 'p.productocodigo', 'p.descripcion', 'pt.precio', 'pi.imagen', 'p.parametros_json', 'ventas.total_cantidad');
             }
-            $products = $products->join('productos', 'productos.productosid', '=', 'facturas_detalles.productosid')
-                ->join('facturas', 'facturas_detalles.facturasid', '=', 'facturas.facturasid')
-                ->join('productos_tarifas', 'productos_tarifas.productosid', '=', 'productos.productosid')
-                ->leftJoin('productos_imagenes', function ($products) {
-                    $products->on('productos_imagenes.productosid', '=', 'productos.productosid')
-                        ->where('productos_imagenes.principal', '=', "1");
-                })
-                ->whereIn('productos.ecommerce_estado', array(1, 2))
-                ->when(get_setting('productos_existencias') != "todos", function ($products) {
-                    return $products->where('productos.existenciastotales', '>', '0');
-                })
-                ->where([
-                    ['productos_tarifas.tarifasid', '=', get_setting('tarifa_productos')],
-                    ['productos.venta', '=', '1'],
-                    ['productos.servicio', '=', '0'],
-                    ['productos.bien', '=', '0'],
-                    ['productos_tarifas.medidasid', '=', DB::raw('productos.unidadinterna')],
-                ])
-                ->groupBy('productos.productosid')
-                ->orderBy('total_cantidad', 'desc')
-                ->take(10)
-                ->get();
-            // Cache::put('top', $products, 1440);
         }
+
+        // Consulta principal
+        $products = $products->join('productos_tarifas as pt', 'pt.productosid', '=', 'p.productosid')
+            ->leftJoin('productos_imagenes as pi', function ($join) {
+                $join->on('pi.productosid', '=', 'p.productosid')
+                    ->where('pi.principal', '=', 1);
+            })
+            ->joinSub($ventasSubquery, 'ventas', function ($join) {
+                $join->on('ventas.productosid', '=', 'p.productosid');
+            })
+            ->whereIn('p.ecommerce_estado', [1, 2])
+            ->where('p.existenciastotales', '>', 0)
+            ->where('pt.tarifasid', '=', 2)
+            ->where('p.venta', '=', 1)
+            ->where('p.servicio', '=', 0)
+            ->where('p.bien', '=', 0)
+            ->whereColumn('pt.medidasid', 'p.unidadinterna')
+            ->orderBy('ventas.total_cantidad', 'desc')
+            ->limit(10)
+            ->get();
 
         return view('frontend.partials.best_selling_section', compact('products'));
     }
@@ -799,6 +788,7 @@ class HomeController extends Controller
             ->orderByRaw('RAND()')
             ->paginate(10);
 
+        $fecha_inicio = Carbon::now()->subDays(30);
         $top = $top->join('productos', 'productos.productosid', '=', 'facturas_detalles.productosid')
             ->join('facturas', 'facturas_detalles.facturasid', '=', 'facturas.facturasid')
             ->join('productos_tarifas', 'productos_tarifas.productosid', '=', 'productos.productosid')
@@ -811,6 +801,7 @@ class HomeController extends Controller
                 return $products->where('productos.existenciastotales', '>', '0');
             })
             ->where([
+                // ['facturas.emision', '>=', $fecha_inicio],
                 ['productos.' . $grupoid, '=', $id],
                 ['productos_tarifas.tarifasid', '=', get_setting('tarifa_productos')],
                 ['productos.venta', '=', '1'],
@@ -823,6 +814,7 @@ class HomeController extends Controller
             ->orderBy('total_cantidad', 'desc')
             ->take(4)
             ->get();
+
         $min_qty = 1;
 
         return view('frontend.product_details', compact('detallesProducto', 'precioProducto', 'precioProducto2', 'imagenProducto', 'min_qty', 'comentarios', 'medidas', 'numerocomentarios', 'relacionados', 'top'));

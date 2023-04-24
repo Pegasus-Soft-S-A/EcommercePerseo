@@ -12,6 +12,7 @@ use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Request;
+use Illuminate\Support\Facades\Session;
 
 if (!function_exists('static_asset')) {
     function static_asset($path, $secure = null)
@@ -24,13 +25,29 @@ if (!function_exists('get_setting')) {
     //funcion global que devuelve el valor del parametro de la integracion que se le envia
     function get_setting($setting)
     {
-        $settings = null;
-        $integraciones = Integraciones::select('parametros')->where('tipo', 5)->first();
-        if ($integraciones != null) {
-            $settings = json_decode($integraciones->parametros);
+
+        // Verificar si los datos están almacenados en la sesión
+        if (!Session::has('settings')) {
+            // Si los datos no están almacenados en la sesión, llamar a la función get_settings()
+            $settings = null;
+            $integraciones = Integraciones::select('parametros')->where('tipo', 5)->first();
+            if ($integraciones != null) {
+                $settings = json_decode($integraciones->parametros);
+            }
+            $settings == null ? null : $settings->$setting;
+
+            // Almacenar los datos en la sesión
+            Session::put('settings', $settings);
+            $settings = $settings->$setting;
+        } else {
+            // Si los datos ya están almacenados en la sesión, obtenerlos de la sesión
+            $settings = Session::get('settings');
+            $settings = $settings->$setting;
+            //dd($settings);
         }
 
-        return $settings == null ? null : $settings->$setting;
+        // Devolver los datos obtenidos
+        return $settings;
     }
 }
 
@@ -325,6 +342,19 @@ function sis_cliente()
         $sis_cliente = 1;
     }
     return $sis_cliente;
+}
+
+function sis_licencia()
+{
+    $base = Request::segment(1);
+    $base_encriptada = strtr($base, '._-', '+/=');
+    $base_desencriptada = decrypt_openssl($base_encriptada, "Perseo1232*");
+    if ($base_desencriptada) {
+        $sis_licencia = DB::connection('sistema')->table('sis_empresas')->where('nombredb', $base_desencriptada)->first()->sis_licenciasid;
+    } else {
+        $sis_licencia = 1;
+    }
+    return $sis_licencia;
 }
 
 function configurar_smtp()

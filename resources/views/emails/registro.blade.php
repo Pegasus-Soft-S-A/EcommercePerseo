@@ -28,9 +28,21 @@
                                             <tr>
                                                 <td
                                                     style="font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;">
-                                                    <img src="{{ $message->embed(public_path() . '/assets/img/logo-'.sis_cliente().'.png') }}" 
+                                                    @php
+                                                    $base = Request::segment(1);
+                                                    $base_encriptada = strtr($base, '._-', '+/=');
+                                                    $base_desencriptada =
+                                                    decrypt_openssl($base_encriptada,"Perseo1232*");
+                                                    @endphp
+                                                    @if ($base_desencriptada)
+                                                    <img src="{{ $message->embed(public_path() . '/assets/img/logo-'.sis_cliente().'.png') }}"
                                                         alt="" width="500" height="100"
                                                         style="display: block; margin-left: auto; margin-right: auto;">
+                                                    @else
+                                                    <img src="{{ $message->embed(public_path() . '/assets/img/logo.png') }}"
+                                                        alt="" width="500" height="100"
+                                                        style="display: block; margin-left: auto; margin-right: auto;">
+                                                    @endif
                                                 </td>
                                             </tr>
                                             <tr class="">

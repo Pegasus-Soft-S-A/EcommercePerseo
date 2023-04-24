@@ -11,7 +11,14 @@ const mix = require('laravel-mix');
  |
  */
 
-mix.js('resources/js/app.js', 'public/js')
-    .postCss('resources/css/app.css', 'public/css', [
-        //
-    ]);
+mix.scripts([
+    'public/assets/js/vendors.js',
+    'public/assets/js/aiz-core.js',
+    'public/assets/js/datatables.bundle.js',
+], 'public/js/plugins.js').styles([
+    'public/assets/css/vendors.css',
+    'public/assets/css/aiz-core.css',
+    'public/assets/css/custom-style.css',
+    'public/assets/css/datatables.bundle.css',
+], 'public/css/plugins.css');
+

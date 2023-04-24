@@ -7,6 +7,17 @@
 
     <!-- CSRF Token -->
     <meta name="csrf-token" content="{{ csrf_token() }}">
+    <!-- Open Graph data -->
+    {{--
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Mobicell" />
+    <meta property="og:title" content="Tienda Mobicell" />
+    <meta property="og:url" content="https://mobicell.shop" />
+    <meta property="og:image" content="{{ asset('assets/img/mobicell.jpg') }}" />
+    <meta property="og:type" content="image/jpeg" />
+    <meta property="og:width" content="1200" />
+    <meta property="og:height" content="630" />
+    <meta property="og:description" content="Bienvenidos a la tienda de Mobicell" /> --}}
 
     <title>{{ config('app.name', 'Laravel') }}</title>
 
