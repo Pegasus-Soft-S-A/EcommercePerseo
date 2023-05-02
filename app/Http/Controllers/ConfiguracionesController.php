@@ -18,6 +18,7 @@ use App\Models\Tarifas;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Session;
 
 class ConfiguracionesController extends Controller
 {
@@ -74,7 +75,7 @@ class ConfiguracionesController extends Controller
 
         Integraciones::where('tipo', 5)
             ->update(['parametros' => json_encode($settings)]);
-
+        Session::forget('settings');
         flash("Actualizado Correctamente")->success();
         return back();
     }
@@ -99,7 +100,7 @@ class ConfiguracionesController extends Controller
 
         Integraciones::where('tipo', 5)
             ->update(['parametros' => json_encode($settings)]);
-
+        Session::forget('settings');
         flash("Actualizado Correctamente")->success();
         return back();
     }
@@ -131,7 +132,7 @@ class ConfiguracionesController extends Controller
 
         Integraciones::where('tipo', 5)
             ->update(['parametros' => json_encode($settings)]);
-
+        Session::forget('settings');
         flash("Actualizado Correctamente")->success();
         return back();
     }
@@ -160,7 +161,7 @@ class ConfiguracionesController extends Controller
         }
         Integraciones::where('tipo', 5)
             ->update(['parametros' => json_encode($settings)]);
-
+        Session::forget('settings');
         flash("Actualizado Correctamente")->success();
         return back();
     }
@@ -214,44 +215,42 @@ class ConfiguracionesController extends Controller
 
         Integraciones::where('tipo', 5)
             ->update(['parametros' => json_encode($settings)]);
-
+        Session::forget('settings');
         flash("Actualizado Correctamente")->success();
         return back();
     }
 
     public function update_inicio(Request $request)
     {
-        $business_settings = Integraciones::where('tipo', 5)->first();
-
-        $settings = json_decode($business_settings->parametros);
         $sliders = [];
 
-        if (isset($request->links)) {
-            foreach ($request->links as $key => $type) {
-                if (isset($request->imagenes[$key])) {
-                    $slider = [
-                        "imagen" => base64_encode(file_get_contents($request->imagenes[$key])),
-                        "link" => $request->links[$key],
-                        "inicio" => $request->inicio[$key],
-                        "fin" => $request->fin[$key]
-                    ];
-                } else {
-                    $slider = [
-                        "imagen" => $request->imagen[$key],
-                        "link" => $request->links[$key],
-                        "inicio" => $request->inicio[$key],
-                        "fin" => $request->fin[$key]
-                    ];
-                }
-                array_push($sliders, $slider);
+        foreach ($request->inicio as $key => $type) {
+
+            if (isset($request->imagenes[$key])) {
+                $imagen = base64_encode(file_get_contents($request->imagenes[$key]));
+            } else {
+                $imagen = $request->imagen[$key];
             }
+
+            $slider = [
+                "imagen" => $imagen,
+                "link" => $request->links[$key],
+                "inicio" => $request->inicio[$key],
+                "fin" => $request->fin[$key]
+            ];
+
+            array_push($sliders, $slider);
         }
 
+        $business_settings = Integraciones::where('tipo', 5)->first();
+        $settings = json_decode($business_settings->parametros);
         $settings->home_slider = json_encode($sliders);
         $settings->top10_categories = $request->get('top10_categories');
+
         Integraciones::where('tipo', 5)
             ->update(['parametros' => json_encode($settings)]);
 
+        Session::forget('settings');
         flash("Actualizado Correctamente")->success();
         return back();
     }
@@ -276,7 +275,7 @@ class ConfiguracionesController extends Controller
 
         Integraciones::where('tipo', 5)
             ->update(['parametros' => json_encode($settings)]);
-
+        Session::forget('settings');
         flash("Actualizado Correctamente")->success();
         return back();
     }
@@ -300,7 +299,7 @@ class ConfiguracionesController extends Controller
 
         Integraciones::where('tipo', 5)
             ->update(['parametros' => json_encode($settings)]);
-
+        Session::forget('settings');
         flash('Guardado Correctamente')->success();
         return back();
     }

@@ -8,7 +8,7 @@
         {{-- Home Slider --}}
         <div class="card">
             <div class="card-header">
-                <h6 class="mb-0">Slider de Inicio (Max. 3)</h6>
+                <h6 class="mb-0">Slider de Inicio</h6>
             </div>
             <form action="{{ route('business_settings.update_inicio') }}" method="POST" enctype="multipart/form-data">
                 @csrf
@@ -24,14 +24,14 @@
                         <label>Fotos y Enlaces</label>
 
                         <div class="home-slider-target">
-                            @if (get_setting('home_slider') != null)
                             @foreach (json_decode(get_setting('home_slider')) as $key => $slider)
+
                             <div class="row gutters-5">
                                 <div class="col-md-3">
                                     <label>Imagen</label>
                                     <div class="form-group">
                                         <div class="input-group">
-                                            <input type="file" name="imagenes[]" class="selected-files" value="">
+                                            <input type="file" name="imagenes[]" class="selected-files" value="" accept="image/png">
                                             <small class="text-muted">Imagen 1000x500.png</small>
                                         </div>
                                     </div>
@@ -74,7 +74,6 @@
                                 </div>
                             </div>
                             @endforeach
-                            @endif
                         </div>
                         <br>
                         <button type="button" class="btn btn-soft-secondary btn-sm" data-toggle="add-more" data-content='
@@ -83,7 +82,7 @@
                                 <label>Imagen</label>
                                 <div class="form-group">
                                     <div class="input-group">
-                                        <input type="file" name="imagenes[]" class="selected-files"
+                                        <input type="file" name="imagenes[]" class="selected-files" accept="image/png"
                                         value="" >
                                         <small class="text-muted">Imagen 1000x500.png</small>
                                     </div>
