@@ -344,6 +344,72 @@ class HomeController extends Controller
                         DB::connection('empresa')->table('productos_subgrupo')->update(array(
                             'parametros_json' => json_encode($subgrupos)
                         ));
+                    } else {
+                        $parametrosExisten = json_decode($integraciones->parametros, true);
+                        $topcategorias = [];
+                        $parametros = [
+                            'header_stikcy' => null,
+                            'header_logo' => null,
+                            'footer_logo' => null,
+                            'acerca_nosotros' => null,
+                            'direccion_contacto' => null,
+                            'telefono_contacto' => null,
+                            'email_contacto' => null,
+                            'show_social_links' => null,
+                            'facebook_link' => null,
+                            'twitter_link' => null,
+                            'instagram_link' => null,
+                            'nombre_sitio' => null,
+                            'lema_sitio' => null,
+                            'icono_sitio' => null,
+                            'color_sitio' => '#377dff',
+                            'color_hover_sitio' => '#377dff',
+                            'header_script' => null,
+                            'footer_script' => null,
+                            'inicio' => null,
+                            'terminos_condiciones' => null,
+                            'politica_devoluciones' => null,
+                            'politica_soporte' => null,
+                            'politica_privacidad' => null,
+                            'home_slider' => null,
+                            'top10_categories' => $topcategorias,
+                            'facebook_pixel' => null,
+                            'FACEBOOK_PIXEL_ID' => null,
+                            'google_analytics' => null,
+                            'TRACKING_ID' => null,
+                            'grupo_productos' => 'categorias',
+                            'facturador' => 1,
+                            'productos_existencias' => 'todos',
+                            'tarifa_productos' => 1,
+                            'cantidad_maxima' => '10',
+                            'registra_clientes' => null,
+                            'grupo_clientes' => null,
+                            'tarifa_clientes' => null,
+                            'email_pedidos' => null,
+                            'imagen_defecto' => base64_encode(file_get_contents(static_asset('assets/img/placeholder.jpg'))),
+                            'login_google' => null,
+                            'login_facebook' => null,
+                            "pago_pedido" => '1',
+                            "pago_plux" => '0',
+                            "email_pago_plux" => null,
+                            "pedido_pago_plux" => "pedido",
+                            "productos_disponibles" => 'En Stock',
+                            "productos_no_disponibles" => 'Bajo Pedido',
+                            "ver_codigo" => 0,
+                            "tipo_tienda" => 'publico',
+                            "controla_stock" => 0,
+                        ];
+
+                        foreach ($parametros as $clave => $valor) {
+                            if (!array_key_exists($clave, $parametrosExisten)) {
+                                $parametrosExisten[$clave] = $valor;
+                            }
+                        }
+
+                        // reasignamos $parametros
+                        $parametros = $parametrosExisten;
+                        $integraciones->parametros = json_encode($parametros);
+                        $integraciones->save();
                     }
                 }
                 Auth::guard('admin')->login($usuario, false);

@@ -38,7 +38,7 @@ if (!function_exists('get_setting')) {
 
             // Almacenar los datos en la sesión
             Session::put('settings', $settings);
-            $settings = $settings->$setting;
+            // $settings = $settings->$setting;
         } else {
             // Si los datos ya están almacenados en la sesión, obtenerlos de la sesión
             $settings = Session::get('settings');
