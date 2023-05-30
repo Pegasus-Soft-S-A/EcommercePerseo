@@ -154,7 +154,11 @@ class CheckoutController extends Controller
             $emails = array_diff($emails, array("", 0, null));
 
             try {
-                Mail::to($emails)->queue(new Pedido($array));
+                $parametros = ParametrosEmpresa::first();
+
+                Mail::mailer('smtp')->to($emails)->send(new Pedido($array), [], function ($message) use ($parametros) {
+                    $message->from($parametros->smtp_from, 'Tienda Ecommerce');
+                });
             } catch (\Exception $e) {
             }
 
@@ -330,7 +334,7 @@ class CheckoutController extends Controller
                     ]);
             }
 
-            //Guardar CxC 
+            //Guardar CxC
             DB::connection('empresa')->table('cuentasporcobrar')
                 ->insert([
                     'documentosid' => $factura->facturasid,
@@ -438,7 +442,11 @@ class CheckoutController extends Controller
         $emails = array_diff($emails, array("", 0, null));
 
         try {
-            Mail::to($emails)->queue(new Factura($array));
+            $parametros = ParametrosEmpresa::first();
+
+            Mail::mailer('smtp')->to($emails)->send(new Factura($array), [], function ($message) use ($parametros) {
+                $message->from($parametros->smtp_from, 'Tienda Ecommerce');
+            });
         } catch (\Exception $e) {
         }
 

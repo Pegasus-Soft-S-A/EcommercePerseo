@@ -2,7 +2,8 @@
 <html>
 
 <head>
-    {{-- <link href="https://fonts.googleapis.com/css?family=Nunito+Sans&amp;display=swap" rel="stylesheet">
+    {{--
+    <link href="https://fonts.googleapis.com/css?family=Nunito+Sans&amp;display=swap" rel="stylesheet">
     <style type="text/css">
         body {
             display: flex !important;
@@ -296,9 +297,21 @@
                                             <tr>
                                                 <td align="center"
                                                     style="font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;">
+                                                    @php
+                                                    $base = Request::segment(1);
+                                                    $base_encriptada = strtr($base, '._-', '+/=');
+                                                    $base_desencriptada =
+                                                    decrypt_openssl($base_encriptada,"Perseo1232*");
+                                                    @endphp
+                                                    @if ($base_desencriptada)
                                                     <img src="{{ $message->embed(public_path() . '/assets/img/logo-'.sis_cliente().'.png') }}"
                                                         alt="" width="500" height="100"
                                                         style="display: block; margin-left: auto; margin-right: auto;">
+                                                    @else
+                                                    <img src="{{ $message->embed(public_path() . '/assets/img/logo.png') }}"
+                                                        alt="" width="500" height="100"
+                                                        style="display: block; margin-left: auto; margin-right: auto;">
+                                                    @endif
                                                 </td>
                                             </tr>
                                             <tr class="">
@@ -421,14 +434,18 @@
                                                                                     style="text-align: right; padding: 12px 0px; width: 10%;">
                                                                                     <div style="color: #666666; font-weight: 400; font-size: 15px; line-height: 21px; font-family: 'Benton Sans', -apple-system, BlinkMacSystemFont, Roboto, 'Helvetica neue', Helvetica, Tahoma, Arial, sans-serif;"
                                                                                         class="">
-                                                                                        {{ number_format(round($detalle->cantidaddigitada,2),2) }}
+                                                                                        {{
+                                                                                        number_format(round($detalle->cantidaddigitada,2),2)
+                                                                                        }}
                                                                                     </div>
                                                                                 </td>
                                                                                 <td
                                                                                     style="text-align: right; padding: 12px 0px; width: 10%;">
                                                                                     <div style="color: #666666; font-weight: 400; font-size: 15px; line-height: 21px; font-family: 'Benton Sans', -apple-system, BlinkMacSystemFont, Roboto, 'Helvetica neue', Helvetica, Tahoma, Arial, sans-serif;"
                                                                                         class="">
-                                                                                        {{ number_format(round($detalle->preciovisible,2),2) }}
+                                                                                        {{
+                                                                                        number_format(round($detalle->preciovisible,2),2)
+                                                                                        }}
                                                                                     </div>
                                                                                 </td>
                                                                             </tr>
@@ -453,7 +470,9 @@
                                                                                     style="text-align: right; padding: 12px 0px; width: 10%;">
                                                                                     <div style="color: #666666; font-weight: 400; font-size: 15px; line-height: 21px; font-family: 'Benton Sans', -apple-system, BlinkMacSystemFont, Roboto, 'Helvetica neue', Helvetica, Tahoma, Arial, sans-serif;"
                                                                                         class=""><span
-                                                                                            style="font-size: 16px;"><strong>{{ number_format(round($pedido->subtotalconiva,2),2) }}</strong></span>
+                                                                                            style="font-size: 16px;"><strong>{{
+                                                                                                number_format(round($pedido->subtotalconiva,2),2)
+                                                                                                }}</strong></span>
                                                                                     </div>
                                                                                 </td>
                                                                             </tr>
@@ -477,7 +496,9 @@
                                                                                     style="text-align: right; padding: 12px 0px; width: 10%;">
                                                                                     <div style="color: #666666; font-weight: 400; font-size: 15px; line-height: 21px; font-family: 'Benton Sans', -apple-system, BlinkMacSystemFont, Roboto, 'Helvetica neue', Helvetica, Tahoma, Arial, sans-serif;"
                                                                                         class=""><span
-                                                                                            style="font-size: 16px;"><strong>{{ number_format(round($pedido->subtotalsiniva,2),2) }}</strong></span>
+                                                                                            style="font-size: 16px;"><strong>{{
+                                                                                                number_format(round($pedido->subtotalsiniva,2),2)
+                                                                                                }}</strong></span>
                                                                                     </div>
                                                                                 </td>
                                                                             </tr>
@@ -500,7 +521,9 @@
                                                                                     style="text-align: right; padding: 12px 0px; width: 10%;">
                                                                                     <div style="color: #666666; font-weight: 400; font-size: 15px; line-height: 21px; font-family: 'Benton Sans', -apple-system, BlinkMacSystemFont, Roboto, 'Helvetica neue', Helvetica, Tahoma, Arial, sans-serif;"
                                                                                         class=""><span
-                                                                                            style="font-size: 16px;"><strong>{{ number_format(round($pedido->total_descuento,2),2) }}</strong></span>
+                                                                                            style="font-size: 16px;"><strong>{{
+                                                                                                number_format(round($pedido->total_descuento,2),2)
+                                                                                                }}</strong></span>
                                                                                     </div>
                                                                                 </td>
                                                                             </tr>
@@ -524,7 +547,9 @@
                                                                                     style="text-align: right; padding: 12px 0px; width: 10%;">
                                                                                     <div style="color: #666666; font-weight: 400; font-size: 15px; line-height: 21px; font-family: 'Benton Sans', -apple-system, BlinkMacSystemFont, Roboto, 'Helvetica neue', Helvetica, Tahoma, Arial, sans-serif;"
                                                                                         class=""><span
-                                                                                            style="font-size: 16px;"><strong>{{ number_format(round($pedido->total_iva,2),2) }}</strong></span>
+                                                                                            style="font-size: 16px;"><strong>{{
+                                                                                                number_format(round($pedido->total_iva,2),2)
+                                                                                                }}</strong></span>
                                                                                     </div>
                                                                                 </td>
                                                                             </tr>
@@ -547,7 +572,9 @@
                                                                                     style="text-align: right; padding: 12px 0px; width: 10%;">
                                                                                     <div style="color: #666666; font-weight: 400; font-size: 15px; line-height: 21px; font-family: 'Benton Sans', -apple-system, BlinkMacSystemFont, Roboto, 'Helvetica neue', Helvetica, Tahoma, Arial, sans-serif;"
                                                                                         class=""><span
-                                                                                            style="font-size: 16px;"><strong>{{ number_format(round($pedido->total,2),2) }}</strong></span>
+                                                                                            style="font-size: 16px;"><strong>{{
+                                                                                                number_format(round($pedido->total,2),2)
+                                                                                                }}</strong></span>
                                                                                     </div>
                                                                                 </td>
                                                                             </tr>

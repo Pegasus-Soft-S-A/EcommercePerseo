@@ -361,12 +361,12 @@ function configurar_smtp()
 {
     $parametros = ParametrosEmpresa::first();
 
-    Config::set('mail.default', 'smtp');
-    Config::set('mail.mailers.smtp.host', $parametros->smtp_servidor);
-    Config::set('mail.mailers.smtp.port', $parametros->smtp_puerto);
-    Config::set('mail.mailers.smtp.username', $parametros->smtp_usuario);
-    Config::set('mail.mailers.smtp.password', $parametros->smtp_clave);
-    Config::set('mail.mailers.smtp.encryption', $parametros->smtp_puerto == 465 ? 'ssl' : 'tls');
-    Config::set('mail.from.name', 'Tienda Ecommerce');
-    Config::set('mail.from.address', $parametros->smtp_from);
+    Config::set('mail.mailers.smtp', [
+        'transport' => 'smtp',
+        'host' => $parametros->smtp_servidor,
+        'port' =>  $parametros->smtp_puerto,
+        'encryption' => $parametros->smtp_puerto == 465 ? 'ssl' : 'tls',
+        'username' => $parametros->smtp_usuario,
+        'password' =>  $parametros->smtp_clave,
+    ]);
 }

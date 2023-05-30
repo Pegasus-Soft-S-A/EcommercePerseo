@@ -501,8 +501,12 @@ class HomeController extends Controller
 
             session(['almacenesid' => $almacenes->almacenesid]);
         }
+        $parametros = ParametrosEmpresa::first();
 
-        Mail::to($user->email_login)->queue(new Registro($array));
+        Mail::mailer('smtp')->to($user->email_login)->send(new Registro($array), [], function ($message) use ($parametros) {
+            $message->from($parametros->smtp_from, 'Tienda Ecommerce');
+        });
+
         flash('Registrado Correctamente')->success();
         return redirect()->route("home");
     }
@@ -1226,7 +1230,11 @@ class HomeController extends Controller
             $array['razonsocial'] = $cliente->razonsocial;
 
             try {
-                Mail::to($cliente->email_login)->queue(new Registro($array));
+                $parametros = ParametrosEmpresa::first();
+
+                Mail::mailer('smtp')->to($cliente->email_login)->send(new Registro($array), [], function ($message) use ($parametros) {
+                    $message->from($parametros->smtp_from, 'Tienda Ecommerce');
+                });
             } catch (\Exception $e) {
                 flash('Error enviando email')->error();
             }

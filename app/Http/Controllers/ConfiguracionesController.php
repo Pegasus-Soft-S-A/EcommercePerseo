@@ -349,10 +349,14 @@ class ConfiguracionesController extends Controller
         $array['subject'] = "SMTP Test";
         $array['from'] = Config::get('mail.from.address');
         $array['content'] = "Esto es un email de prueba.";
-
         try {
-            Mail::to($request->email)->queue(new Test($array));
+            $parametros = ParametrosEmpresa::first();
+
+            Mail::mailer('smtp')->to($request->email)->send(new Test($array), [], function ($message) use ($parametros) {
+                $message->from($parametros->smtp_from, 'Tienda Ecommerce');
+            });
         } catch (\Exception $e) {
+            dd($e->getMessage());
             flash('Error enviando email, revise los parametros')->error();
             return back();
         }

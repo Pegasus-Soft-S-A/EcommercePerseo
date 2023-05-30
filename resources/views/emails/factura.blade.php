@@ -296,9 +296,21 @@
                                             <tr>
                                                 <td align="center"
                                                     style="font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;">
+                                                    @php
+                                                    $base = Request::segment(1);
+                                                    $base_encriptada = strtr($base, '._-', '+/=');
+                                                    $base_desencriptada =
+                                                    decrypt_openssl($base_encriptada,"Perseo1232*");
+                                                    @endphp
+                                                    @if ($base_desencriptada)
                                                     <img src="{{ $message->embed(public_path() . '/assets/img/logo-'.sis_cliente().'.png') }}"
                                                         alt="" width="500" height="100"
                                                         style="display: block; margin-left: auto; margin-right: auto;">
+                                                    @else
+                                                    <img src="{{ $message->embed(public_path() . '/assets/img/logo.png') }}"
+                                                        alt="" width="500" height="100"
+                                                        style="display: block; margin-left: auto; margin-right: auto;">
+                                                    @endif
                                                 </td>
                                             </tr>
                                             <tr class="">
@@ -344,7 +356,9 @@
                                                                     <p style="color: #666666; font-weight: 400; font-size: 15px; line-height: 21px; font-family: 'Benton Sans', -apple-system, BlinkMacSystemFont, Roboto, 'Helvetica neue', Helvetica, Tahoma, Arial, sans-serif; margin-bottom: 18px;"
                                                                         class=""><span
                                                                             style="font-size: 16px;">Secuencial:
-                                                                            <strong>{{ $factura->establecimiento.'-'.$factura->puntoemision.'-'.$factura->secuencial }}</strong></span>
+                                                                            <strong>{{
+                                                                                $factura->establecimiento.'-'.$factura->puntoemision.'-'.$factura->secuencial
+                                                                                }}</strong></span>
                                                                     </p>
                                                                     <table cellpadding="0" cellspacing="0" border="0"
                                                                         style="width: 100%;">
@@ -422,14 +436,18 @@
                                                                                     style="text-align: right; padding: 12px 0px; width: 10%;">
                                                                                     <div style="color: #666666; font-weight: 400; font-size: 15px; line-height: 21px; font-family: 'Benton Sans', -apple-system, BlinkMacSystemFont, Roboto, 'Helvetica neue', Helvetica, Tahoma, Arial, sans-serif;"
                                                                                         class="">
-                                                                                        {{ number_format(round($detalle->cantidaddigitada,2),2) }}
+                                                                                        {{
+                                                                                        number_format(round($detalle->cantidaddigitada,2),2)
+                                                                                        }}
                                                                                     </div>
                                                                                 </td>
                                                                                 <td
                                                                                     style="text-align: right; padding: 12px 0px; width: 10%;">
                                                                                     <div style="color: #666666; font-weight: 400; font-size: 15px; line-height: 21px; font-family: 'Benton Sans', -apple-system, BlinkMacSystemFont, Roboto, 'Helvetica neue', Helvetica, Tahoma, Arial, sans-serif;"
                                                                                         class="">
-                                                                                        {{ number_format(round($detalle->precio,2),2) }}
+                                                                                        {{
+                                                                                        number_format(round($detalle->precio,2),2)
+                                                                                        }}
                                                                                     </div>
                                                                                 </td>
                                                                             </tr>
@@ -454,7 +472,9 @@
                                                                                     style="text-align: right; padding: 12px 0px; width: 10%;">
                                                                                     <div style="color: #666666; font-weight: 400; font-size: 15px; line-height: 21px; font-family: 'Benton Sans', -apple-system, BlinkMacSystemFont, Roboto, 'Helvetica neue', Helvetica, Tahoma, Arial, sans-serif;"
                                                                                         class=""><span
-                                                                                            style="font-size: 16px;"><strong>{{ number_format(round($factura->subtotalconiva,2),2) }}</strong></span>
+                                                                                            style="font-size: 16px;"><strong>{{
+                                                                                                number_format(round($factura->subtotalconiva,2),2)
+                                                                                                }}</strong></span>
                                                                                     </div>
                                                                                 </td>
                                                                             </tr>
@@ -478,7 +498,9 @@
                                                                                     style="text-align: right; padding: 12px 0px; width: 10%;">
                                                                                     <div style="color: #666666; font-weight: 400; font-size: 15px; line-height: 21px; font-family: 'Benton Sans', -apple-system, BlinkMacSystemFont, Roboto, 'Helvetica neue', Helvetica, Tahoma, Arial, sans-serif;"
                                                                                         class=""><span
-                                                                                            style="font-size: 16px;"><strong>{{ number_format(round($factura->subtotalsiniva,2),2) }}</strong></span>
+                                                                                            style="font-size: 16px;"><strong>{{
+                                                                                                number_format(round($factura->subtotalsiniva,2),2)
+                                                                                                }}</strong></span>
                                                                                     </div>
                                                                                 </td>
                                                                             </tr>
@@ -501,7 +523,9 @@
                                                                                     style="text-align: right; padding: 12px 0px; width: 10%;">
                                                                                     <div style="color: #666666; font-weight: 400; font-size: 15px; line-height: 21px; font-family: 'Benton Sans', -apple-system, BlinkMacSystemFont, Roboto, 'Helvetica neue', Helvetica, Tahoma, Arial, sans-serif;"
                                                                                         class=""><span
-                                                                                            style="font-size: 16px;"><strong>{{ number_format(round($factura->total_descuento,2),2) }}</strong></span>
+                                                                                            style="font-size: 16px;"><strong>{{
+                                                                                                number_format(round($factura->total_descuento,2),2)
+                                                                                                }}</strong></span>
                                                                                     </div>
                                                                                 </td>
                                                                             </tr>
@@ -525,7 +549,9 @@
                                                                                     style="text-align: right; padding: 12px 0px; width: 10%;">
                                                                                     <div style="color: #666666; font-weight: 400; font-size: 15px; line-height: 21px; font-family: 'Benton Sans', -apple-system, BlinkMacSystemFont, Roboto, 'Helvetica neue', Helvetica, Tahoma, Arial, sans-serif;"
                                                                                         class=""><span
-                                                                                            style="font-size: 16px;"><strong>{{ number_format(round($factura->total_iva,2),2) }}</strong></span>
+                                                                                            style="font-size: 16px;"><strong>{{
+                                                                                                number_format(round($factura->total_iva,2),2)
+                                                                                                }}</strong></span>
                                                                                     </div>
                                                                                 </td>
                                                                             </tr>
@@ -548,7 +574,9 @@
                                                                                     style="text-align: right; padding: 12px 0px; width: 10%;">
                                                                                     <div style="color: #666666; font-weight: 400; font-size: 15px; line-height: 21px; font-family: 'Benton Sans', -apple-system, BlinkMacSystemFont, Roboto, 'Helvetica neue', Helvetica, Tahoma, Arial, sans-serif;"
                                                                                         class=""><span
-                                                                                            style="font-size: 16px;"><strong>{{ number_format(round($factura->total,2),2) }}</strong></span>
+                                                                                            style="font-size: 16px;"><strong>{{
+                                                                                                number_format(round($factura->total,2),2)
+                                                                                                }}</strong></span>
                                                                                     </div>
                                                                                 </td>
                                                                             </tr>

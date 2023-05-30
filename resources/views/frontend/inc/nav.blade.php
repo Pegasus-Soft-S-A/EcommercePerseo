@@ -6,7 +6,8 @@
             <div class="col-12 text-right d-none d-lg-block">
                 <ul class="list-inline mb-0">
                     @auth
-                    <li class="list-inline-item mr-3">
+                    <span class="text-reset py-2 d-inline-block ">{{ auth()->user()->razonsocial}}</span>
+                    <li class="list-inline-item mr-3 ml-3">
                         <a href="{{ route('dashboard') }}" class="text-reset py-2 d-inline-block opacity-60">Mi
                             Panel</a>
                     </li>
