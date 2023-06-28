@@ -25,16 +25,125 @@ if (!function_exists('get_setting')) {
     //funcion global que devuelve el valor del parametro de la integracion que se le envia
     function get_setting($setting)
     {
-
         // Verificar si los datos están almacenados en la sesión
         if (!Session::has('settings')) {
             // Si los datos no están almacenados en la sesión, llamar a la función get_settings()
             $settings = null;
             $integraciones = Integraciones::select('parametros')->where('tipo', 5)->first();
-            if ($integraciones != null) {
+
+            if ($integraciones != null && $integraciones->parametros != null) {
+                $settings = json_decode($integraciones->parametros);
+            } else {
+                // Si no existe 'parametros', establecer valores por defecto
+                $parametros = [];
+                $topcategorias = [];
+                $productos = [
+                    'rating' => 0,
+                    'destacado' => 0,
+                    'oferta' => 0,
+                    'inicio_oferta' => null,
+                    'fin_oferta' => null
+                ];
+                $lineas = [
+                    'destacado' => 0
+                ];
+                $categorias = [
+                    'destacado' => 0
+                ];
+                $subcategorias = [
+                    'destacado' => 0
+                ];
+                $subgrupos = [
+                    'destacado' => 0
+                ];
+                $parametros = [
+                    'header_stikcy' => null,
+                    'header_logo' => null,
+                    'footer_logo' => null,
+                    'acerca_nosotros' => null,
+                    'direccion_contacto' => null,
+                    'telefono_contacto' => null,
+                    'email_contacto' => null,
+                    'show_social_links' => null,
+                    'facebook_link' => null,
+                    'twitter_link' => null,
+                    'instagram_link' => null,
+                    'nombre_sitio' => null,
+                    'lema_sitio' => null,
+                    'icono_sitio' => null,
+                    'color_sitio' => '#377dff',
+                    'color_hover_sitio' => '#377dff',
+                    'header_script' => null,
+                    'footer_script' => null,
+                    'inicio' => null,
+                    'terminos_condiciones' => null,
+                    'politica_devoluciones' => null,
+                    'politica_soporte' => null,
+                    'politica_privacidad' => null,
+                    'home_slider' => null,
+                    'top10_categories' => $topcategorias,
+                    'facebook_pixel' => null,
+                    'FACEBOOK_PIXEL_ID' => null,
+                    'google_analytics' => null,
+                    'TRACKING_ID' => null,
+                    'grupo_productos' => 'categorias',
+                    'facturador' => 1,
+                    'productos_existencias' => 'todos',
+                    'tarifa_productos' => 1,
+                    'cantidad_maxima' => '10',
+                    'registra_clientes' => null,
+                    'grupo_clientes' => null,
+                    'tarifa_clientes' => null,
+                    'email_pedidos' => null,
+                    'imagen_defecto' => base64_encode(file_get_contents(static_asset('assets/img/placeholder.jpg'))),
+                    'login_google' => null,
+                    'login_facebook' => null,
+                    "pago_pedido" => '1',
+                    "pago_plux" => '0',
+                    "email_pago_plux" => null,
+                    "pedido_pago_plux" => "pedido",
+                    "productos_disponibles" => 'En Stock',
+                    "productos_no_disponibles" => 'Bajo Pedido',
+                    "ver_codigo" => 0,
+                    "tipo_tienda" => 'publico',
+                    "controla_stock" => 0,
+
+                ];
+
+                // Si no existe $integraciones, debes crear una nueva instancia antes de guardar
+                if ($integraciones == null) {
+                    $integraciones = new Integraciones;
+                    $integraciones->tipo = 5;
+                    $integraciones->descripcion = 'Tienda Ecommerce';
+                }
+                $integraciones->parametros = json_encode($parametros);
+                $integraciones->save();
+                DB::connection('empresa')->table('integraciones')
+                    ->where('tipo', 5)
+                    ->update($integraciones->toArray());
+
+                DB::connection('empresa')->table('productos')->update([
+                    'parametros_json' => json_encode($productos)
+                ]);
+
+                DB::connection('empresa')->table('productos_lineas')->update([
+                    'parametros_json' => json_encode($lineas)
+                ]);
+
+                DB::connection('empresa')->table('productos_categorias')->update([
+                    'parametros_json' => json_encode($categorias)
+                ]);
+
+                DB::connection('empresa')->table('productos_subcategoria')->update([
+                    'parametros_json' => json_encode($subcategorias)
+                ]);
+
+                DB::connection('empresa')->table('productos_subgrupo')->update([
+                    'parametros_json' => json_encode($subgrupos)
+                ]);
+
                 $settings = json_decode($integraciones->parametros);
             }
-            $settings == null ? null : $settings->$setting;
 
             // Almacenar los datos en la sesión
             Session::put('settings', $settings);
