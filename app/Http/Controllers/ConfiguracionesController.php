@@ -224,22 +224,24 @@ class ConfiguracionesController extends Controller
     {
         $sliders = [];
 
-        foreach ($request->inicio as $key => $type) {
+        if ($request->inicio) {
+            foreach ($request->inicio as $key => $type) {
 
-            if (isset($request->imagenes[$key])) {
-                $imagen = base64_encode(file_get_contents($request->imagenes[$key]));
-            } else {
-                $imagen = $request->imagen[$key];
+                if (isset($request->imagenes[$key])) {
+                    $imagen = base64_encode(file_get_contents($request->imagenes[$key]));
+                } else {
+                    $imagen = $request->imagen[$key];
+                }
+
+                $slider = [
+                    "imagen" => $imagen,
+                    "link" => $request->links[$key],
+                    "inicio" => $request->inicio[$key],
+                    "fin" => $request->fin[$key]
+                ];
+
+                array_push($sliders, $slider);
             }
-
-            $slider = [
-                "imagen" => $imagen,
-                "link" => $request->links[$key],
-                "inicio" => $request->inicio[$key],
-                "fin" => $request->fin[$key]
-            ];
-
-            array_push($sliders, $slider);
         }
 
         $business_settings = Integraciones::where('tipo', 5)->first();
