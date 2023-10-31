@@ -708,10 +708,10 @@ class HomeController extends Controller
         } else {
             if ($parametros->tipopresentacionprecios == 1) {
                 $products = DB::table('productos as p')
-                    ->select('p.productosid', 'p.productocodigo', 'p.descripcion', 'pt.precioiva as precio', 'pi.imagen', 'p.parametros_json', 'ventas.total_cantidad');
+                    ->select('p.productosid', 'p.productocodigo', 'p.descripcion', 'pi.imagen', 'p.parametros_json', 'ventas.total_cantidad', DB::raw("(SELECT tarifain.precioiva FROM productos_tarifas as tarifain WHERE tarifain.tarifasid = " . get_setting('tarifa_productos') . " and tarifain.productosid = p.productosid AND tarifain.medidasid = p.unidadinterna) AS precio"));
             } else {
                 $products = DB::table('productos as p')
-                    ->select('p.productosid', 'p.productocodigo', 'p.descripcion', 'pt.precio', 'pi.imagen', 'p.parametros_json', 'ventas.total_cantidad');
+                    ->select('p.productosid', 'p.productocodigo', 'p.descripcion', 'pi.imagen', 'p.parametros_json', 'ventas.total_cantidad', DB::raw("(SELECT tarifain.precio FROM productos_tarifas as tarifain WHERE tarifain.tarifasid = " . get_setting('tarifa_productos') . " and tarifain.productosid = p.productosid AND tarifain.medidasid = p.unidadinterna) AS precio"));
             }
         }
 
@@ -726,7 +726,7 @@ class HomeController extends Controller
             })
             ->whereIn('p.ecommerce_estado', [1, 2])
             ->where('p.existenciastotales', '>', 0)
-            ->where('pt.tarifasid', '=', 2)
+            ->where('pt.tarifasid', '=', get_setting('tarifa_productos'))
             ->where('p.venta', '=', 1)
             ->where('p.servicio', '=', 0)
             ->where('p.bien', '=', 0)
