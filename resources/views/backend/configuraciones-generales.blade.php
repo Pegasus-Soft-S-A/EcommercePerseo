@@ -359,7 +359,7 @@
                    }else{
                     AIZ.plugins.notify('error', 'Error Asignando Claves');
                    }
-                   
+
                 }
             });
         }
@@ -376,7 +376,7 @@
                     if (data==1){
                         $('#carga').modal('hide')
                         AIZ.plugins.notify('success', 'Direcciones asignadas correctamente');
-                    }  
+                    }
                 }
             });
         }

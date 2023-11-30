@@ -57,7 +57,7 @@ class HomeController extends Controller
             return back();
         }
 
-        if ($cliente != null) {
+        if ($cliente != null && $cliente->clave != "") {
             $clave = json_decode($cliente->clave);
             $clave_cliente = encrypt_openssl($request->clave, "Perseo1232*");
             if ($clave->ecommerce == $clave_cliente) {

@@ -67,7 +67,7 @@ class ConfiguracionesController extends Controller
                 array_push($tags, $tag->value);
             }
         }
-        $settings->email_pedidos          = implode(',', $tags);
+        $settings->email_pedidos = implode(',', $tags);
 
         if ($request->file('imagen_defecto')) {
             $settings->imagen_defecto = base64_encode(file_get_contents($request->file('imagen_defecto')));
@@ -366,7 +366,6 @@ class ConfiguracionesController extends Controller
                 $message->from($parametros->smtp_from, 'Tienda Ecommerce');
             });
         } catch (\Exception $e) {
-            dd($e->getMessage());
             flash('Error enviando email, revise los parametros')->error();
             return back();
         }
@@ -413,7 +412,7 @@ class ConfiguracionesController extends Controller
                 $address->telefono1 = $cliente->telefono1;
                 $address->fechacreacion = now();
                 $address->usuariocreacion = 'Ecommerce';
-                //dd($address);
+
                 $address->save();
             }
         }
