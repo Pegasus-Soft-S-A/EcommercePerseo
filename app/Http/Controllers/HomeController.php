@@ -1288,11 +1288,12 @@ class HomeController extends Controller
     public function estado_cartera()
     {
         $documentos = DB::connection('empresa')->table('cuentasporcobrar')
-            ->select('cuentasporcobrar.documentosid AS documentoid', 'cuentasporcobrar.secuencial AS secuencia', DB::raw('max(cuentasporcobrar.importe) AS valor'), DB::raw('SUM(cuentasporcobrar.importe) AS saldo'), DB::raw('CASE WHEN MAX(cuentasporcobrar.importe)=0 THEN cuentasporcobrar.emision ELSE cuentasporcobrar.emision END AS emision'), DB::raw('CASE WHEN MAX(cuentasporcobrar.importe)=0 THEN cuentasporcobrar.vence ELSE cuentasporcobrar.vence END AS vence'), DB::raw('case WHEN DATEDIFF(now(),cuentasporcobrar.vence) > 0 then DATEDIFF(now(),cuentasporcobrar.vence) ELSE 0 END as diasvence'))
+            ->select('cuentasporcobrar.secuencial', 'cuentasporcobrar.documentosid AS documentoid', 'cuentasporcobrar.secuencial AS secuencia', DB::raw('max(cuentasporcobrar.importe) AS valor'), DB::raw('SUM(cuentasporcobrar.importe) AS saldo'), DB::raw('CASE WHEN MAX(cuentasporcobrar.importe)=0 THEN cuentasporcobrar.emision ELSE cuentasporcobrar.emision END AS emision'), DB::raw('CASE WHEN MAX(cuentasporcobrar.importe)=0 THEN cuentasporcobrar.vence ELSE cuentasporcobrar.vence END AS vence'), DB::raw('case WHEN DATEDIFF(now(),cuentasporcobrar.vence) > 0 then DATEDIFF(now(),cuentasporcobrar.vence) ELSE 0 END as diasvence'))
             ->where('cuentasporcobrar.clientesid', auth()->user()->clientesid)
             ->groupBy('cuentasporcobrar.secuencial', 'cuentasporcobrar.documentosid')
             ->orderBy('emision', 'desc')
             ->paginate(9);
+
         return view('frontend.cliente.estado_cartera', compact('documentos'));
     }
 

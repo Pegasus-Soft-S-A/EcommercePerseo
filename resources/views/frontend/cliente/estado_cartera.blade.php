@@ -10,6 +10,7 @@
         <table class="table aiz-table mb-0">
             <thead>
                 <tr>
+                    <th>Secuencial</th>
                     <th>Documento</th>
                     <th data-breakpoints="md">Emision</th>
                     <th data-breakpoints="md">Vencimiento</th>
@@ -22,6 +23,7 @@
             <tbody>
                 @foreach ($documentos as $key => $documento)
                 <tr>
+                    <td> {{ $documento->secuencial }}</td>
                     <td> {{ $documento->documentoid }}</td>
                     <td>{{ $documento->emision }}</td>
                     <td>{{ $documento->vence }}</td>
