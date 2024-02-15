@@ -98,6 +98,7 @@ if (!function_exists('get_setting')) {
                     'imagen_defecto' => base64_encode(file_get_contents(static_asset('assets/img/placeholder.jpg'))),
                     'login_google' => null,
                     'login_facebook' => null,
+                    'login_apple' => null,
                     "pago_pedido" => '1',
                     "pago_plux" => '0',
                     "email_pago_plux" => null,

@@ -125,8 +125,6 @@ if ($base_desencriptada) {
 
         /*ALmacenes */
         Route::get('/almacenes', [HomeController::class, 'almacenes'])->name('almacenes.index');
-
-
     });
 } else {
 
@@ -142,6 +140,9 @@ if ($base_desencriptada) {
     Route::post('/password/reset/email/submit', [HomeController::class, 'reset_password_with_code'])->name('password.update');
     Route::get('/social-login/redirect/{provider}', [LoginController::class, 'redirectToProvider'])->name('social.login');
     Route::get('/social-login/{provider}/callback', [LoginController::class, 'handleProviderCallback'])->name('social.callback');
+    Route::post('/social-login/apple/callback',  [LoginController::class, 'handleAppleCallback']);
+
+
     Route::get('/logout', [LoginController::class, 'logout']);
 
     /* Validacion  */
@@ -225,8 +226,7 @@ if ($base_desencriptada) {
 
         //Verificar existencias
         Route::post('/verificar-existencia', [HomeController::class, 'verificar_existencia'])->name('verificar_existencia');
-    Route::get('/almacenes', [HomeController::class, 'almacenes'])->name('almacenes.index');
-
+        Route::get('/almacenes', [HomeController::class, 'almacenes'])->name('almacenes.index');
     });
 
     /* Validacion  */

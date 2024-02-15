@@ -306,6 +306,7 @@ class ConfiguracionesController extends Controller
         $settings = json_decode($business_settings->parametros);
         $settings->login_google = $request->login_google;
         $settings->login_facebook = $request->login_facebook;
+        $settings->login_apple = $request->login_apple;
 
         Integraciones::where('tipo', 5)
             ->update(['parametros' => json_encode($settings)]);

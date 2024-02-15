@@ -36,7 +36,9 @@ class HistorialPedidosController extends Controller
         $order = Pedidos::where('pedidosid', $id)->first();
         $detalles = PedidosDetalles::where('pedidosid', $id)->get();
         $cliente = Clientes::select('email', 'razonsocial')->where('clientesid', $order->clientesid)->first();
-        $datosEmpresa = ParametrosEmpresa::select('nombrecomercial', 'direccion', 'email', 'telefono1')->first();
+        $direccion = \App\Models\ClientesSucursales::where('clientes_sucursalesid', $order->clientes_sucursalesid)->first();
+
+        $datosEmpresa = ParametrosEmpresa::select('nombrecomercial', 'email', 'telefono1')->first();
         $font_family = "'Roboto','sans-serif'";
         $direction = 'ltr';
         $text_align = 'left';
@@ -46,6 +48,7 @@ class HistorialPedidosController extends Controller
             'order' => $order,
             'detalle' => $detalles,
             'cliente' => $cliente,
+            'direccion' => $direccion,
             'datosEmpresa' => $datosEmpresa,
             'font_family' => $font_family,
             'direction' => $direction,

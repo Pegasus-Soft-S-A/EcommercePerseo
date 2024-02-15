@@ -4111,7 +4111,7 @@ input[type="number"] {
 }
 [dir="rtl"] .aiz-steps > *:not(:first-of-type):before {
     left: calc(50% + 20px);
-    right: auto; 
+    right: auto;
 }
 .aiz-steps .title {
     font-size: 15px;
@@ -6483,6 +6483,9 @@ ul.social.colored [class*="twitter"] {
 ul.social.colored [class*="google"] {
     background-color: #e62833;
 }
+ul.social.colored [class*="apple"] {
+    background-color: #888888;
+}
 ul.social.colored [class*="youtube"] {
     background-color: #ff0000;
 }
@@ -6664,7 +6667,7 @@ ul.social.colored [class*="tripadvisor"] {
     right: 20px;
 }
 [dir="rtl"] .hover-category-menu .all-category::before {
-    left: 20px;    
+    left: 20px;
     right: auto;
 }
 

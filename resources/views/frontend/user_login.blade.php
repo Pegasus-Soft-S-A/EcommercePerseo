@@ -1,170 +1,185 @@
 @extends('frontend.layouts.app')
 
 @section('content')
-    @php
-    $user = Session::get('user');
-    $identificador = 0;
-    if ($user) {
-        $identificador = 1;
-    }
-    session(['ruta' => 'login']);
+@php
+$user = Session::get('user');
+$identificador = 0;
+if ($user) {
+$identificador = 1;
+}
+Session::put('ruta', 'login');
+$almacenes = App\Models\Almacenes::where('disponibleventa', 1)->get();
 
-    $almacenes = App\Models\Almacenes::where('disponibleventa', 1)->get();
+@endphp
+<section class="gry-bg py-5">
+    <div class="profile">
+        <div class="container">
+            <div class="row">
+                <div class="col-xxl-4 col-xl-5 col-lg-6 col-md-8 mx-auto">
+                    <div class="card">
+                        <div class="text-center pt-4">
+                            <h1 class="h4 fw-600">
+                                Ingrese a su cuenta
+                            </h1>
+                        </div>
 
-    @endphp
-    <section class="gry-bg py-5">
-        <div class="profile">
-            <div class="container">
-                <div class="row">
-                    <div class="col-xxl-4 col-xl-5 col-lg-6 col-md-8 mx-auto">
-                        <div class="card">
-                            <div class="text-center pt-4">
-                                <h1 class="h4 fw-600">
-                                    Ingrese a su cuenta
-                                </h1>
-                            </div>
+                        <div class="px-4 py-3 py-lg-4">
+                            <div class="">
+                                <form class="form-default" role="form" action="{{ route('login.cliente') }}"
+                                    method="POST">
+                                    @csrf
+                                    <div class="form-group">
+                                        <input type="text" class="form-control " value="" placeholder="Identificacion"
+                                            name="identificacion" autocomplete="off">
+                                    </div>
 
-                            <div class="px-4 py-3 py-lg-4">
-                                <div class="">
-                                    <form class="form-default" role="form" action="{{ route('login.cliente') }}"
-                                        method="POST">
-                                        @csrf
-                                        <div class="form-group">
-                                            <input type="text" class="form-control " value=""
-                                                placeholder="Identificacion" name="identificacion" autocomplete="off">
-                                        </div>
+                                    <div class="form-group">
+                                        <input type="password" class="form-control" placeholder="Contraseña"
+                                            name="clave">
+                                    </div>
+                                    @if (get_setting('controla_stock') == 2)
+                                    <div class="form-group">
+                                        <select class="form-control fs-16 bg-soft-primary" id="almacenesid"
+                                            name="almacenesid">
+                                            <option value="0">Seleccione Sucursal
+                                            </option>
+                                            @foreach ($almacenes as $almacen)
+                                            <option value="{{ $almacen->almacenesid }}">
+                                                {{ $almacen->descripcion }}</option>
+                                            @endforeach
 
-                                        <div class="form-group">
-                                            <input type="password" class="form-control" placeholder="Contraseña"
-                                                name="clave">
-                                        </div>
-                                        @if (get_setting('controla_stock') == 2)
-                                            <div class="form-group">
-                                                <select class="form-control fs-16 bg-soft-primary" id="almacenesid"
-                                                    name="almacenesid">
-                                                    <option value="0">Seleccione Sucursal
-                                                    </option>
-                                                    @foreach ($almacenes as $almacen)
-                                                        <option value="{{ $almacen->almacenesid }}">
-                                                            {{ $almacen->descripcion }}</option>
-                                                    @endforeach
-
-                                                </select>
-                                            </div>
-                                        @endif
-                                        <div class="row mb-2">
-                                            <div class="col-6">
-                                                <label class="aiz-checkbox">
-                                                    <input type="checkbox" name="remember">
-                                                    <span class=opacity-60>Recuerdame</span>
-                                                    <span class="aiz-square-check"></span>
-                                                </label>
-                                            </div>
-                                            <div class="col-6 text-right">
-                                                <a href="{{ route('password.request') }}"
-                                                    class="text-reset opacity-60 fs-14">Olvidó su contraseña</a>
-                                            </div>
-                                        </div>
-
-                                        <div class="mb-2">
-                                            <button type="submit" class="btn btn-primary btn-block fw-600">Entrar</button>
-                                            @if (get_setting('registra_clientes') == 'on')
-                                                <a href="{{ route('user.registration') }}"
-                                                    class="btn btn-primary btn-block fw-600">Registrarse ahora</a>
-                                            @endif
-                                        </div>
-
-                                    </form>
-                                    @if (get_setting('registra_clientes') == 'on')
-
-                                        @if (get_setting('login_google') == 'on' || get_setting('login_facebook') == 'on')
-                                            <div class="separator mb-3">
-                                                <span class="bg-white px-3 opacity-60">O inicia sesion</span>
-                                            </div>
-                                            <ul class="list-inline social colored text-center mb-3" id="botones">
-                                                @if (get_setting('login_facebook') == 'on')
-                                                    <li class="list-inline-item">
-                                                        <a href="{{ route('social.login', ['provider' => 'facebook']) }}"
-                                                            id="facebook" class="facebook">
-                                                            <i class="lab la-facebook-f"></i>
-                                                        </a>
-                                                    </li>
-                                                @endif
-                                                @if (get_setting('login_google') == 'on')
-                                                    <li class="list-inline-item">
-                                                        <a href="{{ route('social.login', ['provider' => 'google']) }}"
-                                                            id="google" class="google">
-                                                            <i class="lab la-google"></i>
-                                                        </a>
-                                                    </li>
-                                                @endif
-                                            </ul>
-                                        @endif
+                                        </select>
+                                    </div>
                                     @endif
+                                    <div class="row mb-2">
+                                        <div class="col-6">
+                                            <label class="aiz-checkbox">
+                                                <input type="checkbox" name="remember">
+                                                <span class=opacity-60>Recuerdame</span>
+                                                <span class="aiz-square-check"></span>
+                                            </label>
+                                        </div>
+                                        <div class="col-6 text-right">
+                                            <a href="{{ route('password.request') }}"
+                                                class="text-reset opacity-60 fs-14">Olvidó su contraseña</a>
+                                        </div>
+                                    </div>
+
+                                    <div class="mb-2">
+                                        <button type="submit" class="btn btn-primary btn-block fw-600">Entrar</button>
+                                        @if (get_setting('registra_clientes') == 'on')
+                                        <a href="{{ route('user.registration') }}"
+                                            class="btn btn-primary btn-block fw-600">Registrarse ahora</a>
+                                        @endif
+                                    </div>
+
+                                </form>
+                                @if (get_setting('registra_clientes') == 'on')
+
+                                @if (get_setting('login_google') == 'on' || get_setting('login_facebook') == 'on' ||
+                                get_setting('login_apple') == 'on')
+                                <div class="separator mb-3">
+                                    <span class="bg-white px-3 opacity-60">O inicia sesion</span>
                                 </div>
+                                <ul class="list-inline social colored text-center mb-3" id="botones">
+                                    @if (get_setting('login_facebook') == 'on')
+                                    <li class="list-inline-item">
+                                        <a href="{{ route('social.login', ['provider' => 'facebook']) }}" id="facebook"
+                                            class="facebook">
+                                            <i class="lab la-facebook-f"></i>
+                                        </a>
+                                    </li>
+                                    @endif
+                                    @if (get_setting('login_google') == 'on')
+                                    <li class="list-inline-item">
+                                        <a href="{{ route('social.login', ['provider' => 'google']) }}" id="google"
+                                            class="google">
+                                            <i class="lab la-google"></i>
+                                        </a>
+                                    </li>
+                                    @endif
+                                    @if (get_setting('login_apple') == 'on')
+                                    <li class="list-inline-item">
+                                        <a href="{{ route('social.login', ['provider' => 'apple']) }}" id="apple">
+                                            <svg style="color: rgb(0, 0, 0);" xmlns="http://www.w3.org/2000/svg"
+                                                width="24" height="24" fill="currentColor" class="bi bi-apple"
+                                                viewBox="0 0 16 16">
+                                                <path
+                                                    d="M11.182.008C11.148-.03 9.923.023 8.857 1.18c-1.066 1.156-.902 2.482-.878 2.516.024.034 1.52.087 2.475-1.258.955-1.345.762-2.391.728-2.43zm3.314 11.733c-.048-.096-2.325-1.234-2.113-3.422.212-2.189 1.675-2.789 1.698-2.854.023-.065-.597-.79-1.254-1.157a3.692 3.692 0 0 0-1.563-.434c-.108-.003-.483-.095-1.254.116-.508.139-1.653.589-1.968.607-.316.018-1.256-.522-2.267-.665-.647-.125-1.333.131-1.824.328-.49.196-1.422.754-2.074 2.237-.652 1.482-.311 3.83-.067 4.56.244.729.625 1.924 1.273 2.796.576.984 1.34 1.667 1.659 1.899.319.232 1.219.386 1.843.067.502-.308 1.408-.485 1.766-.472.357.013 1.061.154 1.782.539.571.197 1.111.115 1.652-.105.541-.221 1.324-1.059 2.238-2.758.347-.79.505-1.217.473-1.282z"
+                                                    fill="#000000"></path>
+                                                <path
+                                                    d="M11.182.008C11.148-.03 9.923.023 8.857 1.18c-1.066 1.156-.902 2.482-.878 2.516.024.034 1.52.087 2.475-1.258.955-1.345.762-2.391.728-2.43zm3.314 11.733c-.048-.096-2.325-1.234-2.113-3.422.212-2.189 1.675-2.789 1.698-2.854.023-.065-.597-.79-1.254-1.157a3.692 3.692 0 0 0-1.563-.434c-.108-.003-.483-.095-1.254.116-.508.139-1.653.589-1.968.607-.316.018-1.256-.522-2.267-.665-.647-.125-1.333.131-1.824.328-.49.196-1.422.754-2.074 2.237-.652 1.482-.311 3.83-.067 4.56.244.729.625 1.924 1.273 2.796.576.984 1.34 1.667 1.659 1.899.319.232 1.219.386 1.843.067.502-.308 1.408-.485 1.766-.472.357.013 1.061.154 1.782.539.571.197 1.111.115 1.652-.105.541-.221 1.324-1.059 2.238-2.758.347-.79.505-1.217.473-1.282z"
+                                                    fill="#000000"></path>
+                                            </svg>
+                                        </a>
+                                    </li>
+                                    @endif
+                                </ul>
+                                @endif
+                                @endif
                             </div>
                         </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </section>
-@endsection
-
-@section('modal')
-    <div class="modal fade" id="modalIdentificacion">
-        <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h6 class="modal-title fw-600">Verificar Usuario</h6>
-                    <button type="button" class="close" data-dismiss="modal">
-                        <span aria-hidden="true"></span>
-                    </button>
-                </div>
-                <div class="modal-body">
-                    <div class="p-3">
-
-                        @csrf
-
-                        <div class="form-group">
-
-                            <input type="text" class="form-control h-auto form-control-lg" placeholder="Identificacion"
-                                name="identificacion" minlength="10" maxlength="13" pattern="[0-9]+"
-                                onkeypress="return validarNumero(event)" id="identificacion" autocomplete="off" required>
-                        </div>
-
-                        <div class="mb-2">
-
-                            <button type="submit" class="btn btn-primary btn-block fw-600"
-                                id="buttonVerificar">Verificar</button>
-                        </div>
-
-
-                        <form class="form-default" role="form" action="{{ route('verificar.identificacion') }}"
-                            id="datosred" method="POST">
-                            @csrf
-
-                            <div class="form-group">
-                                <input type="hidden" value=" " name="identificacion" id="cedula">
-                                <input type="hidden" value=" @if (isset($user)) {{ $user->email }} @endif"
-                                    name="email" id="email">
-                                <input type="hidden"
-                                    value=" @if ($identificador == 1) {{ $user->name }} @endif" name="nombre"
-                                    id="nombre">
-
-                            </div>
-
-                        </form>
                     </div>
                 </div>
             </div>
         </div>
     </div>
+</section>
+@endsection
+
+@section('modal')
+<div class="modal fade" id="modalIdentificacion">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h6 class="modal-title fw-600">Verificar Usuario</h6>
+                <button type="button" class="close" data-dismiss="modal">
+                    <span aria-hidden="true"></span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="p-3">
+
+                    @csrf
+
+                    <div class="form-group">
+
+                        <input type="text" class="form-control h-auto form-control-lg" placeholder="Identificacion"
+                            name="identificacion" minlength="10" maxlength="13" pattern="[0-9]+"
+                            onkeypress="return validarNumero(event)" id="identificacion" autocomplete="off" required>
+                    </div>
+
+                    <div class="mb-2">
+
+                        <button type="submit" class="btn btn-primary btn-block fw-600"
+                            id="buttonVerificar">Verificar</button>
+                    </div>
+
+
+                    <form class="form-default" role="form" action="{{ route('verificar.identificacion') }}"
+                        id="datosred" method="POST">
+                        @csrf
+
+                        <div class="form-group">
+                            <input type="hidden" value=" " name="identificacion" id="cedula">
+                            <input type="hidden" value=" @if (isset($user)) {{ $user->email }} @endif" name="email"
+                                id="email">
+                            <input type="hidden" value=" @if ($identificador == 1) {{ $user->name }} @endif"
+                                name="nombre" id="nombre">
+
+                        </div>
+
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
 @endsection
 
 @section('script')
-    <script type="text/javascript">
-        $(document).ready(function() {
+<script type="text/javascript">
+    $(document).ready(function() {
             @if (isset($user))
                 $('#modalIdentificacion').modal()
             @endif
@@ -318,5 +333,5 @@
             });
 
         }
-    </script>
+</script>
 @endsection

@@ -163,7 +163,8 @@ return [
         Illuminate\View\ViewServiceProvider::class,
         Laracasts\Flash\FlashServiceProvider::class,
         Barryvdh\DomPDF\ServiceProvider::class,
-        Laravel\Socialite\SocialiteServiceProvider::class,
+        //Laravel\Socialite\SocialiteServiceProvider::class,
+        \SocialiteProviders\Manager\ServiceProvider::class,
         /*
          * Package Service Providers...
          */

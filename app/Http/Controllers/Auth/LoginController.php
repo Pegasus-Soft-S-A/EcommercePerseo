@@ -3,18 +3,13 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
-use App\Mail\Registro;
 use App\Models\Carrito;
-use App\Models\Clientes;
-use App\Models\ParametrosEmpresa;
 use App\Models\ProductoTarifa;
-use App\Models\Secuenciales;
 use App\Models\User;
-use Socialite;
+use Laravel\Socialite\Facades\Socialite;
 use Illuminate\Foundation\Auth\AuthenticatesUsers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Session;
 
 class LoginController extends Controller
@@ -49,20 +44,37 @@ class LoginController extends Controller
         return Socialite::driver($provider)->redirect();
     }
 
-    public function handleProviderCallback($provider, Request $request)
+    public function handleAppleCallback()
+    {
+        $provider = 'apple'; // Establecer el proveedor específico si es necesario
+        return $this->authenticateUser($provider);
+    }
+
+    public function handleProviderCallback($provider)
+    {
+        return $this->authenticateUser($provider);
+    }
+
+    private function authenticateUser($provider)
     {
         try {
-            //guarda los datos devueltos por la autenticacion de face o google
-            $user = Socialite::driver($provider)->stateless()->user();
+            // Guarda los datos devueltos por la autenticación de face, google, apple
+            // Si el proveedor es 'apple', configura el cliente HTTP con 'verify' => false
+            $socialiteDriver = Socialite::driver($provider)
+                ->setHttpClient(new \GuzzleHttp\Client(['verify' => false]));
+
+            $user = $socialiteDriver->user();
         } catch (\Exception $e) {
+            dd($e->getMessage());
             flash("Algo salio mal, intentelo nuevamente.")->error();
-            if (session('ruta') == 'login') {
+            if (Session::get('ruta') == 'login') {
                 return redirect()->route('user.login');
             } else {
                 return redirect()->route('cart');
             }
         }
-        //verifica si existe cliente
+
+        // Verifica si existe cliente y autenticar o redirigir según corresponda
         $existingUser = User::where('email_login', $user->email)->first();
         $clienteid = "";
         $tarifaid = "";
@@ -73,16 +85,15 @@ class LoginController extends Controller
             $clienteid = $existingUser->clientesid;
             $tarifaid = $existingUser->tarifasid;
         } else {
-            // flash("No se encontro el correo.")->error();
-            if (session('ruta') == 'login') {
+            if (Session::get('ruta') == 'login') {
                 return redirect()->route('user.login')->with(['user' => $user]);
             } else {
                 return redirect()->route('cart')->with(['user' => $user]);
             }
         }
 
-        //Actualizar si es que existe productos en el carrito
-        $carrito = Carrito::where('usuario_temporalid', $request->session()->get('usuario_temporalid'))->get();
+        // Actualizar el carrito si existe
+        $carrito = Carrito::where('usuario_temporalid', Session::get('usuario_temporalid'))->get();
         if (count($carrito) > 0) {
             foreach ($carrito as $key => $carro) {
                 $precioProducto = ProductoTarifa::select('productos_tarifas.precio', 'productos_tarifas.precioiva')
@@ -92,7 +103,7 @@ class LoginController extends Controller
                     ->where('productos_tarifas.tarifasid', '=', $tarifaid)
                     ->first();
 
-                Carrito::where('usuario_temporalid', $request->session()->get('usuario_temporalid'))
+                Carrito::where('usuario_temporalid', Session::get('usuario_temporalid'))
                     ->where('productosid', $carro->productosid)
                     ->where('medidasid', $carro->medidasid)
                     ->update(
@@ -104,7 +115,7 @@ class LoginController extends Controller
                     );
             }
 
-            Carrito::where('usuario_temporalid', $request->session()->get('usuario_temporalid'))
+            Carrito::where('usuario_temporalid', Session::get('usuario_temporalid'))
                 ->update(
                     [
                         'clientesid' => $clienteid,
@@ -114,12 +125,15 @@ class LoginController extends Controller
 
             Session::forget('usuario_temporalid');
         }
+
+        // Redirigir al usuario al final del proceso
         if (session('ruta') == 'login') {
             return redirect()->route('dashboard');
         } else {
             return redirect()->route('cart');
         }
     }
+
 
     public function logout(Request $request)
     {
