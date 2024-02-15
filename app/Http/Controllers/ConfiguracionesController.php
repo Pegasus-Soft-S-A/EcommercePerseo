@@ -18,7 +18,7 @@ use App\Models\Tarifas;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
-use Illuminate\Support\Facades\Session;
+use Illuminate\Support\Facades\Cache;
 
 class ConfiguracionesController extends Controller
 {
@@ -75,7 +75,12 @@ class ConfiguracionesController extends Controller
 
         Integraciones::where('tipo', 5)
             ->update(['parametros' => json_encode($settings)]);
-        Session::forget('settings');
+
+        // Antes de guardar en caché, convierte $settings a un arreglo asociativo
+        $settingsArray = (array) $settings;
+        // Ahora guarda $settingsArray en la caché
+        Cache::forever('settings', $settingsArray);
+
         flash("Actualizado Correctamente")->success();
         return back();
     }
@@ -108,7 +113,10 @@ class ConfiguracionesController extends Controller
 
         Integraciones::where('tipo', 5)
             ->update(['parametros' => json_encode($settings)]);
-        Session::forget('settings');
+        // Antes de guardar en caché, convierte $settings a un arreglo asociativo
+        $settingsArray = (array) $settings;
+        // Ahora guarda $settingsArray en la caché
+        Cache::forever('settings', $settingsArray);
         flash("Actualizado Correctamente")->success();
         return back();
     }
@@ -140,7 +148,10 @@ class ConfiguracionesController extends Controller
 
         Integraciones::where('tipo', 5)
             ->update(['parametros' => json_encode($settings)]);
-        Session::forget('settings');
+        // Antes de guardar en caché, convierte $settings a un arreglo asociativo
+        $settingsArray = (array) $settings;
+        // Ahora guarda $settingsArray en la caché
+        Cache::forever('settings', $settingsArray);
         flash("Actualizado Correctamente")->success();
         return back();
     }
@@ -169,7 +180,10 @@ class ConfiguracionesController extends Controller
         }
         Integraciones::where('tipo', 5)
             ->update(['parametros' => json_encode($settings)]);
-        Session::forget('settings');
+        // Antes de guardar en caché, convierte $settings a un arreglo asociativo
+        $settingsArray = (array) $settings;
+        // Ahora guarda $settingsArray en la caché
+        Cache::forever('settings', $settingsArray);
         flash("Actualizado Correctamente")->success();
         return back();
     }
@@ -223,7 +237,10 @@ class ConfiguracionesController extends Controller
 
         Integraciones::where('tipo', 5)
             ->update(['parametros' => json_encode($settings)]);
-        Session::forget('settings');
+        // Antes de guardar en caché, convierte $settings a un arreglo asociativo
+        $settingsArray = (array) $settings;
+        // Ahora guarda $settingsArray en la caché
+        Cache::forever('settings', $settingsArray);
         flash("Actualizado Correctamente")->success();
         return back();
     }
@@ -260,7 +277,10 @@ class ConfiguracionesController extends Controller
         Integraciones::where('tipo', 5)
             ->update(['parametros' => json_encode($settings)]);
 
-        Session::forget('settings');
+        // Antes de guardar en caché, convierte $settings a un arreglo asociativo
+        $settingsArray = (array) $settings;
+        // Ahora guarda $settingsArray en la caché
+        Cache::forever('settings', $settingsArray);
         flash("Actualizado Correctamente")->success();
         return back();
     }
@@ -285,7 +305,10 @@ class ConfiguracionesController extends Controller
 
         Integraciones::where('tipo', 5)
             ->update(['parametros' => json_encode($settings)]);
-        Session::forget('settings');
+        // Antes de guardar en caché, convierte $settings a un arreglo asociativo
+        $settingsArray = (array) $settings;
+        // Ahora guarda $settingsArray en la caché
+        Cache::forever('settings', $settingsArray);
         flash("Actualizado Correctamente")->success();
         return back();
     }
@@ -310,7 +333,10 @@ class ConfiguracionesController extends Controller
 
         Integraciones::where('tipo', 5)
             ->update(['parametros' => json_encode($settings)]);
-        Session::forget('settings');
+        // Antes de guardar en caché, convierte $settings a un arreglo asociativo
+        $settingsArray = (array) $settings;
+        // Ahora guarda $settingsArray en la caché
+        Cache::forever('settings', $settingsArray);
         flash('Guardado Correctamente')->success();
         return back();
     }
