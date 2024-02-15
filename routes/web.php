@@ -14,7 +14,7 @@ use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Request;
 
-$base = Request::segment(2);
+$base = Request::segment(1);
 if ($base) {
     Route::group(['prefix' => $base, 'middleware' => ['conexion:' . $base]], function () {
 
