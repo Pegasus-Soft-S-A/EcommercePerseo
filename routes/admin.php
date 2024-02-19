@@ -5,8 +5,6 @@ use App\Http\Controllers\ConfiguracionesController;
 use App\Http\Controllers\FacturaController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\PedidoController;
-use App\Models\ParametrosEmpresa;
-use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -23,7 +21,6 @@ if ($base) {
     });
 
     Route::group(['prefix' =>  $base . '/' . 'admin/', 'middleware' => ['admin', 'conexion:' . $base]], function () {
-
 
         //Rutas configuraciones
         Route::get('/configuracion-general', [ConfiguracionesController::class, 'general'])->name('configuracion.general');

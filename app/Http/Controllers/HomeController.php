@@ -468,17 +468,23 @@ class HomeController extends Controller
         $cliente->tarifasid = get_setting('tarifa_clientes');
         $cliente->clientes_gruposid = get_setting('grupo_clientes');
 
-        if ($cliente->save()) {
-            if (session('usuario_temporalid') != null) {
-                Carrito::where('usuario_temporalid', session('usuario_temporalid'))
-                    ->update([
-                        'clientesid' => $cliente->clientesid,
-                        'usuario_temporalid' => null
-                    ]);
+        try {
+            if ($cliente->save()) {
+                if (session('usuario_temporalid') != null) {
+                    Carrito::where('usuario_temporalid', session('usuario_temporalid'))
+                        ->update([
+                            'clientesid' => $cliente->clientesid,
+                            'usuario_temporalid' => null
+                        ]);
 
-                Session::forget('usuario_temporalid');
+                    Session::forget('usuario_temporalid');
+                }
+
+                return $cliente;
             }
-            return $cliente;
+        } catch (\Exception $e) {
+            flash('Ocurrió un error vuelva a intentarlo')->warning();
+            //dd($e->getMessage());
         }
     }
 
@@ -505,12 +511,14 @@ class HomeController extends Controller
             session(['almacenesid' => $almacenes->almacenesid]);
         }
         $parametros = ParametrosEmpresa::first();
+        try {
+            Mail::mailer('smtp')->to($user->email_login)->send(new Registro($array), [], function ($message) use ($parametros) {
+                $message->from($parametros->smtp_from, 'Tienda Ecommerce');
+            });
+        } catch (\Exception $e) {
+            flash('Error enviando email')->error();
+        }
 
-        Mail::mailer('smtp')->to($user->email_login)->send(new Registro($array), [], function ($message) use ($parametros) {
-            $message->from($parametros->smtp_from, 'Tienda Ecommerce');
-        });
-
-        flash('Registrado Correctamente')->success();
         return redirect()->route("home");
     }
 
@@ -690,7 +698,7 @@ class HomeController extends Controller
     {
         $fecha_inicio = Carbon::now()->subDays(30); // 30 días hacia atrás desde la fecha actual
         // Subconsulta para las ventas
-        $ventasSubquery = DB::table('facturas_detalles as fd')
+        $ventasSubquery = DB::connection('empresa')->table('facturas_detalles as fd')
             ->select('fd.productosid', DB::raw('SUM(CASE WHEN (f.sri_documentoscodigo = \'04\') THEN (fd.cantidad * -1) ELSE fd.cantidad END) AS total_cantidad'))
             ->join('facturas as f', 'fd.facturasid', '=', 'f.facturasid')
             ->where('f.emision', '>=', Carbon::now()->subDays(30))
@@ -702,18 +710,18 @@ class HomeController extends Controller
 
         if (Auth::check()) {
             if ($parametros->tipopresentacionprecios == 1) {
-                $products = DB::table('productos as p')
+                $products = DB::connection('empresa')->table('productos as p')
                     ->select('p.productosid', 'p.productocodigo', 'p.descripcion', 'pt.precioiva as precio2', 'pi.imagen', 'p.parametros_json', 'ventas.total_cantidad', DB::raw("(SELECT tarifain.precioiva FROM productos_tarifas as tarifain WHERE tarifain.tarifasid = " . auth()->user()->tarifasid . " and tarifain.productosid = p.productosid AND tarifain.medidasid = p.unidadinterna) AS precio"));
             } else {
-                $products = DB::table('productos as p')
+                $products = DB::connection('empresa')->table('productos as p')
                     ->select('p.productosid', 'p.productocodigo', 'p.descripcion', 'pt.precio as precio2', 'pi.imagen', 'p.parametros_json', 'ventas.total_cantidad', DB::raw("(SELECT tarifain.precio FROM productos_tarifas as tarifain WHERE tarifain.tarifasid = " . auth()->user()->tarifasid . " and tarifain.productosid = p.productosid AND tarifain.medidasid = p.unidadinterna) AS precio"));
             }
         } else {
             if ($parametros->tipopresentacionprecios == 1) {
-                $products = DB::table('productos as p')
+                $products = DB::connection('empresa')->table('productos as p')
                     ->select('p.productosid', 'p.productocodigo', 'p.descripcion', 'pi.imagen', 'p.parametros_json', 'ventas.total_cantidad', DB::raw("(SELECT tarifain.precioiva FROM productos_tarifas as tarifain WHERE tarifain.tarifasid = " . get_setting('tarifa_productos') . " and tarifain.productosid = p.productosid AND tarifain.medidasid = p.unidadinterna) AS precio"));
             } else {
-                $products = DB::table('productos as p')
+                $products = DB::connection('empresa')->table('productos as p')
                     ->select('p.productosid', 'p.productocodigo', 'p.descripcion', 'pi.imagen', 'p.parametros_json', 'ventas.total_cantidad', DB::raw("(SELECT tarifain.precio FROM productos_tarifas as tarifain WHERE tarifain.tarifasid = " . get_setting('tarifa_productos') . " and tarifain.productosid = p.productosid AND tarifain.medidasid = p.unidadinterna) AS precio"));
             }
         }

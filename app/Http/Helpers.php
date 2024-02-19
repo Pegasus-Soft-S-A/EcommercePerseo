@@ -376,10 +376,9 @@ if (!function_exists('decrypt_openssl')) {
 function sis_cliente()
 {
     $base = Request::segment(1);
-    $base_encriptada = strtr($base, '._-', '+/=');
-    $base_desencriptada = decrypt_openssl($base_encriptada, "Perseo1232*");
-    if ($base_desencriptada) {
-        $sis_cliente = DB::connection('sistema')->table('sis_empresas')->where('nombredb', $base_desencriptada)->first()->sis_clientesid;
+
+    if ($base) {
+        $sis_cliente = DB::connection('sistema')->table('sis_empresas')->where('sis_empresasid', $base)->first()->sis_clientesid;
     } else {
         $sis_cliente = 1;
     }
@@ -389,10 +388,21 @@ function sis_cliente()
 function sis_licencia()
 {
     $base = Request::segment(1);
-    $base_encriptada = strtr($base, '._-', '+/=');
-    $base_desencriptada = decrypt_openssl($base_encriptada, "Perseo1232*");
-    if ($base_desencriptada) {
-        $sis_licencia = DB::connection('sistema')->table('sis_empresas')->where('nombredb', $base_desencriptada)->first()->sis_licenciasid;
+
+    if ($base) {
+        $sis_licencia = DB::connection('sistema')->table('sis_empresas')->where('sis_empresasid', $base)->first()->sis_licenciasid;
+    } else {
+        $sis_licencia = 1;
+    }
+    return $sis_licencia;
+}
+
+function sis_empresa()
+{
+    $base = Request::segment(1);
+
+    if ($base) {
+        $sis_licencia = DB::connection('sistema')->table('sis_empresas')->where('sis_empresasid', $base)->first()->sis_empresasid;
     } else {
         $sis_licencia = 1;
     }

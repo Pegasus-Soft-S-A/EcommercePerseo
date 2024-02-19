@@ -76,11 +76,11 @@ if ($base) {
         //comentarios
         Route::resource('/reviews',  ComentariosController::class);
 
-
         Route::get('invoice/{order_id}', [HistorialPedidosController::class, 'descargar_pedido'])->name('invoice.download');
         Route::get('/orders/destroy/{id}', [PedidoController::class, 'destroy'])->name('orders.destroy');
 
         Route::group(['middleware' => ['auth']], function () {
+
             //Cliente
             Route::get('/dashboard', [HomeController::class, 'dashboard'])->name('dashboard');
             Route::resource('purchase_history', HistorialPedidosController::class);
@@ -99,10 +99,7 @@ if ($base) {
             Route::post('/checkout/payment_select', [CheckoutController::class, 'store_delivery_info'])->name('checkout.store_delivery_info');
             Route::post('/checkout/payment', [CheckoutController::class, 'checkout'])->name('payment.checkout');
             Route::get('/checkout/order-confirmed/{ordenid}/{clientesid}', [CheckoutController::class, 'order_confirmed'])->name('order_confirmed');
-
             Route::post('/checkout/factura', [CheckoutController::class, 'crear_factura'])->name('factura.crear');
-
-
 
             /* WISHLISTS */
             Route::resource('wishlist', WishlistController::class);

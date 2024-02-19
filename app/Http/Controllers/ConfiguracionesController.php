@@ -101,14 +101,8 @@ class ConfiguracionesController extends Controller
             $settings->header_logo = base64_encode(file_get_contents($request->file('header_logo')));
             $imagen = $request->header_logo;
             $base = $request->segment(1);
-            $base_encriptada = strtr($base, '._-', '+/=');
-            $base_desencriptada = decrypt_openssl($base_encriptada, "Perseo1232*");
 
-            if ($base_desencriptada) {
-                move_uploaded_file($imagen->getRealPath(), public_path("assets/img/") . 'logo-' . sis_cliente() . '.png');
-            } else {
-                move_uploaded_file($imagen->getRealPath(), public_path("assets/img/") . 'logo.png');
-            }
+            move_uploaded_file($imagen->getRealPath(), public_path("assets/img/") . 'logo-' . $base . '.png');
         }
 
         Integraciones::where('tipo', 5)
