@@ -39,8 +39,13 @@ class LoginController extends Controller
      *
      * @return void
      */
-    public function redirectToProvider($provider)
+    public function redirectToProvider($provider, Request $request)
     {
+        $base = $request->segment(1);
+        $dynamicRedirectUrl = env('APP_URL') . "/{$base}/social-login/{$provider}/callback";
+
+        // Configurar la URL de redirección dinámicamente
+        config(["services.$provider.redirect" => $dynamicRedirectUrl]);
         return Socialite::driver($provider)->redirect();
     }
 

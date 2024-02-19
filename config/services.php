@@ -33,19 +33,19 @@ return [
     'google' => [
         'client_id'     => env('GOOGLE_CLIENT_ID'),
         'client_secret' => env('GOOGLE_CLIENT_SECRET'),
-        'redirect'      => env('APP_URL') . '/social-login/google/callback',
+        //'redirect'      => env('APP_URL') . '/social-login/google/callback',
     ],
 
     'facebook' => [
         'client_id'     => env('FACEBOOK_CLIENT_ID'),
         'client_secret' => env('FACEBOOK_CLIENT_SECRET'),
-        'redirect'      => env('APP_URL') . '/social-login/facebook/callback',
+        // 'redirect'      => env('APP_URL') . '/social-login/facebook/callback',
     ],
 
     'apple' => [
         'client_id'     => env('APPLE_CLIENT_ID'),
         'client_secret' => env('APPLE_CLIENT_SECRET'),
-        'redirect'      => env('APP_URL') . '/social-login/apple/callback',
+        //'redirect'      => env('APP_URL') . '/social-login/apple/callback',
     ],
 
 ];

@@ -30,6 +30,7 @@ if ($base) {
         Route::post('/password/reset/email/submit', [HomeController::class, 'reset_password_with_code'])->name('password.update');
         Route::get('/social-login/redirect/{provider}', [LoginController::class, 'redirectToProvider'])->name('social.login');
         Route::get('/social-login/{provider}/callback', [LoginController::class, 'handleProviderCallback'])->name('social.callback');
+        Route::post('/social-login/apple/callback', [LoginController::class, 'handleAppleCallback'])->name('social.callback');
         Route::get('/logout', [LoginController::class, 'logout']);
 
         /* Validacion  */
