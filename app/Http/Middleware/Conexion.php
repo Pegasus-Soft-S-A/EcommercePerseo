@@ -4,9 +4,11 @@ namespace App\Http\Middleware;
 
 use Closure;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Session;
 
 class Conexion
 {
@@ -41,6 +43,10 @@ class Conexion
         if ($base != $lastEmpresaId) {
             //Invalidar la caché de la empresa anterior
             Cache::forget("settings");
+
+            Auth::guard('admin')->logout();
+            Auth::logout();
+            Session::forget('almacenesid');
 
             // Actualiza el ID de la empresa en la sesión para futuras referencias
             session(['last_empresa_id' => $base]);

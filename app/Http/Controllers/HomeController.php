@@ -510,11 +510,9 @@ class HomeController extends Controller
 
             session(['almacenesid' => $almacenes->almacenesid]);
         }
-        $parametros = ParametrosEmpresa::first();
+
         try {
-            Mail::mailer('smtp')->to($user->email_login)->send(new Registro($array), [], function ($message) use ($parametros) {
-                $message->from($parametros->smtp_from, 'Tienda Ecommerce');
-            });
+            Mail::mailer('smtp')->to($user->email_login)->send(new Registro($array));
         } catch (\Exception $e) {
             flash('Error enviando email')->error();
         }
@@ -1242,11 +1240,7 @@ class HomeController extends Controller
             $array['razonsocial'] = $cliente->razonsocial;
 
             try {
-                $parametros = ParametrosEmpresa::first();
-
-                Mail::mailer('smtp')->to($cliente->email_login)->send(new Registro($array), [], function ($message) use ($parametros) {
-                    $message->from($parametros->smtp_from, 'Tienda Ecommerce');
-                });
+                Mail::mailer('smtp')->to($cliente->email_login)->send(new Registro($array));
             } catch (\Exception $e) {
                 flash('Error enviando email')->error();
             }
@@ -1259,7 +1253,7 @@ class HomeController extends Controller
 
         $carrito = Carrito::where('usuario_temporalid', $request->session()->get('usuario_temporalid'))->get();
         if (count($carrito) > 0) {
-            //dd(auth()->user());
+
             foreach ($carrito as $key => $carro) {
                 $precioProducto = ProductoTarifa::select('productos_tarifas.precio', 'productos_tarifas.precioiva')
                     ->join('productos', 'productos.productosid', '=', 'productos_tarifas.productosid')

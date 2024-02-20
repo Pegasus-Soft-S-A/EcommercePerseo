@@ -30,6 +30,15 @@
                     </div>
                     <div class="form-group row">
                         <div class="col-md-3">
+                            <label class="col-from-label">Correo Remitente</label>
+                        </div>
+                        <div class="col-md-9">
+                            <input type="text" class="form-control" name="smtp_from"
+                                value="{{  $parametros->smtp_from }}" autocomplete="off" placeholder="Correo Remitente">
+                        </div>
+                    </div>
+                    <div class="form-group row">
+                        <div class="col-md-3">
                             <label class="col-from-label">Usuario</label>
                         </div>
                         <div class="col-md-9">

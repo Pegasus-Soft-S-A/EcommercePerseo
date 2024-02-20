@@ -147,7 +147,6 @@ class LoginController extends Controller
             Auth::guard('admin')->logout();
         } else {
             $redirect_route = 'home';
-            //Carrito::where('clientesid', auth()->user()->clientesid)->delete();
             Auth::logout();
             Session::forget('almacenesid');
         }

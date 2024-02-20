@@ -154,11 +154,7 @@ class CheckoutController extends Controller
             $emails = array_diff($emails, array("", 0, null));
 
             try {
-                $parametros = ParametrosEmpresa::first();
-
-                Mail::mailer('smtp')->to($emails)->send(new Pedido($array), [], function ($message) use ($parametros) {
-                    $message->from($parametros->smtp_from, 'Tienda Ecommerce');
-                });
+                Mail::mailer('smtp')->to($emails)->send(new Pedido($array));
             } catch (\Exception $e) {
             }
 
@@ -442,11 +438,7 @@ class CheckoutController extends Controller
         $emails = array_diff($emails, array("", 0, null));
 
         try {
-            $parametros = ParametrosEmpresa::first();
-
-            Mail::mailer('smtp')->to($emails)->send(new Factura($array), [], function ($message) use ($parametros) {
-                $message->from($parametros->smtp_from, 'Tienda Ecommerce');
-            });
+            Mail::mailer('smtp')->to($emails)->send(new Factura($array));
         } catch (\Exception $e) {
         }
 

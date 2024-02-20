@@ -365,6 +365,7 @@ class ConfiguracionesController extends Controller
         $parametros->smtp_usuario = $request->smtp_usuario;
         $parametros->smtp_clave = $request->smtp_clave;
         $parametros->smtp_puerto = $request->smtp_puerto;
+        $parametros->smtp_from = $request->smtp_from;
         $parametros->save();
 
         flash('Guardado Correctamente')->success();
@@ -376,16 +377,15 @@ class ConfiguracionesController extends Controller
 
         configurar_smtp();
 
-        $array['view'] = 'emails.test';
-        $array['subject'] = "SMTP Test";
-        $array['from'] = Config::get('mail.from.address');
-        $array['content'] = "Esto es un email de prueba.";
-        try {
-            $parametros = ParametrosEmpresa::first();
+        $array = [
+            'view' => 'emails.test',
+            'subject' => "SMTP Test",
+            'from' => Config::get('mail.from.address'),
+            'content' => "Esto es un email de prueba.",
+        ];
 
-            Mail::mailer('smtp')->to($request->email)->send(new Test($array), [], function ($message) use ($parametros) {
-                $message->from($parametros->smtp_from, 'Tienda Ecommerce');
-            });
+        try {
+            Mail::mailer('smtp')->to($request->email)->send(new Test($array));
         } catch (\Exception $e) {
             flash('Error enviando email, revise los parametros')->error();
             return back();

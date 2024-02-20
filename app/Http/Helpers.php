@@ -413,12 +413,18 @@ function configurar_smtp()
 {
     $parametros = ParametrosEmpresa::first();
 
-    Config::set('mail.mailers.smtp', [
-        'transport' => 'smtp',
-        'host' => $parametros->smtp_servidor,
-        'port' =>  $parametros->smtp_puerto,
-        'encryption' => $parametros->smtp_puerto == 465 ? 'ssl' : 'tls',
-        'username' => $parametros->smtp_usuario,
-        'password' =>  $parametros->smtp_clave,
+    Config::set([
+        'mail.mailers.smtp' => [
+            'transport' => 'smtp',
+            'host' => $parametros->smtp_servidor,
+            'port' => $parametros->smtp_puerto,
+            'encryption' => $parametros->smtp_puerto == 465 ? 'ssl' : 'tls',
+            'username' => $parametros->smtp_usuario,
+            'password' => $parametros->smtp_clave,
+        ],
+        'mail.from' => [
+            'address' => $parametros->smtp_from,
+            'name' => 'Tienda Ecommerce'
+        ],
     ]);
 }

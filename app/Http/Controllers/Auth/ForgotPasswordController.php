@@ -44,11 +44,8 @@ class ForgotPasswordController extends Controller
                     $array['from'] = Config::get('mail.from.address');
                     $array['subject'] = 'Reestablecer Contraseña';
                     $array['codigo'] = $user->codigo_verificacion;
-                    $parametros = ParametrosEmpresa::first();
 
-                    Mail::mailer('smtp')->to($user->email_login)->send(new ReestablecerContrasena($array), [], function ($message) use ($parametros) {
-                        $message->from($parametros->smtp_from, 'Tienda Ecommerce');
-                    });
+                    Mail::mailer('smtp')->to($user->email_login)->send(new ReestablecerContrasena($array));
 
                     flash('Se ha enviado un codigo de verificacion a su correo electronico')->success();
                     return view('auth.passwords.reset');
