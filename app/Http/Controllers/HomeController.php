@@ -27,7 +27,6 @@ use Illuminate\Auth\Events\PasswordReset;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Cache;
 use GuzzleHttp\Client;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Mail;
@@ -58,6 +57,10 @@ class HomeController extends Controller
         }
 
         if ($cliente != null && $cliente->clave != "") {
+            if ($cliente->estado == 0) {
+                flash("Usuario Inactivo")->warning();
+                return back();
+            }
             $clave = json_decode($cliente->clave);
             $clave_cliente = encrypt_openssl($request->clave, "Perseo1232*");
             if ($clave->ecommerce == $clave_cliente) {
@@ -141,286 +144,144 @@ class HomeController extends Controller
             ->where('sis_licenciasid', sis_licencia())
             ->first();
 
-        if ($usuario != null) {
-
-            $clave_usuario = encrypt_openssl($request->contrasena, "Perseo1232*" . sis_cliente());
-            if ($usuario->contrasena == $clave_usuario) {
-                $integraciones = Integraciones::where('tipo', 5)->first();
-                if ($integraciones == null) {
-                    $integracion = new Integraciones();
-                    $integracion->descripcion = "Tienda Ecommerce";
-                    $integracion->tipo = 5;
-                    $parametros = [];
-                    $topcategorias = [];
-                    $productos = [
-                        'rating' => 0,
-                        'destacado' => 0,
-                        'oferta' => 0,
-                        'inicio_oferta' => null,
-                        'fin_oferta' => null
-                    ];
-                    $lineas = [
-                        'destacado' => 0
-                    ];
-                    $categorias = [
-                        'destacado' => 0
-                    ];
-                    $subcategorias = [
-                        'destacado' => 0
-                    ];
-                    $subgrupos = [
-                        'destacado' => 0
-                    ];
-                    $parametros = [
-                        'header_stikcy' => null,
-                        'header_logo' => null,
-                        'footer_logo' => null,
-                        'acerca_nosotros' => null,
-                        'direccion_contacto' => null,
-                        'telefono_contacto' => null,
-                        'email_contacto' => null,
-                        'show_social_links' => null,
-                        'facebook_link' => null,
-                        'twitter_link' => null,
-                        'instagram_link' => null,
-                        'nombre_sitio' => null,
-                        'lema_sitio' => null,
-                        'icono_sitio' => null,
-                        'color_sitio' => '#377dff',
-                        'color_hover_sitio' => '#377dff',
-                        'header_script' => null,
-                        'footer_script' => null,
-                        'inicio' => null,
-                        'terminos_condiciones' => null,
-                        'politica_devoluciones' => null,
-                        'politica_soporte' => null,
-                        'politica_privacidad' => null,
-                        'home_slider' => null,
-                        'top10_categories' => $topcategorias,
-                        'facebook_pixel' => null,
-                        'FACEBOOK_PIXEL_ID' => null,
-                        'google_analytics' => null,
-                        'TRACKING_ID' => null,
-                        'grupo_productos' => 'categorias',
-                        'facturador' => 1,
-                        'productos_existencias' => 'todos',
-                        'tarifa_productos' => 1,
-                        'cantidad_maxima' => '10',
-                        'registra_clientes' => null,
-                        'grupo_clientes' => null,
-                        'tarifa_clientes' => null,
-                        'email_pedidos' => null,
-                        'imagen_defecto' => base64_encode(file_get_contents(static_asset('assets/img/placeholder.jpg'))),
-                        'login_google' => null,
-                        'login_facebook' => null,
-                        'login_apple' => null,
-                        "pago_pedido" => '1',
-                        "pago_plux" => '0',
-                        "email_pago_plux" => null,
-                        "pedido_pago_plux" => "pedido",
-                        "productos_disponibles" => 'En Stock',
-                        "productos_no_disponibles" => 'Bajo Pedido',
-                        "ver_codigo" => 0,
-                        "tipo_tienda" => 'publico',
-                        "controla_stock" => 0
-
-                    ];
-                    $integracion->parametros = json_encode($parametros);
-                    $integracion->save();
-
-                    DB::connection('empresa')->table('productos')->update(array(
-                        'parametros_json' => json_encode($productos)
-                    ));
-
-                    DB::connection('empresa')->table('productos_lineas')->update(array(
-                        'parametros_json' => json_encode($lineas)
-                    ));
-
-                    DB::connection('empresa')->table('productos_categorias')->update(array(
-                        'parametros_json' => json_encode($categorias)
-                    ));
-
-                    DB::connection('empresa')->table('productos_subcategoria')->update(array(
-                        'parametros_json' => json_encode($subcategorias)
-                    ));
-
-                    DB::connection('empresa')->table('productos_subgrupo')->update(array(
-                        'parametros_json' => json_encode($subgrupos)
-                    ));
-                } else {
-                    if ($integraciones->parametros == null) {
-                        $parametros = [];
-                        $topcategorias = [];
-                        $productos = [
-                            'rating' => 0,
-                            'destacado' => 0,
-                            'oferta' => 0,
-                            'inicio_oferta' => null,
-                            'fin_oferta' => null
-                        ];
-                        $lineas = [
-                            'destacado' => 0
-                        ];
-                        $categorias = [
-                            'destacado' => 0
-                        ];
-                        $subcategorias = [
-                            'destacado' => 0
-                        ];
-                        $subgrupos = [
-                            'destacado' => 0
-                        ];
-                        $parametros = [
-                            'header_stikcy' => null,
-                            'header_logo' => null,
-                            'footer_logo' => null,
-                            'acerca_nosotros' => null,
-                            'direccion_contacto' => null,
-                            'telefono_contacto' => null,
-                            'email_contacto' => null,
-                            'show_social_links' => null,
-                            'facebook_link' => null,
-                            'twitter_link' => null,
-                            'instagram_link' => null,
-                            'nombre_sitio' => null,
-                            'lema_sitio' => null,
-                            'icono_sitio' => null,
-                            'color_sitio' => '#377dff',
-                            'color_hover_sitio' => '#377dff',
-                            'header_script' => null,
-                            'footer_script' => null,
-                            'inicio' => null,
-                            'terminos_condiciones' => null,
-                            'politica_devoluciones' => null,
-                            'politica_soporte' => null,
-                            'politica_privacidad' => null,
-                            'home_slider' => null,
-                            'top10_categories' => $topcategorias,
-                            'facebook_pixel' => null,
-                            'FACEBOOK_PIXEL_ID' => null,
-                            'google_analytics' => null,
-                            'TRACKING_ID' => null,
-                            'grupo_productos' => 'categorias',
-                            'facturador' => 1,
-                            'productos_existencias' => 'todos',
-                            'tarifa_productos' => 1,
-                            'cantidad_maxima' => '10',
-                            'registra_clientes' => null,
-                            'grupo_clientes' => null,
-                            'tarifa_clientes' => null,
-                            'email_pedidos' => null,
-                            'imagen_defecto' => base64_encode(file_get_contents(static_asset('assets/img/placeholder.jpg'))),
-                            'login_google' => null,
-                            'login_facebook' => null,
-                            'login_apple' => null,
-                            "pago_pedido" => '1',
-                            "pago_plux" => '0',
-                            "email_pago_plux" => null,
-                            "pedido_pago_plux" => "pedido",
-                            "productos_disponibles" => 'En Stock',
-                            "productos_no_disponibles" => 'Bajo Pedido',
-                            "ver_codigo" => 0,
-                            "tipo_tienda" => 'publico',
-                            "controla_stock" => 0,
-
-                        ];
-                        $integraciones->parametros = json_encode($parametros);
-                        $integraciones->save();
-
-                        DB::connection('empresa')->table('productos')->update(array(
-                            'parametros_json' => json_encode($productos)
-                        ));
-
-                        DB::connection('empresa')->table('productos_lineas')->update(array(
-                            'parametros_json' => json_encode($lineas)
-                        ));
-
-                        DB::connection('empresa')->table('productos_categorias')->update(array(
-                            'parametros_json' => json_encode($categorias)
-                        ));
-
-                        DB::connection('empresa')->table('productos_subcategoria')->update(array(
-                            'parametros_json' => json_encode($subcategorias)
-                        ));
-
-                        DB::connection('empresa')->table('productos_subgrupo')->update(array(
-                            'parametros_json' => json_encode($subgrupos)
-                        ));
-                    } else {
-                        $parametrosExisten = json_decode($integraciones->parametros, true);
-                        $topcategorias = [];
-                        $parametros = [
-                            'header_stikcy' => null,
-                            'header_logo' => null,
-                            'footer_logo' => null,
-                            'acerca_nosotros' => null,
-                            'direccion_contacto' => null,
-                            'telefono_contacto' => null,
-                            'email_contacto' => null,
-                            'show_social_links' => null,
-                            'facebook_link' => null,
-                            'twitter_link' => null,
-                            'instagram_link' => null,
-                            'nombre_sitio' => null,
-                            'lema_sitio' => null,
-                            'icono_sitio' => null,
-                            'color_sitio' => '#377dff',
-                            'color_hover_sitio' => '#377dff',
-                            'header_script' => null,
-                            'footer_script' => null,
-                            'inicio' => null,
-                            'terminos_condiciones' => null,
-                            'politica_devoluciones' => null,
-                            'politica_soporte' => null,
-                            'politica_privacidad' => null,
-                            'home_slider' => null,
-                            'top10_categories' => $topcategorias,
-                            'facebook_pixel' => null,
-                            'FACEBOOK_PIXEL_ID' => null,
-                            'google_analytics' => null,
-                            'TRACKING_ID' => null,
-                            'grupo_productos' => 'categorias',
-                            'facturador' => 1,
-                            'productos_existencias' => 'todos',
-                            'tarifa_productos' => 1,
-                            'cantidad_maxima' => '10',
-                            'registra_clientes' => null,
-                            'grupo_clientes' => null,
-                            'tarifa_clientes' => null,
-                            'email_pedidos' => null,
-                            'imagen_defecto' => base64_encode(file_get_contents(static_asset('assets/img/placeholder.jpg'))),
-                            'login_google' => null,
-                            'login_facebook' => null,
-                            'login_apple' => null,
-                            "pago_pedido" => '1',
-                            "pago_plux" => '0',
-                            "email_pago_plux" => null,
-                            "pedido_pago_plux" => "pedido",
-                            "productos_disponibles" => 'En Stock',
-                            "productos_no_disponibles" => 'Bajo Pedido',
-                            "ver_codigo" => 0,
-                            "tipo_tienda" => 'publico',
-                            "controla_stock" => 0,
-                        ];
-
-                        foreach ($parametros as $clave => $valor) {
-                            if (!array_key_exists($clave, $parametrosExisten)) {
-                                $parametrosExisten[$clave] = $valor;
-                            }
-                        }
-
-                        // reasignamos $parametros
-                        $parametros = $parametrosExisten;
-                        $integraciones->parametros = json_encode($parametros);
-                        $integraciones->save();
-                    }
-                }
-                Auth::guard('admin')->login($usuario, false);
-                return redirect()->route('admin.dashboard');
-            }
+        if (!$usuario) {
+            flash("Identificacion o contraseña incorrecta")->error();
+            return back();
         }
-        flash("Identificacion o contraseña incorrecta")->error();
-        return back();
+
+        $clave_usuario = encrypt_openssl($request->contrasena, "Perseo1232*" . sis_cliente());
+        if ($usuario->contrasena !== $clave_usuario) {
+            flash("Identificacion o contraseña incorrecta")->error();
+            return back();
+        }
+
+        $integraciones = Integraciones::where('tipo', 5)->first();
+
+        if (!$integraciones) {
+            $integracion = new Integraciones();
+            $integracion->descripcion = "Tienda Ecommerce";
+            $integracion->tipo = 5;
+            $integracion->parametros = json_encode($this->getDefaultParameters());
+            $integracion->save();
+
+            $this->updateDatabaseParameters();
+        } elseif ($integraciones->parametros === null) {
+            $integraciones->parametros = json_encode($this->getDefaultParameters());
+            $integraciones->save();
+
+            $this->updateDatabaseParameters();
+        } else {
+            $parametrosExisten = json_decode($integraciones->parametros, true);
+            $parametros = $this->getDefaultParameters();
+
+            foreach ($parametros as $clave => $valor) {
+                if (!array_key_exists($clave, $parametrosExisten)) {
+                    $parametrosExisten[$clave] = $valor;
+                }
+            }
+
+            $integraciones->parametros = json_encode($parametrosExisten);
+            $integraciones->save();
+        }
+
+        Auth::guard('admin')->login($usuario, false);
+        return redirect()->route('admin.dashboard');
+    }
+
+    private function getDefaultParameters()
+    {
+        return [
+            'header_stikcy' => null,
+            'header_logo' => null,
+            'footer_logo' => null,
+            'acerca_nosotros' => null,
+            'direccion_contacto' => null,
+            'telefono_contacto' => null,
+            'email_contacto' => null,
+            'show_social_links' => null,
+            'facebook_link' => null,
+            'twitter_link' => null,
+            'instagram_link' => null,
+            'nombre_sitio' => null,
+            'lema_sitio' => null,
+            'icono_sitio' => null,
+            'color_sitio' => '#377dff',
+            'color_hover_sitio' => '#377dff',
+            'header_script' => null,
+            'footer_script' => null,
+            'inicio' => null,
+            'terminos_condiciones' => null,
+            'politica_devoluciones' => null,
+            'politica_soporte' => null,
+            'politica_privacidad' => null,
+            'home_slider' => null,
+            'top10_categories' => [],
+            'facebook_pixel' => null,
+            'FACEBOOK_PIXEL_ID' => null,
+            'google_analytics' => null,
+            'TRACKING_ID' => null,
+            'grupo_productos' => 'categorias',
+            'facturador' => 1,
+            'productos_existencias' => 'todos',
+            'tarifa_productos' => 1,
+            'cantidad_maxima' => '10',
+            'registra_clientes' => null,
+            'grupo_clientes' => null,
+            'tarifa_clientes' => null,
+            'email_pedidos' => null,
+            'imagen_defecto' => base64_encode(file_get_contents(static_asset('assets/img/placeholder.jpg'))),
+            'login_google' => null,
+            'login_facebook' => null,
+            'login_apple' => null,
+            "pago_pedido" => '1',
+            "pago_plux" => '0',
+            "email_pago_plux" => null,
+            "pedido_pago_plux" => "pedido",
+            "productos_disponibles" => 'En Stock',
+            "productos_no_disponibles" => 'Bajo Pedido',
+            "ver_codigo" => 0,
+            "tipo_tienda" => 'publico',
+            "controla_stock" => 0,
+            "vista_categorias" => 1
+        ];
+    }
+
+    private function updateDatabaseParameters()
+    {
+        // Los arreglos $productos, $lineas, $categorias, $subcategorias y $subgrupos deberían definirse aquí, si es que cambian entre llamadas.
+        // De lo contrario, considera definirlos en getDefaultParameters o en otra función si se reutilizan.
+        $productos = [
+            'rating' => 0,
+            'destacado' => 0,
+            'oferta' => 0,
+            'inicio_oferta' => null,
+            'fin_oferta' => null
+        ];
+        $lineas = [
+            'destacado' => 0
+        ];
+        $categorias = [
+            'destacado' => 0
+        ];
+        $subcategorias = [
+            'destacado' => 0
+        ];
+        $subgrupos = [
+            'destacado' => 0
+        ];
+        // ... otros arreglos// Actualización en masa para no repetir código y reducir conexiones a la base de datos
+        $tablas = [
+            'productos' => $productos,
+            'productos_lineas' => $lineas,
+            'productos_categorias' => $categorias,
+            'productos_subcategoria' => $subcategorias,
+            'productos_subgrupo' => $subgrupos,
+            // ... otros mapeos de tabla a arreglo de parámetros
+        ];
+
+        foreach ($tablas as $tabla => $parametros) {
+            DB::connection('empresa')->table($tabla)->update(['parametros_json' => json_encode($parametros)]);
+        }
     }
 
     public function registration(Request $request)
@@ -1342,25 +1203,15 @@ class HomeController extends Controller
 
     public function almacenes(Request $request)
     {
-
-
         if ($request->ajax()) {
-
-
             $data = MovimientosInventariosAlmacenes::select('movinventarios_almacenes.almacenesid', 'almacenes.descripcion')->selectRaw('(movinventarios_almacenes.existencias)/' . $request->factorValor . ' AS existencias')->where('productosid', $request->producto)->where('disponibleventa', 1)->join('almacenes', 'almacenes.almacenesid', 'movinventarios_almacenes.almacenesid')->orderBy('almacenesid', 'asc')->get();
-
-
             return DataTables::of($data)
-
                 ->editColumn('existencias', function ($almacen) {
-
                     $existencias = number_format(round($almacen->existencias, 2), 2);
-
                     return $existencias;
                 })
                 ->editColumn('action', function ($almacen) {
                     $nombreAlmacen = Almacenes::select('descripcion')->where('almacenesid', $almacen->almacenesid)->first();
-
                     if ($almacen->almacenesid == session('almacenesid')) {
                         return '<input checked class="form-control mx-auto" type="radio" id="' . $almacen->almacenesid . '" nombrealmacen="' . $nombreAlmacen->descripcion . '" name="cambioalmacen" value="' . number_format(round($almacen->existencias, 2), 2) . '" style="height:25px; width:25px;" onclick="cambiarAlmacen(event)"  ></input>';
                     } else {
@@ -1370,5 +1221,16 @@ class HomeController extends Controller
                 ->rawColumns(['action', 'existencias'])
                 ->make(true);
         }
+    }
+
+    public function profile_delete($id)
+    {
+        $clientes = Clientes::findOrFail($id);
+        $clientes->estado = 0;
+        $clientes->save();
+
+        Auth::logout();
+        Session::forget('almacenesid');
+        return redirect()->route('home');
     }
 }

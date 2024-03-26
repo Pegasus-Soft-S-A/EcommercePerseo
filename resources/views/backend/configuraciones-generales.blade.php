@@ -70,6 +70,20 @@
                     </div>
 
                     <div class="form-group row">
+                        <label class="col-md-3 col-from-label">Vista de grupo de productos</label>
+                        <div class="col-md-8">
+                            <select class="form-control aiz-selectpicker" name="vista_categorias" id="vista_categorias">
+                                <option value="1" @if (get_setting('vista_categorias')=='1' ) selected @endif>
+                                    Imágenes Categorías
+                                </option>
+                                <option value="2" @if (get_setting('vista_categorias')=='2' ) selected @endif>
+                                    Lista Categorías
+                                </option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-group row">
                         <label class="col-md-3 col-from-label">Facturador con el que se guardara el pedido</label>
                         <div class="col-md-8">
                             <select class="form-control aiz-selectpicker" name="facturador" id="facturador"

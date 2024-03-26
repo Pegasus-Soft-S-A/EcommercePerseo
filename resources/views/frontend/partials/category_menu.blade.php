@@ -2,7 +2,8 @@
     id="category-sidebar" @endif>
     <div class="p-3 bg-soft-primary d-none d-lg-block rounded-top all-category position-relative text-left">
         <span class="fw-600 fs-16 mr-3">{{ucfirst(get_setting('grupo_productos'))}}</span>
-        <a href="{{ route('search') }}" class="text-reset">
+        <a href="@if (get_setting('vista_categorias')==1) {{ route('categories.all') }} @else {{ route('search') }} @endif"
+            class="text-reset">
             <span class="d-none d-lg-inline-block">Ver todas</span>
         </a>
     </div>

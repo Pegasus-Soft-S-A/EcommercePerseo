@@ -82,7 +82,9 @@
                 </div>
             </div>
 
-            <div class="form-group mb-0 text-right">
+            <div class="card-footer">
+                <a href="javascript:void(0)" class="btn btn-danger text-white confirm-delete"
+                    data-href="{{route('profile_delete',  auth()->user()->clientesid)}}">Eliminar Perfil</a>
                 <button type="submit" class="btn btn-primary">Actualizar Perfil</button>
             </div>
         </form>
@@ -222,6 +224,10 @@
         </div>
     </div>
 </div>
+
+
+@include('modals.delete_modal')
+
 @endsection
 
 @section('script')

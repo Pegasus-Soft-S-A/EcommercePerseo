@@ -1,7 +1,7 @@
 @extends('frontend.layouts.app')
 
 @section('content')
-<section class="pt-4 mb-4">
+<section class="pt-4 mb-3">
     <div class="container text-center">
         <div class="row">
             <div class="col-lg-6 text-center text-lg-left">
@@ -21,32 +21,30 @@
         </div>
     </div>
 </section>
+
 <section class="mb-4">
     <div class="container">
-        @foreach (grupoProductos() as $key => $category)
-        <div class="mb-3 bg-white shadow-sm rounded">
-            <div class="p-3 border-bottom fs-16 fw-600">
-                <a href="{{ route('products.category', $category->$id) }}"
-                    class="text-reset">{{ $category->descripcion}}</a>
-            </div>
-            <div class="p-3 p-lg-4">
-                <div class="row">
-
-                    <div class="col-lg-4 col-6 text-left">
-                        <h6 class="mb-3"><a class="text-reset fw-600 fs-14" href=""></a></h6>
-                        <ul class="mb-3 list-unstyled pl-2">
-
-                            <li class="mb-2">
-                                <a class="text-reset" href=""></a>
-                            </li>
-
-                        </ul>
+        <div class="row row-cols-xxl-5 row-cols-xl-4 row-cols-lg-3 row-cols-md-3 row-cols-2">
+            @foreach (grupoProductos() as $key => $grupos)
+            <a href="{{ route('products.category', $grupos->id) }}"
+                class="bg-white border text-reset rounded-lg hov-shadow-lg d-block overflow-hidden mt-1">
+                <div class="p-2">
+                    <div class="row align-items-center no-gutters">
+                        <div class="col-4 text-center">
+                            <img src="data:image/jpg;base64,{{ base64_encode($grupos->imagen) }}"
+                                onerror="this.onerror=null;this.src='data:image/jpg;base64,{{ get_setting('imagen_defecto') }}';"
+                                class="img-fluid img lazyload h-60px">
+                        </div>
+                        <div class="col-8">
+                            <div class="text-truncat-2 pl-3 fs-12 fw-600 text-center">
+                                {{$grupos->descripcion}}
+                            </div>
+                        </div>
                     </div>
-
                 </div>
-            </div>
+            </a>
+            @endforeach
         </div>
-        @endforeach
     </div>
 </section>
 

@@ -161,7 +161,7 @@
             class="text-reset flex-grow-1 text-center py-3 border-right {{ areActiveRoutes(['home'],'bg-soft-primary')}}">
             <i class="las la-home la-2x"></i>
         </a>
-        <a href="{{ route('search') }}"
+        <a href="@if (get_setting('vista_categorias')==1) {{ route('categories.all') }} @else {{ route('search') }} @endif"
             class="text-reset flex-grow-1 text-center py-3 border-right {{ areActiveRoutes(['search'],'bg-soft-primary')}}">
             <span class="d-inline-block position-relative px-2">
                 <i class="las la-list-ul la-2x"></i>

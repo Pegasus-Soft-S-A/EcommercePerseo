@@ -60,6 +60,7 @@ class ConfiguracionesController extends Controller
         $settings->ver_codigo = $request->get('ver_codigo');
         $settings->tipo_tienda = $request->get('tipo_tienda');
         $settings->controla_stock = $request->get('controla_stock');
+        $settings->vista_categorias = $request->get('vista_categorias');
 
         $tags = array();
         if ($request->get('email_pedidos')[0] != null) {

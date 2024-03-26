@@ -91,6 +91,7 @@ if ($base) {
             Route::post('/factura_history/details', [HistorialFacturasController::class, 'factura_history_details'])->name('factura_history.details');
 
             Route::get('/profile', [HomeController::class, 'profile'])->name('profile');
+            Route::get('/profile/delete/{id}', [HomeController::class, 'profile_delete'])->name('profile_delete');
             Route::post('/customer/update-profile', [HomeController::class, 'update_profile'])->name('profile.update');
 
             //Checkout Routes

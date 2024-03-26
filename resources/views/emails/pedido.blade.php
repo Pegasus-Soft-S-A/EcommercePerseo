@@ -301,7 +301,7 @@
                                                     $base = Request::segment(1);
                                                     @endphp
                                                     @if ($base)
-                                                    <img src="{{ $message->embed(public_path() . '/assets/img/logo-'.sis_cliente().'.png') }}"
+                                                    <img src="{{ $message->embed(public_path() . '/assets/img/logo-'.$base.'.png') }}"
                                                         alt="" width="500" height="100"
                                                         style="display: block; margin-left: auto; margin-right: auto;">
                                                     @endif

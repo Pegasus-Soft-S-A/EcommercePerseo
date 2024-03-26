@@ -103,7 +103,7 @@
 
 </div>
 
-{{-- Best Selling  --}}
+{{-- Best Selling --}}
 <div id="section_best_selling">
 </div>
 
@@ -118,7 +118,8 @@
                         <span class="border-bottom border-primary border-width-2 pb-3 d-inline-block">Top 10
                             {{ucfirst(get_setting('grupo_productos'))}}</span>
                     </h3>
-                    <a href="{{ route('search') }}" class="ml-auto mr-0 btn btn-primary btn-sm shadow-md">Ver
+                    <a href="@if (get_setting('vista_categorias')==1) {{ route('categories.all') }} @else {{ route('search') }} @endif"
+                        class="ml-auto mr-0 btn btn-primary btn-sm shadow-md">Ver
                         todas las
                         {{ucfirst(get_setting('grupo_productos'))}}</a>
                 </div>

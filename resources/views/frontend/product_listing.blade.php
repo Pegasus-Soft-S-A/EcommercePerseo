@@ -28,12 +28,14 @@
                                         @foreach (grupoProductos() as $category)
                                         <li class="mb-2 ml-2">
                                             <a class="text-reset fs-14"
-                                                href="{{ route('products.category', $category->id) }}">{{ $category->descripcion }}</a>
+                                                href="{{ route('products.category', $category->id) }}">{{
+                                                $category->descripcion }}</a>
                                         </li>
                                         @endforeach
                                         @else
                                         <li class="mb-2">
-                                            <a class="text-reset fs-14 fw-600" href="{{route('search')}}">
+                                            <a class="text-reset fs-14 fw-600"
+                                                href="@if (get_setting('vista_categorias')==1) {{ route('categories.all') }} @else {{ route('search') }} @endif">
                                                 <i class="las la-angle-left"></i>
                                                 Todas las {{ucfirst(get_setting('grupo_productos'))}}
                                             </a>
@@ -41,7 +43,7 @@
                                         <li class="mb-2">
                                             <label class="text-reset fs-14 fw-600" href="#">
                                                 <i class="las la-angle-down"></i>
-                                                {{  $descripcion }}
+                                                {{ $descripcion }}
                                             </label>
                                         </li>
                                         @endif
@@ -70,7 +72,7 @@
                                             <div class="col-6 text-right">
                                                 <span class="range-slider-value value-high fs-14 fw-600 opacity-70  "
                                                     @if (isset($max_price)) data-range-value-high="{{ $max_price }}"
-                                                    @elseif("{{$preciomaximo  > 0 }}")
+                                                    @elseif("{{$preciomaximo> 0 }}")
                                                     data-range-value-high="{{$preciomaximo + 0.99 }}" @else
                                                     data-range-value-high="0" @endif
                                                     id="input-slider-range-value-high"></span>
@@ -90,12 +92,14 @@
                         </li>
                         @if(!isset($id))
                         <li class="breadcrumb-item fw-600  text-dark">
-                            <a class="text-reset" href="{{ route('search') }}">Todas las
+                            <a class="text-reset" href=@if (get_setting('vista_categorias')==1) {{
+                                route('categories.all') }} @else {{ route('search') }} @endif">Todas las
                                 {{ucfirst(get_setting('grupo_productos'))}}</a>
                         </li>
                         @else
                         <li class="breadcrumb-item opacity-50">
-                            <a class="text-reset" href="{{ route('search') }}">Todas las
+                            <a class="text-reset" href=@if (get_setting('vista_categorias')==1) {{
+                                route('categories.all') }} @else {{ route('search') }} @endif">Todas las
                                 {{ucfirst(get_setting('grupo_productos'))}}</a>
                         </li>
                         @endif
