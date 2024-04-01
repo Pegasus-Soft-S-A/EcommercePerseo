@@ -126,8 +126,8 @@
                                     @endphp
 
                                     <td>
-                                        <a href="{{ route('product', $pedidoDetail->productosid) }}"
-                                            target="_blank">{{ $producto->descripcion }}</a>
+                                        <a href="{{ route('product', $pedidoDetail->productosid) }}" target="_blank">{{
+                                            $producto->descripcion }}</a>
                                     </td>
 
                                     <td>{{ $medida->descripcion }}</td>
@@ -182,7 +182,7 @@
                             </tr>
 
                             <tr>
-                                <td class="w-50 fw-600">IVA 12%</td>
+                                <td class="w-50 fw-600">IVA</td>
                                 <td class="text-right">
                                     <span class="strong-600">$
                                         {{ number_format(round($factura->total_iva, 2), 2) }}</span>

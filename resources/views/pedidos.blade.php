@@ -178,7 +178,7 @@
 										<td style="text-align:right">
 											@foreach ($detalle as $key => $detalle)
 											<?php
-                                                        $precioCantidad =  $precioCantidad + $detalle->precio * $detalle->cantidaddigitada; 
+                                                        $precioCantidad =  $precioCantidad + $detalle->precio * $detalle->cantidaddigitada;
                                                 ?>
 											@endforeach
 											$ {{ number_format(round($precioCantidad,2),2) }}
@@ -196,7 +196,7 @@
 											{{ number_format(round($order->subtotalneto,2),2) }}</td>
 									</tr>
 									<tr>
-										<th class="gry-color text-left">IVA 12%</th>
+										<th class="gry-color text-left">IVA</th>
 										<td style="text-align:right">$ {{ number_format(round($order->total_iva,2),2) }}
 										</td>
 									</tr>

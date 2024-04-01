@@ -191,7 +191,7 @@
                             </tr>
 
                             <tr>
-                                <td class="w-50 fw-600">IVA 12%</td>
+                                <td class="w-50 fw-600">IVA</td>
                                 <td class="text-right">
                                     <span class="strong-600">$ {{number_format(round(($pedido->total_iva),2),2)}}</span>
                                 </td>
