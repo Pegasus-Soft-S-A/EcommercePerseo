@@ -66,69 +66,15 @@ $almacenes = App\Models\Almacenes::where('disponibleventa', 1)->get();
                             <div class="col-auto fw-600">Eliminar</div>
                         </div>
                         <ul class="list-group list-group-flush">
-                            @php
-                            $parametros = \App\Models\ParametrosEmpresa::first();
-                            $subtotal = 0;
-                            $descuento = 0;
-                            $subtotalneto = 0;
-                            $subtotalnetoconiva = 0;
-                            $totalIVA = 0;
-                            $total = 0;
-                            @endphp
+
                             @foreach ($carts as $key => $cartItem)
-                            @php
-                            $product = \App\Models\Producto::where('productosid', $cartItem['productosid'])->first();
-                            $subtotal = $subtotal + $cartItem['precio'] * $cartItem['cantidad'];
-                            $descuento = $descuento + $cartItem['precio'] * $cartItem['cantidad'] *
-                            ($cartItem['descuento'] / 100);
-                            $subtotalneto = $subtotalneto + $cartItem['precio'] * $cartItem['cantidad'] -
-                            $cartItem['precio'] * $cartItem['cantidad'] * ($cartItem['descuento'] / 100);
-                            if ($cartItem['iva'] > 0) {
-                            $subtotalnetoconiva = $subtotalnetoconiva + $cartItem['precio'] * $cartItem['cantidad'] -
-                            $cartItem['precio'] * $cartItem['cantidad'] * ($cartItem['descuento'] / 100);
-                            $totalIVA = round($subtotalnetoconiva * ($cartItem['iva'] / 100), $parametros->fdv_iva);
-                            }
-                            $total = round($subtotalneto + $totalIVA, $parametros->fdc_totales);
-                            $imagenProducto = \App\Models\ProductoImagen::select('productos_imagenes.imagen')
-                            ->where('productos_imagenes.productosid', '=', $cartItem['productosid'])
-                            ->where('productos_imagenes.medidasid', '=', $cartItem['medidasid'])
-                            ->where('productos_imagenes.ecommerce_visible', '=', '1')
-                            ->first();
-                            $preciovisible = \App\Models\ParametrosEmpresa::first()->tipopresentacionprecios == 1 ?
-                            $cartItem['precioiva'] : $cartItem['precio'];
 
-                            if (get_setting('controla_stock') == 1 || get_setting('controla_stock') == 0) {
-                            $cantidad = App\Models\Producto::select('existenciastotales')
-                            ->where('productosid', $cartItem->productosid)
-                            ->first();
-                            $cantidadProductos = $cantidad->existenciastotales;
-                            } elseif (get_setting('controla_stock') == 2) {
-                            $cantidad = App\Models\MovimientosInventariosAlmacenes::where('productosid',
-                            $cartItem->productosid)
-                            ->where('almacenesid', $cartItem->almacenesid)
-                            ->first();
-                            if ($cantidad) {
-                            $cantidadProductos = $cantidad->existencias;
-                            } else {
-                            $cantidadProductos = 0;
-                            }
-                            } else {
-                            $cantidadProductos = 0;
-                            }
-
-                            if ($cartItem->cantidadfactor != 0) {
-                            $cantidadFinal = $cantidadProductos / $cartItem->cantidadfactor;
-                            } else {
-                            $cantidadFinal = $cantidadProductos;
-                            }
-
-                            @endphp
                             <li class="list-group-item px-0 px-lg-3">
                                 <div class="row gutters-5">
                                     <div class="col-lg-5 d-flex">
                                         <span class="mr-2 ml-0">
-                                            @if ($imagenProducto)
-                                            <img src="data:image/jpg;base64,{{ base64_encode($imagenProducto->imagen) }}"
+                                            @if ($cartItem['imagen_producto'])
+                                            <img src="data:image/jpg;base64,{{ base64_encode($cartItem['imagen_producto']) }}"
                                                 data-src="" class="img-fit lazyload size-60px rounded" alt="">
                                             @else
                                             <img src="data:image/jpg;base64,{{ get_setting('imagen_defecto') }}"
@@ -139,13 +85,14 @@ $almacenes = App\Models\Almacenes::where('disponibleventa', 1)->get();
                                             @if ($cartItem['iva'] > 0)
                                             <span class="text-danger">*</span>
                                             @endif
-                                            {{ $product->descripcion }}
+                                            {{ $cartItem['producto_descripcion'] }}
                                         </span>
                                     </div>
 
                                     <div class="col-lg col-4 order-1 order-lg-0 my-3 my-lg-0">
                                         <span class="opacity-60 fs-12 d-block d-lg-none">Precio</span>
-                                        <span class="fw-600 fs-16">${{ number_format(round($preciovisible, 2), 2)
+                                        <span class="fw-600 fs-16">${{ number_format(round($cartItem['precio_visible'],
+                                            2), 2)
                                             }}</span>
                                     </div>
 
@@ -164,8 +111,9 @@ $almacenes = App\Models\Almacenes::where('disponibleventa', 1)->get();
                                                 placeholder="1" value="{{ round($cartItem['cantidad'], 2) }}" min="1"
                                                 @if (get_setting('controla_stock')==0)
                                                 max="{{ get_setting('cantidad_maxima') }}" @else
-                                                max="{{ round($cantidadFinal, 2) }}" @endif autocomplete="off"
-                                                onchange="updateQuantity({{ $cartItem['ecommerce_carritosid'] }}, {{ round($cantidadFinal, 2) }}, this)">
+                                                max="{{ round($cartItem['cantidad_final'], 2) }}" @endif
+                                                autocomplete="off"
+                                                onchange="updateQuantity({{ $cartItem['ecommerce_carritosid'] }}, {{ round($cartItem['cantidad_final'], 2) }}, this)">
                                             <button class="btn col-auto btn-icon btn-sm btn-circle btn-light"
                                                 type="button" data-type="plus"
                                                 data-field="quantity[{{ $cartItem['ecommerce_carritosid'] }}]">
@@ -178,7 +126,8 @@ $almacenes = App\Models\Almacenes::where('disponibleventa', 1)->get();
                                     <div class="col-lg col-4 order-3 order-lg-0 my-3 my-lg-0 text-center">
                                         <span class="opacity-60 fs-12 d-block d-lg-none ">Total</span>
                                         <span class="fw-600 fs-16 text-primary ">$
-                                            {{ number_format(round($preciovisible * $cartItem['cantidad'], 2), 2)
+                                            {{ number_format(round($cartItem['precio_visible'] * $cartItem['cantidad'],
+                                            2), 2)
                                             }}</span>
                                     </div>
 
@@ -192,7 +141,7 @@ $almacenes = App\Models\Almacenes::where('disponibleventa', 1)->get();
                                         @if ((get_setting('controla_stock') == 0 && !Auth::check()) ||
                                         (get_setting('controla_stock') == 2 && !Auth::check()))
                                         <div class="col-sm-10 ">
-                                            @if ($cantidadFinal > 0)
+                                            @if ($cartItem['cantidad_final'] > 0)
                                             <div
                                                 class="d-inline-block rounded px-2 border-success mt-1 text-success border">
                                                 <span>{{ get_setting('productos_disponibles') }}</span>
@@ -206,7 +155,7 @@ $almacenes = App\Models\Almacenes::where('disponibleventa', 1)->get();
                                         </div>
                                         @elseif(get_setting('controla_stock') == 0 && Auth::check())
                                         <div class="col-sm-10 ">
-                                            @if ($cantidadFinal > 0)
+                                            @if ($cartItem['cantidad_final'] > 0)
                                             <div
                                                 class="d-inline-block rounded px-2 border-success mt-1 text-success border">
                                                 <span>{{ get_setting('productos_disponibles') }}</span>
@@ -220,11 +169,8 @@ $almacenes = App\Models\Almacenes::where('disponibleventa', 1)->get();
                                         </div>
                                         @else
                                         <div class="">
-
                                             <span class="fw-600 fs-16 text-primary" id="cantidad">{{
-                                                round($cantidadFinal, 2) }}</span>
-
-
+                                                round($cartItem['cantidad_final'], 2) }}</span>
                                         </div>
                                         @endif
                                     </div>
@@ -246,26 +192,23 @@ $almacenes = App\Models\Almacenes::where('disponibleventa', 1)->get();
 
                     <div class="px-3 py-2  border-top d-flex justify-content-between">
                         <span class="opacity-60 fs-15">Subtotal</span>
-                        <span class="fw-600 fs-17">${{ number_format(round($subtotal, $parametros->fdv_subtotales),
-                            $parametros->fdv_subtotales) }}</span>
+                        <span class="fw-600 fs-17">${{ $totales['subtotal'] }}</span>
                     </div>
                     <div class="px-3 py-2  border-top d-flex justify-content-between">
                         <span class="opacity-60 fs-15">Descuento</span>
-                        <span class="fw-600 fs-17">${{ number_format(round($descuento, 2), 2) }}</span>
+                        <span class="fw-600 fs-17">${{ $totales['descuento'] }}</span>
                     </div>
                     <div class="px-3 py-2  border-top d-flex justify-content-between">
                         <span class="opacity-60 fs-15">Subtotal Neto</span>
-                        <span class="fw-600 fs-17">${{ number_format(round($subtotalneto, $parametros->fdv_subtotales),
-                            $parametros->fdv_subtotales) }}</span>
+                        <span class="fw-600 fs-17">${{ $totales['subtotalNeto'] }}</span>
                     </div>
                     <div class="px-3 py-2  border-top d-flex justify-content-between">
                         <span class="opacity-60 fs-15">IVA</span>
-                        <span class="fw-600 fs-17">${{ number_format(round($totalIVA, $parametros->fdv_iva),
-                            $parametros->fdv_iva) }}</span>
+                        <span class="fw-600 fs-17">${{ $totales['totalIVA'] }}</span>
                     </div>
                     <div class="px-3 py-2  border-top d-flex justify-content-between">
                         <span class="opacity-60 fs-15">Total</span>
-                        <span class="fw-600 fs-17">${{ number_format(round($total, 2), 2) }}</span>
+                        <span class="fw-600 fs-17">${{ $totales['total'] }}</span>
                     </div>
 
                     <div class="row align-items-center">

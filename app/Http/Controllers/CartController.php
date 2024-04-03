@@ -3,7 +3,6 @@
 namespace App\Http\Controllers;
 
 use App\Models\Carrito;
-use App\Models\Categorias;
 use App\Models\MovimientosInventariosAlmacenes;
 use App\Models\ParametrosEmpresa;
 use App\Models\Producto;
@@ -17,16 +16,128 @@ class CartController extends Controller
 {
     public function index(Request $request)
     {
+        $carts = $this->getCarts($request);
+        $parametros = ParametrosEmpresa::first();
+
+        foreach ($carts as &$cartItem) {
+            $product = Producto::where('productosid', $cartItem['productosid'])->first();
+            $cartItem['producto_descripcion'] = $product->descripcion; // Asumiendo que $product es un objeto
+            $cartItem['imagen_producto'] = $this->getImagenProducto($cartItem);
+            $cartItem['precio_visible'] = $this->getPrecioVisible($cartItem, $parametros);
+            $cartItem['cantidad_final'] = $this->getCantidadFinal($cartItem);
+            // Agrega cualquier otro campo que necesites calcular y mostrar
+        }
+        // Calcula los totales
+        $totales = $this->calcularTotales($carts, $parametros);
+        // Retorna la vista con los carritos y los totales ya calculados
+        return view('frontend.view_cart', compact('carts', 'totales'));
+    }
+
+    protected function getCarts(Request $request)
+    {
         if (auth()->user() != null) {
             $clientesid = Auth::user()->clientesid;
-            $carts = Carrito::where('clientesid', $clientesid)->get();
+            return Carrito::where('clientesid', $clientesid)->get();
         } else {
             $usuario_temporalid = $request->session()->get('usuario_temporalid');
-            $carts = Carrito::where('usuario_temporalid', $usuario_temporalid)->get();
+            return Carrito::where('usuario_temporalid', $usuario_temporalid)->get();
         }
-       
-       
-        return view('frontend.view_cart', compact('carts'));
+    }
+
+    protected function getImagenProducto($cartItem)
+    {
+        $imagenProducto = ProductoImagen::select('productos_imagenes.imagen')
+            ->where('productos_imagenes.productosid', '=', $cartItem['productosid'])
+            ->where('productos_imagenes.medidasid', '=', $cartItem['medidasid'])
+            ->where('productos_imagenes.ecommerce_visible', '=', '1')
+            ->first();
+
+        return $imagenProducto->imagen ?? null;
+    }
+
+    protected function getPrecioVisible($cartItem, $parametros)
+    {
+        $preciovisible = $parametros->tipopresentacionprecios == 1 ?
+            $cartItem['precioiva'] : $cartItem['precio'];
+
+        return $preciovisible;
+    }
+
+    protected function getCantidadFinal($cartItem)
+    {
+        if (get_setting('controla_stock') == 1 || get_setting('controla_stock') == 0) {
+            $cantidad = Producto::select('existenciastotales')
+                ->where('productosid', $cartItem->productosid)
+                ->first();
+            $cantidadProductos = $cantidad->existenciastotales;
+        } elseif (get_setting('controla_stock') == 2) {
+            $cantidad = MovimientosInventariosAlmacenes::where(
+                'productosid',
+                $cartItem->productosid
+            )
+                ->where('almacenesid', $cartItem->almacenesid)
+                ->first();
+            $cantidadProductos = $cantidad->existencias;
+        } else {
+            $cantidadProductos = 0;
+        }
+
+        if ($cartItem->cantidadfactor != 0) {
+            $cantidadFinal = $cantidadProductos / $cartItem->cantidadfactor;
+        } else {
+            $cantidadFinal = $cantidadProductos;
+        }
+
+        return $cantidadFinal;
+    }
+
+    protected function calcularTotales($carts, $parametros)
+    {
+        $totales = [
+            'subtotal' => 0,
+            'descuento' => 0,
+            'subtotalNeto' => 0,
+            'subtotalNetoConIva' => 0,
+            'subtotalNetoSinIva' => 0,
+            'totalIVA' => 0,
+            'total' => 0,
+        ];
+
+        foreach ($carts as $cartItem) {
+            $precioTotalItem = $cartItem['precio'] * $cartItem['cantidad'];
+            $descuentoTotalItem = $precioTotalItem * ($cartItem['descuento'] / 100);
+            $subtotalNetoItem = $precioTotalItem - $descuentoTotalItem;
+
+            $totales['subtotal'] += $precioTotalItem;
+            $totales['descuento'] += $descuentoTotalItem;
+            $totales['subtotalNeto'] += $subtotalNetoItem;
+
+            // Aquí calculamos el IVA para el artículo individual
+            $IVAItem = $subtotalNetoItem * ($cartItem['iva'] / 100);
+
+            // Acumulamos el IVA para cada producto en el carrito
+            $totales['totalIVA'] += $IVAItem;
+
+            // Separamos los subtotales netos con IVA y sin IVA para una posible distinción futura
+            if ($cartItem['iva'] > 0) {
+                $totales['subtotalNetoConIva'] += $subtotalNetoItem;
+            } else {
+                $totales['subtotalNetoSinIva'] += $subtotalNetoItem;
+            }
+        }
+
+        // Ahora, fuera del bucle, calculamos el total sumando el subtotal neto y el IVA acumulado
+        $totales['total'] = $totales['subtotalNeto'] + $totales['totalIVA'];
+
+        // Aplicar redondeo y formateo al final
+        $totales['subtotal'] = number_format(round($totales['subtotal'], $parametros->fdv_subtotales), $parametros->fdv_subtotales);
+        $totales['descuento'] = number_format(round($totales['descuento'], 2), 2);
+        $totales['subtotalNeto'] = number_format(round($totales['subtotalNeto'], $parametros->fdv_subtotales), $parametros->fdv_subtotales);
+        $totales['totalIVA'] = number_format(round($totales['totalIVA'], $parametros->fdv_iva), $parametros->fdv_iva);
+        $totales['total'] = number_format(round($totales['total'], 2), 2);
+
+
+        return $totales;
     }
 
     public function showCartModal(Request $request)
@@ -82,12 +193,12 @@ class CartController extends Controller
 
     public function addToCart(Request $request)
     {
-        
+
         $product = Producto::where('productosid', $request->id)->first();
         $almacenes = DB::connection('empresa')->table('facturadores_almacenes')
-        ->where('facturadoresid', get_setting('facturador'))
-        ->where('principal', '1')
-        ->first();
+            ->where('facturadoresid', get_setting('facturador'))
+            ->where('principal', '1')
+            ->first();
         $imagenProducto =  ProductoImagen::select('productos_imagenes.imagen')
             ->where('productos_imagenes.ecommerce_visible', '=', '1')
             ->where('productos_imagenes.productosid', '=', $request->id)
@@ -121,19 +232,13 @@ class CartController extends Controller
         $data['cantidadfactor'] = $request->factor;
         $data['almacenesid'] =  get_setting('controla_stock') != 2 ? $almacenes->almacenesid :  $request->variableinicio;
 
-        switch ($product->sri_tipos_ivas_codigo) {
-            case '0':
-                $data['iva'] = 0;
-                break;
-            case '2':
-                $data['iva'] = 12;
-                break;
-            default:
-                $data['iva'] = 0;
-                break;
-        }
+        $iva = DB::connection('empresa')->table('sri_tipos_ivas')
+            ->where('sri_tipos_ivas_codigo', $product->sri_tipos_ivas_codigo)
+            ->first();
 
-        if ($request['quantity'] == null ) {
+        $data['iva'] = $iva->valor;
+
+        if ($request['quantity'] == null) {
             $data['cantidad'] = 1;
         }
 
@@ -142,8 +247,8 @@ class CartController extends Controller
             $encontroEnCarro = false;
 
             foreach ($carts as $key => $cartItem) {
-                if ($cartItem['productosid'] == $request->id && $cartItem['medidasid'] == $request->medidasid && $cartItem['almacenesid'] == $request->variableinicio ) {
-             
+                if ($cartItem['productosid'] == $request->id && $cartItem['medidasid'] == $request->medidasid && $cartItem['almacenesid'] == $request->variableinicio) {
+
                     $encontroEnCarro = true;
                     $cartItem['cantidad'] += $request['quantity'];
                     $cartItem->save();
@@ -162,15 +267,20 @@ class CartController extends Controller
     public function removeFromCart(Request $request)
     {
         Carrito::destroy($request->id);
-        if (auth()->user() != null) {
-            $clientesid = Auth::user()->clientesid;
-            $carts = Carrito::where('clientesid', $clientesid)->get();
-        } else {
-            $usuario_temporalid = $request->session()->get('usuario_temporalid');
-            $carts = Carrito::where('usuario_temporalid', $usuario_temporalid)->get();
-        }
+        $carts = $this->getCarts($request);
+        $parametros = ParametrosEmpresa::first();
 
-        return view('frontend.partials.cart_details', compact('carts'));
+        foreach ($carts as &$cartItem) {
+            $product = Producto::where('productosid', $cartItem['productosid'])->first();
+            $cartItem['producto_descripcion'] = $product->descripcion; // Asumiendo que $product es un objeto
+            $cartItem['imagen_producto'] = $this->getImagenProducto($cartItem);
+            $cartItem['precio_visible'] = $this->getPrecioVisible($cartItem, $parametros);
+            $cartItem['cantidad_final'] = $this->getCantidadFinal($cartItem);
+            // Agrega cualquier otro campo que necesites calcular y mostrar
+        }
+        // Calcula los totales
+        $totales = $this->calcularTotales($carts, $parametros);
+        return view('frontend.partials.cart_details', compact('carts', 'totales'));
     }
 
     public function updateNavCart(Request $request)
@@ -186,12 +296,12 @@ class CartController extends Controller
             $product = Producto::where('productosid', $carrito['productosid'])->first();
 
 
-            if ( get_setting('controla_stock') == 0) {
+            if (get_setting('controla_stock') == 0) {
                 $quantity = get_setting('cantidad_maxima');
             } else {
                 $quantity = $request->cantidad;
-            } 
-            
+            }
+
             if ($quantity >= $request->quantity) {
                 if ($request->quantity >= 1) {
                     $carrito['cantidad'] = $request->quantity;
@@ -205,15 +315,21 @@ class CartController extends Controller
             $carrito->save();
         }
 
+        $carts = $this->getCarts($request);
 
-        if (auth()->user() != null) {
-            $clientesid = Auth::user()->clientesid;
-            $carts = Carrito::where('clientesid', $clientesid)->get();
-        } else {
-            $usuario_temporalid = $request->session()->get('usuario_temporalid');
-            $carts = Carrito::where('usuario_temporalid',   $usuario_temporalid)->get();
+        $parametros = ParametrosEmpresa::first();
+
+        foreach ($carts as &$cartItem) {
+            $product = Producto::where('productosid', $cartItem['productosid'])->first();
+            $cartItem['producto_descripcion'] = $product->descripcion; // Asumiendo que $product es un objeto
+            $cartItem['imagen_producto'] = $this->getImagenProducto($cartItem);
+            $cartItem['precio_visible'] = $this->getPrecioVisible($cartItem, $parametros);
+            $cartItem['cantidad_final'] = $this->getCantidadFinal($cartItem);
+            // Agrega cualquier otro campo que necesites calcular y mostrar
         }
+        // Calcula los totales
+        $totales = $this->calcularTotales($carts, $parametros);
 
-        return view('frontend.partials.cart_details', compact('carts'));
+        return view('frontend.partials.cart_details', compact('carts', 'totales'));
     }
 }

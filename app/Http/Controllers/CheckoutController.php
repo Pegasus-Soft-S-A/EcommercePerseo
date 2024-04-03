@@ -48,10 +48,73 @@ class CheckoutController extends Controller
             return back();
         }
         $direccion = $request->clientes_sucursalesid;
+
         $carts = Carrito::where('clientesid', Auth::user()->clientesid)
             ->get();
 
-        return view('frontend.payment_select', compact('carts', 'direccion'));
+        $parametros = ParametrosEmpresa::first();
+
+        foreach ($carts as &$cartItem) {
+            $product = Producto::where('productosid', $cartItem['productosid'])->first();
+            $cartItem['producto_descripcion'] = $product->descripcion;
+            $cartItem['precio_visible'] = $this->getPrecioVisible($cartItem, $parametros);
+        }
+        // Calcula los totales
+        $totales = $this->calcularTotales($carts, $parametros);
+
+        return view('frontend.payment_select', compact('carts', 'direccion', 'totales', 'parametros'));
+    }
+
+    protected function getPrecioVisible($cartItem, $parametros)
+    {
+        $preciovisible = $parametros->tipopresentacionprecios == 1 ?
+            $cartItem['precioiva'] : $cartItem['precio'];
+
+        return $preciovisible;
+    }
+
+    protected function calcularTotales($carts, $parametros)
+    {
+        $totales = [
+            'subtotal' => 0,
+            'descuento' => 0,
+            'subtotalNeto' => 0,
+            'subtotalNetoConIva' => 0,
+            'subtotalNetoSinIva' => 0,
+            'totalIVA' => 0,
+            'total' => 0,
+        ];
+
+        foreach ($carts as $cartItem) {
+            $precioTotalItem = $cartItem['precio'] * $cartItem['cantidad'];
+            $descuentoTotalItem = $precioTotalItem * ($cartItem['descuento'] / 100);
+            $subtotalNetoItem = $precioTotalItem - $descuentoTotalItem;
+
+            $totales['subtotal'] += $precioTotalItem;
+            $totales['descuento'] += $descuentoTotalItem;
+            $totales['subtotalNeto'] += $subtotalNetoItem;
+
+            // Aquí calculamos el IVA para el artículo individual
+            $IVAItem = $subtotalNetoItem * ($cartItem['iva'] / 100);
+
+            // Acumulamos el IVA para cada producto en el carrito
+            $totales['totalIVA'] += $IVAItem;
+
+            // Separamos los subtotales netos con IVA y sin IVA para una posible distinción futura
+            if ($cartItem['iva'] > 0) {
+                $totales['subtotalNetoConIva'] += $subtotalNetoItem;
+            } else {
+                $totales['subtotalNetoSinIva'] += $subtotalNetoItem;
+            }
+        }
+
+        // Ahora, fuera del bucle, calculamos el total sumando el subtotal neto y el IVA acumulado
+        $totales['total'] = $totales['subtotalNeto'] + $totales['totalIVA'];
+
+        // Aplicar redondeo y formateo al final
+        $totales['subtotal'] = number_format(round($totales['subtotal'], $parametros->fdv_subtotales), $parametros->fdv_subtotales);
+
+        return $totales;
     }
 
     public function checkout(Request $request)
