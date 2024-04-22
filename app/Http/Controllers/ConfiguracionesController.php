@@ -22,6 +22,21 @@ use Illuminate\Support\Facades\Cache;
 
 class ConfiguracionesController extends Controller
 {
+    private function updateSettings($tipo, $updates)
+    {
+        $businessSettings = Integraciones::where('tipo', $tipo)->firstOrFail();
+        $settings = json_decode($businessSettings->parametros);
+
+        foreach ($updates as $key => $value) {
+            $settings->$key = $value;
+        }
+
+        Integraciones::where('tipo', $tipo)->update(['parametros' => json_encode($settings)]);
+        // Convertir $settings a un arreglo asociativo y guardarlo en caché
+        Cache::forever('settings', (array) $settings);
+        flash('Configuración actualizada correctamente')->success();
+    }
+
     public function general()
     {
         $productos_existencias = get_setting('productos_existencias');
@@ -37,52 +52,43 @@ class ConfiguracionesController extends Controller
 
     public function update_general(Request $request)
     {
+        $tags = [];
 
-        $business_settings = Integraciones::where('tipo', 5)->first();
-        if ($business_settings == null) {
-            return back();
-        }
-        $settings = json_decode($business_settings->parametros);
-        $settings->grupo_productos = $request->get('grupo_productos');
-        $settings->facturador = $request->get('facturador');
-        $settings->productos_existencias = $request->get('productos_existencias');
-        $settings->tarifa_productos = $request->get('tarifa_productos');
-        $settings->registra_clientes = $request->get('registra_clientes');
-        $settings->grupo_clientes = $request->get('grupo_clientes');
-        $settings->tarifa_clientes = $request->get('tarifa_clientes');
-        $settings->cantidad_maxima = $request->get('cantidad_maxima');
-        $settings->pago_pedido = $request->get('pago_pedido');
-        $settings->pago_plux = $request->get('pago_plux');
-        $settings->email_pago_plux = $request->get('email_pago_plux');
-        $settings->pedido_pago_plux = $request->get('pedido_pago_plux');
-        $settings->productos_disponibles = $request->get('productos_disponibles');
-        $settings->productos_no_disponibles = $request->get('productos_no_disponibles');
-        $settings->ver_codigo = $request->get('ver_codigo');
-        $settings->tipo_tienda = $request->get('tipo_tienda');
-        $settings->controla_stock = $request->get('controla_stock');
-        $settings->vista_categorias = $request->get('vista_categorias');
-
-        $tags = array();
         if ($request->get('email_pedidos')[0] != null) {
             foreach (json_decode($request->get('email_pedidos')[0]) as $key => $tag) {
                 array_push($tags, $tag->value);
             }
         }
-        $settings->email_pedidos = implode(',', $tags);
+
+        $updates = [
+            'grupo_productos' => $request->grupo_productos,
+            'facturador' => $request->facturador,
+            'productos_existencias' => $request->productos_existencias,
+            'tarifa_productos' => $request->tarifa_productos,
+            'registra_clientes' => $request->registra_clientes,
+            'grupo_clientes' => $request->grupo_clientes,
+            'tarifa_clientes' => $request->tarifa_clientes,
+            'cantidad_maxima' => $request->cantidad_maxima,
+            'pago_pedido' => $request->pago_pedido,
+            'pago_plux' => $request->pago_plux,
+            'email_pago_plux' => $request->email_pago_plux,
+            'pedido_pago_plux' => $request->pedido_pago_plux,
+            'productos_disponibles' => $request->productos_disponibles,
+            'productos_no_disponibles' => $request->productos_no_disponibles,
+            'ver_codigo' => $request->ver_codigo,
+            'tipo_tienda' => $request->tipo_tienda,
+            'controla_stock' => $request->controla_stock,
+            'vista_categorias' => $request->vista_categorias,
+            'email_pedidos' => implode(',', $tags),
+        ];
 
         if ($request->file('imagen_defecto')) {
-            $settings->imagen_defecto = base64_encode(file_get_contents($request->file('imagen_defecto')));
+            $imagen = base64_encode(file_get_contents($request->file('imagen_defecto')));
+            $updates['imagen_defecto'] = $imagen;
         }
 
-        Integraciones::where('tipo', 5)
-            ->update(['parametros' => json_encode($settings)]);
+        $this->updateSettings(5, $updates);
 
-        // Antes de guardar en caché, convierte $settings a un arreglo asociativo
-        $settingsArray = (array) $settings;
-        // Ahora guarda $settingsArray en la caché
-        Cache::forever('settings', $settingsArray);
-
-        flash("Actualizado Correctamente")->success();
         return back();
     }
 
@@ -93,26 +99,20 @@ class ConfiguracionesController extends Controller
 
     public function update_header(Request $request)
     {
-
-        $business_settings = Integraciones::where('tipo', 5)->first();
-        $settings = json_decode($business_settings->parametros);
-        $settings->header_stikcy = $request->get('header_stikcy');
+        $updates = [
+            'header_stikcy' => $request->header_stikcy,
+        ];
 
         if ($request->file('header_logo')) {
-            $settings->header_logo = base64_encode(file_get_contents($request->file('header_logo')));
             $imagen = $request->header_logo;
             $base = $request->segment(1);
+            $updates['header_logo'] = base64_encode(file_get_contents($request->file('header_logo')));
 
             move_uploaded_file($imagen->getRealPath(), public_path("assets/img/") . 'logo-' . $base . '.png');
         }
 
-        Integraciones::where('tipo', 5)
-            ->update(['parametros' => json_encode($settings)]);
-        // Antes de guardar en caché, convierte $settings a un arreglo asociativo
-        $settingsArray = (array) $settings;
-        // Ahora guarda $settingsArray en la caché
-        Cache::forever('settings', $settingsArray);
-        flash("Actualizado Correctamente")->success();
+        $this->updateSettings(5, $updates);
+
         return back();
     }
 
@@ -123,31 +123,23 @@ class ConfiguracionesController extends Controller
 
     public function update_footer(Request $request)
     {
-
-        $business_settings = Integraciones::where('tipo', 5)->first();
-
-        $settings = json_decode($business_settings->parametros);
-
-        $settings->acerca_nosotros = $request->get('acerca_nosotros');
-        $settings->direccion_contacto = $request->get('direccion_contacto');
-        $settings->telefono_contacto = $request->get('telefono_contacto');
-        $settings->email_contacto = $request->get('email_contacto');
-        $settings->show_social_links = $request->get('show_social_links');
-        $settings->facebook_link = $request->get('facebook_link');
-        $settings->twitter_link = $request->get('twitter_link');
-        $settings->instagram_link = $request->get('instagram_link');
+        $updates = [
+            'acerca_nosotros' => $request->acerca_nosotros,
+            'direccion_contacto' => $request->direccion_contacto,
+            'telefono_contacto' => $request->telefono_contacto,
+            'email_contacto' => $request->email_contacto,
+            'show_social_links' => $request->show_social_links,
+            'facebook_link' => $request->facebook_link,
+            'twitter_link' => $request->twitter_link,
+            'instagram_link' => $request->instagram_link,
+        ];
 
         if ($request->file('footer_logo')) {
-            $settings->footer_logo = base64_encode(file_get_contents($request->file('footer_logo')));
+            $updates['footer_logo'] = base64_encode(file_get_contents($request->file('footer_logo')));
         }
 
-        Integraciones::where('tipo', 5)
-            ->update(['parametros' => json_encode($settings)]);
-        // Antes de guardar en caché, convierte $settings a un arreglo asociativo
-        $settingsArray = (array) $settings;
-        // Ahora guarda $settingsArray en la caché
-        Cache::forever('settings', $settingsArray);
-        flash("Actualizado Correctamente")->success();
+        $this->updateSettings(5, $updates);
+
         return back();
     }
 
@@ -158,28 +150,21 @@ class ConfiguracionesController extends Controller
 
     public function update_apariencia(Request $request)
     {
-
-        $business_settings = Integraciones::where('tipo', 5)->first();
-
-        $settings = json_decode($business_settings->parametros);
-
-        $settings->nombre_sitio = $request->get('nombre_sitio');
-        $settings->lema_sitio = $request->get('lema_sitio');
-        $settings->color_sitio = $request->get('color_sitio');
-        $settings->color_hover_sitio = $request->get('color_hover_sitio');
-        $settings->header_script = $request->get('header_script');
-        $settings->footer_script = $request->get('footer_script');
+        $updates = [
+            'nombre_sitio' => $request->nombre_sitio,
+            'lema_sitio' => $request->lema_sitio,
+            'color_sitio' => $request->color_sitio,
+            'color_hover_sitio' => $request->color_hover_sitio,
+            'header_script' => $request->header_script,
+            'footer_script' => $request->footer_script,
+        ];
 
         if ($request->file('icono_sitio')) {
-            $settings->icono_sitio = base64_encode(file_get_contents($request->file('icono_sitio')));
+            $updates['icono_sitio'] = base64_encode(file_get_contents($request->file('icono_sitio')));
         }
-        Integraciones::where('tipo', 5)
-            ->update(['parametros' => json_encode($settings)]);
-        // Antes de guardar en caché, convierte $settings a un arreglo asociativo
-        $settingsArray = (array) $settings;
-        // Ahora guarda $settingsArray en la caché
-        Cache::forever('settings', $settingsArray);
-        flash("Actualizado Correctamente")->success();
+
+        $this->updateSettings(5, $updates);
+
         return back();
     }
 
@@ -224,19 +209,13 @@ class ConfiguracionesController extends Controller
 
     public function update_paginas(Request $request)
     {
-        $business_settings = Integraciones::where('tipo', 5)->first();
-
-        $settings = json_decode($business_settings->parametros);
         $pagina = $request->get('pagina');
-        $settings->$pagina = $request->get('contenido');
+        $contenido = $request->get('contenido');
 
-        Integraciones::where('tipo', 5)
-            ->update(['parametros' => json_encode($settings)]);
-        // Antes de guardar en caché, convierte $settings a un arreglo asociativo
-        $settingsArray = (array) $settings;
-        // Ahora guarda $settingsArray en la caché
-        Cache::forever('settings', $settingsArray);
-        flash("Actualizado Correctamente")->success();
+        $updates = [$pagina => $contenido];
+
+        $this->updateSettings(5, $updates);
+
         return back();
     }
 
@@ -244,39 +223,35 @@ class ConfiguracionesController extends Controller
     {
         $sliders = [];
 
-        if ($request->inicio) {
+        if ($request->has('inicio')) {
             foreach ($request->inicio as $key => $type) {
+                $imagen = $request->imagen[$key] ?? null;  // Usa valor predeterminado si no existe
 
                 if (isset($request->imagenes[$key])) {
                     $imagen = base64_encode(file_get_contents($request->imagenes[$key]));
                 } else {
-                    $imagen = $request->imagen[$key];
+                    flash('Debe seleccionar una imagen para cada slider')->error();
+                    return back();
                 }
 
                 $slider = [
                     "imagen" => $imagen,
-                    "link" => $request->links[$key],
-                    "inicio" => $request->inicio[$key],
-                    "fin" => $request->fin[$key]
+                    "link" => $request->links[$key] ?? '',
+                    "inicio" => $type,
+                    "fin" => $request->fin[$key] ?? ''
                 ];
 
                 array_push($sliders, $slider);
             }
         }
 
-        $business_settings = Integraciones::where('tipo', 5)->first();
-        $settings = json_decode($business_settings->parametros);
-        $settings->home_slider = json_encode($sliders);
-        $settings->top10_categories = $request->get('top10_categories');
+        $updates = [
+            'home_slider' => json_encode($sliders),
+            'top10_categories' => $request->get('top10_categories', '')  // Usa valor predeterminado si no se proporciona
+        ];
 
-        Integraciones::where('tipo', 5)
-            ->update(['parametros' => json_encode($settings)]);
+        $this->updateSettings(5, $updates);
 
-        // Antes de guardar en caché, convierte $settings a un arreglo asociativo
-        $settingsArray = (array) $settings;
-        // Ahora guarda $settingsArray en la caché
-        Cache::forever('settings', $settingsArray);
-        flash("Actualizado Correctamente")->success();
         return back();
     }
 
@@ -287,24 +262,15 @@ class ConfiguracionesController extends Controller
 
     public function update_analytics(Request $request)
     {
+        $updates = [
+            'facebook_pixel' => $request->facebook_pixel,
+            'FACEBOOK_PIXEL_ID' => $request->FACEBOOK_PIXEL_ID,
+            'google_analytics' => $request->google_analytics,
+            'TRACKING_ID' => $request->TRACKING_ID,
+        ];
 
-        $business_settings = Integraciones::where('tipo', 5)->first();
+        $this->updateSettings(5, $updates);
 
-        $settings = json_decode($business_settings->parametros);
-
-        $settings->facebook_pixel = $request->get('facebook_pixel');
-        $settings->FACEBOOK_PIXEL_ID = $request->get('FACEBOOK_PIXEL_ID');
-
-        $settings->google_analytics = $request->get('google_analytics');
-        $settings->TRACKING_ID = $request->get('TRACKING_ID');
-
-        Integraciones::where('tipo', 5)
-            ->update(['parametros' => json_encode($settings)]);
-        // Antes de guardar en caché, convierte $settings a un arreglo asociativo
-        $settingsArray = (array) $settings;
-        // Ahora guarda $settingsArray en la caché
-        Cache::forever('settings', $settingsArray);
-        flash("Actualizado Correctamente")->success();
         return back();
     }
 
@@ -319,20 +285,14 @@ class ConfiguracionesController extends Controller
             $this->overWriteEnvFile($type, $request[$type]);
         }
 
-        $business_settings = Integraciones::where('tipo', 5)->first();
+        $updates = [
+            'login_google' => $request->login_google,
+            'login_facebook' => $request->login_facebook,
+            'login_apple' => $request->login_apple,
+        ];
 
-        $settings = json_decode($business_settings->parametros);
-        $settings->login_google = $request->login_google;
-        $settings->login_facebook = $request->login_facebook;
-        $settings->login_apple = $request->login_apple;
+        $this->updateSettings(5, $updates);
 
-        Integraciones::where('tipo', 5)
-            ->update(['parametros' => json_encode($settings)]);
-        // Antes de guardar en caché, convierte $settings a un arreglo asociativo
-        $settingsArray = (array) $settings;
-        // Ahora guarda $settingsArray en la caché
-        Cache::forever('settings', $settingsArray);
-        flash('Guardado Correctamente')->success();
         return back();
     }
 

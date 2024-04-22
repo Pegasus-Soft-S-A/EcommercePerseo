@@ -345,7 +345,6 @@ class HomeController extends Controller
             }
         } catch (\Exception $e) {
             flash('Ocurrió un error vuelva a intentarlo')->warning();
-            //dd($e->getMessage());
         }
     }
 
