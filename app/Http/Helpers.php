@@ -25,7 +25,9 @@ if (!function_exists('get_setting')) {
     //funcion global que devuelve el valor del parametro de la integracion que se le envia
     function get_setting($setting)
     {
-        $settings = Cache::rememberForever('settings', function () {
+        $base = Request::segment(1);
+
+        $settings = Cache::rememberForever('settings' . $base, function () {
             $integraciones = Integraciones::select('parametros')->where('tipo', 5)->first();
             if ($integraciones && $integraciones->parametros) {
                 return json_decode($integraciones->parametros, true);

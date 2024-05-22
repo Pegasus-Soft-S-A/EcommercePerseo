@@ -24,6 +24,8 @@ class ConfiguracionesController extends Controller
 {
     private function updateSettings($tipo, $updates)
     {
+        $base = request()->segment(1);
+
         $businessSettings = Integraciones::where('tipo', $tipo)->firstOrFail();
         $settings = json_decode($businessSettings->parametros);
 
@@ -33,7 +35,7 @@ class ConfiguracionesController extends Controller
 
         Integraciones::where('tipo', $tipo)->update(['parametros' => json_encode($settings)]);
         // Convertir $settings a un arreglo asociativo y guardarlo en caché
-        Cache::forever('settings', (array) $settings);
+        Cache::forever('settings' . $base, (array) $settings);
         flash('Configuración actualizada correctamente')->success();
     }
 
