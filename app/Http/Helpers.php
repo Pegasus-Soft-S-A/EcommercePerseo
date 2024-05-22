@@ -165,7 +165,7 @@ if (!function_exists('productosOferta')) {
                         ->where('productos_imagenes.principal', '=', "1");
                 })
                 ->where('productos_tarifas.tarifasid', '=', get_setting('tarifa_productos'))
-                ->whereIn('productos.ecommerce_estado', array(1, 2))
+                ->where('productos.ecommerce_estado', 1)
                 ->where('productos.venta', '=', '1')
                 ->where('productos.servicio', '=', '0')
                 ->where('productos.bien', '=', '0')
@@ -188,7 +188,7 @@ if (!function_exists('productosOferta')) {
                         ->where('productos_imagenes.principal', '=', "1");
                 })
                 ->where('productos_tarifas.tarifasid', '=', get_setting('tarifa_productos'))
-                ->whereIn('productos.ecommerce_estado', array(1, 2))
+                ->where('productos.ecommerce_estado', 1)
                 ->where('productos.venta', '=', '1')
                 ->where('productos.servicio', '=', '0')
                 ->where('productos.bien', '=', '0')
@@ -247,7 +247,7 @@ if (!function_exists('grupoProductos')) {
             default:
                 break;
         }
-        $grupos = $grupos->whereIn('productos.ecommerce_estado', array(1, 2))
+        $grupos = $grupos->where('productos.ecommerce_estado', 1)
             ->where('productos.venta', '=', '1')
             ->where('productos.servicio', '=', '0')
             ->where('productos.bien', '=', '0')

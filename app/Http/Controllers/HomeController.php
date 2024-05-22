@@ -537,7 +537,7 @@ class HomeController extends Controller
             })->when(get_setting('productos_existencias') != "todos", function ($products) {
                 return $products->where('productos.existenciastotales', '>', '0');
             })
-            ->whereIn('productos.ecommerce_estado', array(1, 2))
+            ->where('productos.ecommerce_estado', 1)
             ->where([
                 ['productos_tarifas.tarifasid', '=', get_setting('tarifa_productos')],
                 ['productos.venta', '=', '1'],
@@ -593,7 +593,7 @@ class HomeController extends Controller
             ->joinSub($ventasSubquery, 'ventas', function ($join) {
                 $join->on('ventas.productosid', '=', 'p.productosid');
             })
-            ->whereIn('p.ecommerce_estado', [1, 2])
+            ->where('p.ecommerce_estado', 1)
             ->where('p.existenciastotales', '>', 0)
             ->where('pt.tarifasid', '=', get_setting('tarifa_productos'))
             ->where('p.venta', '=', 1)
@@ -715,7 +715,7 @@ class HomeController extends Controller
             ->when(get_setting('productos_existencias') != "todos", function ($products) {
                 return $products->where('productos.existenciastotales', '>', '0');
             })
-            ->whereIn('productos.ecommerce_estado', array(1, 2))
+            ->where('productos.ecommerce_estado', 1)
             ->where([
                 ['productos.' . $grupoid, '=', $id],
                 ['productos_tarifas.tarifasid', '=', get_setting('tarifa_productos')],
@@ -735,7 +735,7 @@ class HomeController extends Controller
                 $products->on('productos_imagenes.productosid', '=', 'productos.productosid')
                     ->where('productos_imagenes.principal', '=', "1");
             })
-            ->whereIn('productos.ecommerce_estado', array(1, 2))
+            ->where('productos.ecommerce_estado', 1)
             ->when(get_setting('productos_existencias') != "todos", function ($products) {
                 return $products->where('productos.existenciastotales', '>', '0');
             })
@@ -826,7 +826,7 @@ class HomeController extends Controller
                 $products->on('productos_imagenes.productosid', '=', 'productos.productosid')
                     ->where('productos_imagenes.principal', '=', "1");
             })
-            ->whereIn('productos.ecommerce_estado', array(1, 2))
+            ->where('productos.ecommerce_estado', 1)
             ->when(get_setting('productos_existencias') != "todos", function ($products) {
                 return $products->where('productos.existenciastotales', '>', '0');
             })
@@ -886,7 +886,7 @@ class HomeController extends Controller
                     ->where('productos_imagenes.principal', '=', "1");
             })
             ->where('productos_tarifas.tarifasid', '=', get_setting('tarifa_productos'))
-            ->whereIn('productos.ecommerce_estado', array(1, 2))
+            ->where('productos.ecommerce_estado', 1)
             ->where('productos.venta', '=', '1')
             ->where('productos.servicio', '=', '0')
             ->where('productos.bien', '=', '0')
@@ -930,7 +930,7 @@ class HomeController extends Controller
             default:
                 break;
         }
-        $categories = $categories->whereIn('productos.ecommerce_estado', array(1, 2))
+        $categories = $categories->where('productos.ecommerce_estado', 1)
             ->where('productos.venta', '=', '1')
             ->where('productos.servicio', '=', '0')
             ->where('productos.bien', '=', '0')
