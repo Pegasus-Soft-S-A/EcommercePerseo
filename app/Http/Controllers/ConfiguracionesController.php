@@ -221,24 +221,23 @@ class ConfiguracionesController extends Controller
 
     public function update_inicio(Request $request)
     {
+
         $sliders = [];
 
-        if ($request->has('inicio')) {
+        if ($request->inicio) {
             foreach ($request->inicio as $key => $type) {
-                $imagen = $request->imagen[$key] ?? null;  // Usa valor predeterminado si no existe
 
                 if (isset($request->imagenes[$key])) {
                     $imagen = base64_encode(file_get_contents($request->imagenes[$key]));
                 } else {
-                    flash('Debe seleccionar una imagen para cada slider')->error();
-                    return back();
+                    $imagen = $request->imagen[$key];
                 }
 
                 $slider = [
                     "imagen" => $imagen,
-                    "link" => $request->links[$key] ?? '',
-                    "inicio" => $type,
-                    "fin" => $request->fin[$key] ?? ''
+                    "link" => $request->links[$key],
+                    "inicio" => $request->inicio[$key],
+                    "fin" => $request->fin[$key]
                 ];
 
                 array_push($sliders, $slider);
