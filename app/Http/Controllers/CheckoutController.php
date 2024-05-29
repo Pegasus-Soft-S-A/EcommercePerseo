@@ -315,6 +315,7 @@ class CheckoutController extends Controller
             $factura->total = $request->total;
             $factura->totalneto = $request->total;
             $factura->totalneto = $request->total;
+            $factura->origen = 'Ecommerce';
             $factura->save();
 
             //Actualizar secuencia del vendedor
