@@ -564,4 +564,64 @@ class CheckoutController extends Controller
             return redirect()->route('checkout.shipping_info');
         }
     }
+
+    protected function getCarts(Request $request)
+    {
+        if (auth()->user() != null) {
+            $clientesid = Auth::user()->clientesid;
+            return Carrito::where('clientesid', $clientesid)->get();
+        } else {
+            $usuario_temporalid = $request->session()->get('usuario_temporalid');
+            return Carrito::where('usuario_temporalid', $usuario_temporalid)->get();
+        }
+    }
+
+    protected function calcularTotales($carts, $parametros)
+    {
+        $totales = [
+            'subtotal' => 0,
+            'descuento' => 0,
+            'subtotalNeto' => 0,
+            'subtotalNetoConIva' => 0,
+            'subtotalNetoSinIva' => 0,
+            'totalIVA' => 0,
+            'total' => 0,
+        ];
+
+        foreach ($carts as $cartItem) {
+            $precioTotalItem = $cartItem['precio'] * $cartItem['cantidad'];
+            $descuentoTotalItem = $precioTotalItem * ($cartItem['descuento'] / 100);
+            $subtotalNetoItem = $precioTotalItem - $descuentoTotalItem;
+
+            $totales['subtotal'] += $precioTotalItem;
+            $totales['descuento'] += $descuentoTotalItem;
+            $totales['subtotalNeto'] += $subtotalNetoItem;
+
+            // Aquí calculamos el IVA para el artículo individual
+            $IVAItem = $subtotalNetoItem * ($cartItem['iva'] / 100);
+
+            // Acumulamos el IVA para cada producto en el carrito
+            $totales['totalIVA'] += $IVAItem;
+
+            // Separamos los subtotales netos con IVA y sin IVA para una posible distinción futura
+            if ($cartItem['iva'] > 0) {
+                $totales['subtotalNetoConIva'] += $subtotalNetoItem;
+            } else {
+                $totales['subtotalNetoSinIva'] += $subtotalNetoItem;
+            }
+        }
+
+        // Ahora, fuera del bucle, calculamos el total sumando el subtotal neto y el IVA acumulado
+        $totales['total'] = $totales['subtotalNeto'] + $totales['totalIVA'];
+
+        // Aplicar redondeo y formateo al final
+        $totales['subtotal'] = number_format(round($totales['subtotal'], $parametros->fdv_subtotales), $parametros->fdv_subtotales);
+        $totales['descuento'] = number_format(round($totales['descuento'], 2), 2);
+        $totales['subtotalNeto'] = number_format(round($totales['subtotalNeto'], $parametros->fdv_subtotales), $parametros->fdv_subtotales);
+        $totales['totalIVA'] = number_format(round($totales['totalIVA'], $parametros->fdv_iva), $parametros->fdv_iva);
+        $totales['total'] = number_format(round($totales['total'], 2), 2);
+
+
+        return $totales;
+    }
 }
