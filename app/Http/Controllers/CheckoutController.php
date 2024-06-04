@@ -13,6 +13,7 @@ use App\Models\ParametrosEmpresa;
 use App\Models\Pedidos;
 use App\Models\PedidosDetalles;
 use App\Models\Producto;
+use App\Models\ProductoImagen;
 use App\Models\ProductoTarifa;
 use App\Models\Secuenciales;
 use App\Models\Secuencias;
@@ -574,5 +575,16 @@ class CheckoutController extends Controller
             $usuario_temporalid = $request->session()->get('usuario_temporalid');
             return Carrito::where('usuario_temporalid', $usuario_temporalid)->get();
         }
+    }
+
+    protected function getImagenProducto($cartItem)
+    {
+        $imagenProducto = ProductoImagen::select('productos_imagenes.imagen')
+            ->where('productos_imagenes.productosid', '=', $cartItem['productosid'])
+            ->where('productos_imagenes.medidasid', '=', $cartItem['medidasid'])
+            ->where('productos_imagenes.ecommerce_visible', '=', '1')
+            ->first();
+
+        return $imagenProducto->imagen ?? null;
     }
 }
