@@ -118,6 +118,34 @@ class CheckoutController extends Controller
         return $totales;
     }
 
+    protected function getCantidadFinal($cartItem)
+    {
+        if (get_setting('controla_stock') == 1 || get_setting('controla_stock') == 0) {
+            $cantidad = Producto::select('existenciastotales')
+                ->where('productosid', $cartItem->productosid)
+                ->first();
+            $cantidadProductos = $cantidad->existenciastotales;
+        } elseif (get_setting('controla_stock') == 2) {
+            $cantidad = MovimientosInventariosAlmacenes::where(
+                'productosid',
+                $cartItem->productosid
+            )
+                ->where('almacenesid', $cartItem->almacenesid)
+                ->first();
+            $cantidadProductos = $cantidad->existencias;
+        } else {
+            $cantidadProductos = 0;
+        }
+
+        if ($cartItem->cantidadfactor != 0) {
+            $cantidadFinal = $cantidadProductos / $cartItem->cantidadfactor;
+        } else {
+            $cantidadFinal = $cantidadProductos;
+        }
+
+        return $cantidadFinal;
+    }
+
     public function checkout(Request $request)
     {
 
