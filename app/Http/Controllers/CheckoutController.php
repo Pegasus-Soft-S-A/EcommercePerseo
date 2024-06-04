@@ -509,7 +509,7 @@ class CheckoutController extends Controller
         return $factura->facturasid;
     }
 
-    public function verificar_existencias($cliente)
+    public function verificar_existencias(Request $request, $cliente)
     {
 
         $carrito = Carrito::select(DB::raw('SUM(cantidad * cantidadfactor) as cantidad_total'), 'productosid', 'medidasid', 'almacenesid')->where('clientesid', $cliente)->groupBy('productosid')->get();
@@ -545,9 +545,21 @@ class CheckoutController extends Controller
 
         if (count($productos) > 0) {
 
-            $carts = Carrito::where('clientesid', $cliente)->get();
+            $carts = $this->getCarts($request);
+            $parametros = ParametrosEmpresa::first();
 
-            return view('frontend.view_cart', compact('productos', 'carts'));
+            foreach ($carts as &$cartItem) {
+                $product = Producto::where('productosid', $cartItem['productosid'])->first();
+                $cartItem['producto_descripcion'] = $product->descripcion; // Asumiendo que $product es un objeto
+                $cartItem['imagen_producto'] = $this->getImagenProducto($cartItem);
+                $cartItem['precio_visible'] = $this->getPrecioVisible($cartItem, $parametros);
+                $cartItem['cantidad_final'] = $this->getCantidadFinal($cartItem);
+                // Agrega cualquier otro campo que necesites calcular y mostrar
+            }
+            // Calcula los totales
+            $totales = $this->calcularTotales($carts, $parametros);
+
+            return view('frontend.view_cart', compact('productos', 'carts', 'totales'));
         } else {
             return redirect()->route('checkout.shipping_info');
         }
