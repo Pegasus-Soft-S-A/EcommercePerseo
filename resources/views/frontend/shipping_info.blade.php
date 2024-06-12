@@ -159,7 +159,8 @@
                             </div>
                             <div class="col-md-10">
                                 <textarea class="form-control textarea-autogrow mb-3" placeholder="Su Direccion"
-                                    rows="1" name="direccion" onkeydown="controlar(event)" required></textarea>
+                                    rows="1" name="direccion" onkeydown="controlar(event)" required
+                                    maxlength="100"></textarea>
                             </div>
                         </div>
 

@@ -51,15 +51,29 @@ $parametros = \App\Models\ParametrosEmpresa::first();
                                 Seleccione una opcion de pago
                             </h3>
                         </div>
+                        @php
+                        $payment_options = [
+                        'pago_pedido' => get_setting('pago_pedido') == 'on',
+                        'pago_plux' => get_setting('pago_plux') == 'on'
+                        ];
+
+                        $available_options = array_filter($payment_options, function($value) {
+                        return $value == true;
+                        });
+
+                        $single_option_key = count($available_options) == 1 ? array_keys($available_options)[0] : null;
+                        @endphp
+
                         <div class="card-body text-center">
                             <div class="row">
                                 <div class="col-xxl-8 col-xl-10 mx-auto">
                                     <div class="row gutters-10">
-                                        @if (get_setting('pago_pedido') == 'on')
+                                        @if ($payment_options['pago_pedido'])
                                         <div class="col-6 col-md-4">
                                             <label class="aiz-megabox d-block mb-3">
                                                 <input value="pago_pedido" class="online_payment" type="radio"
-                                                    name="payment_option">
+                                                    name="payment_option" {{ $single_option_key=='pago_pedido'
+                                                    ? 'checked' : '' }}>
                                                 <span class="d-block p-3 aiz-megabox-elem">
                                                     <img src="{{ static_asset('assets/img/cards/cod.png') }}"
                                                         class="img-fluid mb-2">
@@ -70,11 +84,12 @@ $parametros = \App\Models\ParametrosEmpresa::first();
                                             </label>
                                         </div>
                                         @endif
-                                        @if (get_setting('pago_plux') == 'on')
+                                        @if ($payment_options['pago_plux'])
                                         <div class="col-6 col-md-4">
                                             <label class="aiz-megabox d-block mb-3">
                                                 <input value="pago_pedido" class="online_payment" type="radio"
-                                                    name="payment_option" id="pagoplux">
+                                                    name="payment_option" id="pagoplux" {{
+                                                    $single_option_key=='pago_plux' ? 'checked' : '' }}>
                                                 <span class="d-block p-3 aiz-megabox-elem">
                                                     <img src="{{ static_asset('assets/img/cards/pagoplux.jpg') }}"
                                                         class="img-fluid mb-1">
@@ -89,6 +104,7 @@ $parametros = \App\Models\ParametrosEmpresa::first();
                                 </div>
                             </div>
                         </div>
+
                     </div>
                     <div class="pt-3">
                         <label class="aiz-checkbox">
