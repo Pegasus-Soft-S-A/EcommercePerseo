@@ -230,7 +230,7 @@ class CheckoutController extends Controller
                     ->get();
 
                 flash('Ocurrio un error al realizar el pedido')->error();
-                return view('frontend.payment_select', compact('carts', 'direccion'));
+                return view('frontend.payment_select', compact('carts', 'direccion', 'totales', 'parametros'));
             }
 
             configurar_smtp();

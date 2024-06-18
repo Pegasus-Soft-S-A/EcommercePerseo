@@ -47,52 +47,42 @@
                 <tr class="cart-subtotal">
                     <th>Subtotal</th>
                     <td class="text-right">
-                        <span class="fw-600">{{
-                            number_format(round($totales['subtotal'],$parametros->fdv_subtotales),$parametros->fdv_subtotales)
-                            }}</span>
-                        <input type="hidden" value="{{round($totales['subtotal'],$parametros->fdv_subtotales)}}"
-                            name="subtotal" id="subtotal">
+                        <span class="fw-600">{{ $totales['subtotal'] }}</span>
+                        <input type="hidden" value="{{ $totales['subtotal'] }}" name="subtotal" id="subtotal">
                     </td>
                 </tr>
                 <tr class="cart-subtotal">
                     <th>Descuento</th>
                     <td class="text-right">
-                        <span class="fw-600">{{ number_format(round($totales['descuento'],2),2) }}</span>
-                        <input type="hidden" value="{{$totales['descuento']}}" name="descuento" id="descuento">
+                        <span class="fw-600">{{ $totales['descuento'] }}</span>
+                        <input type="hidden" value="{{ $totales['descuento'] }}" name="descuento" id="descuento">
                     </td>
                 </tr>
                 <tr class="cart-subtotal">
                     <th>Subtotal Neto</th>
                     <td class="text-right">
-                        <span class="fw-600">{{
-                            number_format(round($totales['subtotalNeto'],$parametros->fdv_subtotales),$parametros->fdv_subtotales)
-                            }}</span>
-                        <input type="hidden" value="{{round($totales['subtotalNeto'],$parametros->fdv_subtotales)}}"
-                            name="subtotalneto" id="subtotalneto">
-                        <input type="hidden"
-                            value="{{round($totales['subtotalNetoConIva'],$parametros->fdv_subtotales)}}"
-                            name="subtotalnetoconiva" id="subtotalnetoconiva">
-                        <input type="hidden"
-                            value="{{round($totales['subtotalNetoSinIva'],$parametros->fdv_subtotales)}}"
-                            name="subtotalnetosiniva" id="subtotalnetosiniva">
+                        <span class="fw-600">{{ $totales['subtotalNeto'] }}</span>
+                        <input type="hidden" value="{{ $totales['subtotalNeto'] }}" name="subtotalneto"
+                            id="subtotalneto">
+                        <input type="hidden" value="{{ $totales['subtotalNetoConIva'] }}" name="subtotalnetoconiva"
+                            id="subtotalnetoconiva">
+                        <input type="hidden" value="{{ $totales['subtotalNetoSinIva'] }}" name="subtotalnetosiniva"
+                            id="subtotalnetosiniva">
                     </td>
                 </tr>
                 <tr class="cart-subtotal">
                     <th>IVA</th>
                     <td class="text-right">
-                        <span class="fw-600">{{
-                            number_format(round($totales['totalIVA'],$parametros->fdv_iva),$parametros->fdv_iva)
-                            }}</span>
-                        <input type="hidden" value="{{round($totales['totalIVA'],$parametros->fdv_iva)}}"
-                            name="totalIVA" id="totalIVA">
+                        <span class="fw-600">{{ $totales['totalIVA'] }}</span>
+                        <input type="hidden" value="{{ $totales['totalIVA'] }}" name="totalIVA" id="totalIVA">
                         <input type="hidden" value="0" name="inputCero" id="inputCero">
                     </td>
                 </tr>
                 <tr class="cart-subtotal">
                     <th>Total</th>
                     <td class="text-right">
-                        <span class="fw-600">{{ number_format(round($totales['total'],2),2) }}</span>
-                        <input type="hidden" value="{{round($totales['total'],2)}}" name="total" id="total">
+                        <span class="fw-600">{{ $totales['total'] }}</span>
+                        <input type="hidden" value="{{ $totales['total'] }}" name="total" id="total">
                     </td>
                 </tr>
             </tfoot>
