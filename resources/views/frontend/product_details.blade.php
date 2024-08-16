@@ -44,7 +44,7 @@
                                 @foreach ($imagenProducto as $imagenProduct)
                                 <div class="carousel-box img-zoom rounded">
                                     <img class="img-fluid lazyload"
-                                        src="data:image/jpg;base64,{{ base64_encode($imagenProduct->imagen) }}">
+                                        src="data:image/jpg;base64,{{ base64_encode($imagenProduct['imagen']) }}">
                                 </div>
                                 @endforeach
                                 @else
@@ -62,9 +62,9 @@
                                 @if (count($imagenProducto) > 0)
                                 @foreach ($imagenProducto as $imagenProduct)
                                 <div class="carousel-box c-pointer border p-1 rounded"
-                                    data-medidasid="{{ $imagenProduct->medidasid }}">
+                                    data-medidasid="{{ $imagenProduct['medidasid'] }}">
                                     <img class="lazyload mw-100 size-50px mx-auto"
-                                        src="data:image/jpg;base64,{{ base64_encode($imagenProduct->imagen) }}">
+                                        src="data:image/jpg;base64,{{ base64_encode($imagenProduct['imagen']) }}">
                                 </div>
                                 @endforeach
                                 @else

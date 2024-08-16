@@ -32,6 +32,8 @@ use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Session;
 use Yajra\DataTables\DataTables as DataTables;
+use Intervention\Image\ImageManagerStatic as Image;
+
 
 use function GuzzleHttp\json_decode;
 
@@ -636,6 +638,15 @@ class HomeController extends Controller
             ->where('productos_imagenes.ecommerce_visible', '=', '1')
             ->orderBy('productos_imagenes.medidasid')
             ->get();
+
+        $imagenProducto = $imagenProducto->map(function ($item) {
+            $image = Image::make($item->imagen);
+            $compressedImage = $image->encode('webp', 100);
+            return [
+                'imagen' => ($compressedImage),
+                'medidasid' => $item->medidasid,
+            ];
+        });
 
         $comentarios = Comentarios::select('ecommerce_comentarios.comentario', 'ecommerce_comentarios.valoracion', 'ecommerce_comentarios.fechacreacion', 'clientes.razonsocial')
             ->join('clientes', 'clientes.clientesid', '=', 'ecommerce_comentarios.clientesid')
