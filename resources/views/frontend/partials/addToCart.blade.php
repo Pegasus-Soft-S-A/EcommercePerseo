@@ -14,16 +14,14 @@ $user = Session::get('user');
                         @if (count($imagenProducto) > 0)
                         @foreach ($imagenProducto as $imagenProduct)
                         <div class="carousel-box img-zoom rounded">
-                            <img class="img-fluid" loading="lazy"
-                                src="data:image/jpg;base64,{{ base64_encode($imagenProduct->imagen) }}"
-                                data-src="data:image/jpg;base64,{{ base64_encode($imagenProduct->imagen) }}" onerror="">
+                            <img class="img-fluid lazyload"
+                                src="data:image/jpg;base64,{{ base64_encode($imagenProduct['imagen']) }}">
                         </div>
                         @endforeach
                         @else
                         <div class="carousel-box img-zoom rounded">
-                            <img class="img-fluid" loading="lazy"
-                                src="data:image/jpg;base64,{{ get_setting('imagen_defecto') }}"
-                                data-src="data:image/jpg;base64,{{ get_setting('imagen_defecto') }}" onerror="">
+                            <img class="img-fluid lazyload"
+                                src="data:image/jpg;base64,{{ get_setting('imagen_defecto') }}">
                         </div>
                         @endif
                     </div>
