@@ -1,10 +1,9 @@
-@extends('frontend.layouts.app')
-@section('content')
-@php
+<?php $__env->startSection('content'); ?>
+<?php
 $user = Session::get('user');
 session(['ruta' => 'carrito']);
 $almacenes = App\Models\Almacenes::where('disponibleventa', 1)->get();
-@endphp
+?>
 <section class="pt-5 mb-4">
     <div class="container">
         <div class="row">
@@ -41,17 +40,17 @@ $almacenes = App\Models\Almacenes::where('disponibleventa', 1)->get();
 </section>
 <section class="mb-4" id="cart-summary">
     <div class="container-fluid">
-        @if ($carts && count($carts) > 0)
+        <?php if($carts && count($carts) > 0): ?>
         <div class="row">
             <div class="col-xxl-8 col-xl-10 mx-auto">
                 <div class="shadow-sm bg-white p-3 p-lg-4 rounded text-left">
-                    @if (isset($productos))
+                    <?php if(isset($productos)): ?>
                     <div id="mensajes" class="alert alert-danger d-flex align-items-center">
-                        @foreach ($productos as $prod)
-                        * El producto "{{ $prod }}" sobrepasa las existencias. <br>
-                        @endforeach
+                        <?php $__currentLoopData = $productos; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $prod): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                        * El producto "<?php echo e($prod); ?>" sobrepasa las existencias. <br>
+                        <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                     </div>
-                    @endif
+                    <?php endif; ?>
                     <div class="mb-4">
                         <div class="row gutters-7 d-none d-lg-flex border-bottom mb-1 pb-3">
                             <div class="col-md-4 fw-600 text-center">Producto</div>
@@ -59,56 +58,57 @@ $almacenes = App\Models\Almacenes::where('disponibleventa', 1)->get();
                             <div class="col-md-2 fw-600 text-center">Cantidad</div>
                             <div class="col-md-1 fw-600 text-center">Total</div>
                             <div class="col-md-1 fw-600 text-center">Observacion</div>
-                            @if (get_setting('productos_existencias')=='todos' || get_setting('controla_stock')==1 ||
-                            (get_setting('controla_stock')==2 && Auth::check()))
+                            <?php if(get_setting('productos_existencias')=='todos' || get_setting('controla_stock')==1 ||
+                            (get_setting('controla_stock')==2 && Auth::check())): ?>
                             <div class="col-md-2 fw-600 text-center">Existencias</div>
-                            @endif
+                            <?php endif; ?>
                             <div class="col-md-1 fw-600 text-center"></div>
                         </div>
                         <ul class="list-group list-group-flush">
-                            @foreach ($carts as $key => $cartItem)
+                            <?php $__currentLoopData = $carts; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $key => $cartItem): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
                             <li class="list-group-item px-0 px-lg-3">
                                 <div class="row gutters-7 align-items-center">
                                     <div class="col-md-4 d-flex">
                                         <span class="mr-2 ml-0">
-                                            @if ($cartItem['imagen_producto'])
-                                            <img src="data:image/jpg;base64,{{ base64_encode($cartItem['imagen_producto']) }}"
+                                            <?php if($cartItem['imagen_producto']): ?>
+                                            <img src="data:image/jpg;base64,<?php echo e(base64_encode($cartItem['imagen_producto'])); ?>"
                                                 class="img-fit lazyload size-60px rounded" alt="">
-                                            @else
-                                            <img src="data:image/jpg;base64,{{ get_setting('imagen_defecto') }}"
+                                            <?php else: ?>
+                                            <img src="data:image/jpg;base64,<?php echo e(get_setting('imagen_defecto')); ?>"
                                                 class="img-fit lazyload size-60px rounded" alt="">
-                                            @endif
+                                            <?php endif; ?>
                                         </span>
                                         <span class="fs-14 opacity-60 mt-3 ml-4">
-                                            @if ($cartItem['iva'] > 0)
+                                            <?php if($cartItem['iva'] > 0): ?>
                                             <span class="text-danger">*</span>
-                                            @endif
-                                            {{ $cartItem['producto_descripcion'] }}
+                                            <?php endif; ?>
+                                            <?php echo e($cartItem['producto_descripcion']); ?>
+
                                         </span>
                                     </div>
 
                                     <div class="col-md-1 text-center">
                                         <span class="opacity-60 fs-12 d-block d-lg-none">Precio</span>
-                                        <span class="fw-600 fs-16">${{ number_format(round($cartItem['precio_visible'],
-                                            2), 2) }}</span>
+                                        <span class="fw-600 fs-16">$<?php echo e(number_format(round($cartItem['precio_visible'],
+                                            2), 2)); ?></span>
                                     </div>
 
                                     <div class="col-md-2 text-center">
                                         <div class="row no-gutters align-items-center aiz-plus-minus mr-2 ml-0">
                                             <button class="btn col-auto btn-icon btn-sm btn-circle btn-light"
                                                 type="button" data-type="minus"
-                                                data-field="quantity[{{ $cartItem['ecommerce_carritosid'] }}]">
+                                                data-field="quantity[<?php echo e($cartItem['ecommerce_carritosid']); ?>]">
                                                 <i class="las la-minus"></i>
                                             </button>
                                             <input type="number"
-                                                name="quantity[{{ $cartItem['ecommerce_carritosid'] }}]"
+                                                name="quantity[<?php echo e($cartItem['ecommerce_carritosid']); ?>]"
                                                 class="col border-0 text-center flex-grow-1 fs-16 input-number"
-                                                placeholder="1" value="{{ round($cartItem['cantidad'], 2) }}" min="1"
-                                                max="{{ round($cartItem['cantidad_final'], 2) }}" autocomplete="off"
-                                                onchange="updateQuantity({{ $cartItem['ecommerce_carritosid'] }}, {{ round($cartItem['cantidad_final'], 2) }}, this)">
+                                                placeholder="1" value="<?php echo e(round($cartItem['cantidad'], 2)); ?>" min="1"
+                                                max="<?php echo e(round($cartItem['cantidad_final'], 2)); ?>" autocomplete="off"
+                                                onchange="updateQuantity(<?php echo e($cartItem['ecommerce_carritosid']); ?>, <?php echo e(round($cartItem['cantidad_final'], 2)); ?>, this)">
                                             <button class="btn col-auto btn-icon btn-sm btn-circle btn-light"
                                                 type="button" data-type="plus"
-                                                data-field="quantity[{{ $cartItem['ecommerce_carritosid'] }}]">
+                                                data-field="quantity[<?php echo e($cartItem['ecommerce_carritosid']); ?>]">
                                                 <i class="las la-plus"></i>
                                             </button>
                                         </div>
@@ -116,118 +116,116 @@ $almacenes = App\Models\Almacenes::where('disponibleventa', 1)->get();
 
                                     <div class="col-md-1 text-center">
                                         <span class="opacity-60 fs-12 d-block d-lg-none">Total</span>
-                                        <span class="fw-600 fs-16 text-primary">${{
-                                            number_format(round($cartItem['precio_visible'] * $cartItem['cantidad'], 2),
-                                            2) }}</span>
+                                        <span class="fw-600 fs-16 text-primary">$<?php echo e(number_format(round($cartItem['precio_visible'] * $cartItem['cantidad'], 2),
+                                            2)); ?></span>
                                     </div>
 
                                     <div class="col-md-1 text-center">
                                         <a href="javascript:void(0)"
-                                            onclick="showObservacion({{ $cartItem['ecommerce_carritosid'] }})"
+                                            onclick="showObservacion(<?php echo e($cartItem['ecommerce_carritosid']); ?>)"
                                             class="btn btn-icon btn-sm btn-soft-success btn-circle">
                                             <i class="las la-pen"></i>
                                         </a>
                                     </div>
 
-                                    <div @if (get_setting('productos_existencias')=='todos' ||
+                                    <div <?php if(get_setting('productos_existencias')=='todos' ||
                                         get_setting('controla_stock')==1 || (get_setting('controla_stock')==2 &&
-                                        Auth::check())) class="col-md-2 text-center" @else
-                                        class="col-md-2 text-center invisible" @endif>
+                                        Auth::check())): ?> class="col-md-2 text-center" <?php else: ?>
+                                        class="col-md-2 text-center invisible" <?php endif; ?>>
                                         <span class="opacity-60 fs-12 d-block d-lg-none ">Existencias</span>
-                                        @if ((get_setting('controla_stock') == 0 && !Auth::check()) ||
-                                        (get_setting('controla_stock') == 2 && !Auth::check()))
+                                        <?php if((get_setting('controla_stock') == 0 && !Auth::check()) ||
+                                        (get_setting('controla_stock') == 2 && !Auth::check())): ?>
 
-                                        @if ($cartItem['cantidad_final'] > 0)
+                                        <?php if($cartItem['cantidad_final'] > 0): ?>
                                         <div
                                             class="d-inline-block rounded px-2 border-success mt-1 text-success border">
-                                            <span>{{ get_setting('productos_disponibles') }}</span>
+                                            <span><?php echo e(get_setting('productos_disponibles')); ?></span>
                                         </div>
-                                        @else
+                                        <?php else: ?>
                                         <div class="d-inline-block rounded px-2 border-danger mt-1 text-danger border">
-                                            <span>{{ get_setting('productos_no_disponibles') }}</span>
+                                            <span><?php echo e(get_setting('productos_no_disponibles')); ?></span>
                                         </div>
-                                        @endif
+                                        <?php endif; ?>
 
-                                        @elseif(get_setting('controla_stock') == 0 && Auth::check())
+                                        <?php elseif(get_setting('controla_stock') == 0 && Auth::check()): ?>
 
-                                        @if ($cartItem['cantidad_final'] > 0)
+                                        <?php if($cartItem['cantidad_final'] > 0): ?>
                                         <div
                                             class="d-inline-block rounded px-2 border-success mt-1 text-success border">
-                                            <span>{{ get_setting('productos_disponibles') }}</span>
+                                            <span><?php echo e(get_setting('productos_disponibles')); ?></span>
                                         </div>
-                                        @else
+                                        <?php else: ?>
                                         <div class="d-inline-block rounded px-2 border-danger mt-1 text-danger border">
-                                            <span>{{ get_setting('productos_no_disponibles') }}</span>
+                                            <span><?php echo e(get_setting('productos_no_disponibles')); ?></span>
                                         </div>
-                                        @endif
+                                        <?php endif; ?>
 
-                                        @else
+                                        <?php else: ?>
                                         <div class="">
-                                            <span class="fw-600 fs-16 text-primary" id="cantidad">{{
-                                                round($cartItem['cantidad_final'], 2) }}</span>
+                                            <span class="fw-600 fs-16 text-primary" id="cantidad"><?php echo e(round($cartItem['cantidad_final'], 2)); ?></span>
                                         </div>
-                                        @endif
+                                        <?php endif; ?>
                                     </div>
 
                                     <div class="col-md-1 text-center">
                                         <a href="javascript:void(0)"
-                                            onclick="removeFromCartView(event, {{ $cartItem['ecommerce_carritosid'] }})"
+                                            onclick="removeFromCartView(event, <?php echo e($cartItem['ecommerce_carritosid']); ?>)"
                                             class="btn btn-icon btn-sm btn-soft-primary btn-circle">
                                             <i class="las la-trash"></i>
                                         </a>
                                     </div>
                                 </div>
                             </li>
-                            @endforeach
+                            <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                         </ul>
                     </div>
 
 
                     <div class="px-3 py-2  border-top d-flex justify-content-between">
                         <span class="opacity-60 fs-15">Subtotal</span>
-                        <span class="fw-600 fs-17">${{ $totales['subtotal'] }}</span>
+                        <span class="fw-600 fs-17">$<?php echo e($totales['subtotal']); ?></span>
                     </div>
                     <div class="px-3 py-2  border-top d-flex justify-content-between">
                         <span class="opacity-60 fs-15">Descuento</span>
-                        <span class="fw-600 fs-17">${{ $totales['descuento'] }}</span>
+                        <span class="fw-600 fs-17">$<?php echo e($totales['descuento']); ?></span>
                     </div>
                     <div class="px-3 py-2  border-top d-flex justify-content-between">
                         <span class="opacity-60 fs-15">Subtotal Neto</span>
-                        <span class="fw-600 fs-17">${{ $totales['subtotalNeto'] }}</span>
+                        <span class="fw-600 fs-17">$<?php echo e($totales['subtotalNeto']); ?></span>
                     </div>
                     <div class="px-3 py-2  border-top d-flex justify-content-between">
                         <span class="opacity-60 fs-15">IVA</span>
-                        <span class="fw-600 fs-17">${{ $totales['totalIVA'] }}</span>
+                        <span class="fw-600 fs-17">$<?php echo e($totales['totalIVA']); ?></span>
                     </div>
                     <div class="px-3 py-2  border-top d-flex justify-content-between">
                         <span class="opacity-60 fs-15">Total</span>
-                        <span class="fw-600 fs-17">${{ $totales['total'] }}</span>
+                        <span class="fw-600 fs-17">$<?php echo e($totales['total']); ?></span>
                     </div>
 
                     <div class="row align-items-center">
                         <div class="col-md-6 text-center text-md-left order-1 order-md-0">
-                            <a href="{{ route('home') }}" class="btn btn-link">
+                            <a href="<?php echo e(route('home')); ?>" class="btn btn-link">
                                 <i class="las la-arrow-left"></i>
                                 Regresar a la tienda
                             </a>
                         </div>
 
                         <div class="col-md-6 text-center text-md-right">
-                            @if (Auth::check())
-                            <a href="{{ route('verificarexistencias.shipping_info', Auth::user()->clientesid) }}"
+                            <?php if(Auth::check()): ?>
+                            <a href="<?php echo e(route('verificarexistencias.shipping_info', Auth::user()->clientesid)); ?>"
                                 class="btn btn-primary fw-600">
                                 Continuar con la Compra
                             </a>
-                            @else
+                            <?php else: ?>
                             <button class="btn btn-primary fw-600" onclick="showCheckoutModal()">Continuar
                                 con la Compra</button>
-                            @endif
+                            <?php endif; ?>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
-        @else
+        <?php else: ?>
         <div class="row">
             <div class="col-xl-8 mx-auto">
                 <div class="shadow-sm bg-white p-4 rounded">
@@ -238,12 +236,12 @@ $almacenes = App\Models\Almacenes::where('disponibleventa', 1)->get();
                 </div>
             </div>
         </div>
-        @endif
+        <?php endif; ?>
     </div>
 </section>
-@endsection
+<?php $__env->stopSection(); ?>
 
-@section('modal')
+<?php $__env->startSection('modal'); ?>
 <div class="modal fade" id="GuestCheckout">
     <div class="modal-dialog modal-dialog-zoom">
         <div class="modal-content">
@@ -255,12 +253,12 @@ $almacenes = App\Models\Almacenes::where('disponibleventa', 1)->get();
             </div>
             <div class="modal-body">
                 <div class="p-3">
-                    <form class="form-default" role="form" action="{{ route('login.cliente') }}" method="POST">
-                        @csrf
+                    <form class="form-default" role="form" action="<?php echo e(route('login.cliente')); ?>" method="POST">
+                        <?php echo csrf_field(); ?>
                         <div class="form-group">
                             <input type="text"
-                                class="form-control h-auto form-control-lg {{ $errors->has('identificacion') ? ' is-invalid' : '' }}"
-                                value="{{ old('identificacion') }}" placeholder="Identificacion" name="identificacion"
+                                class="form-control h-auto form-control-lg <?php echo e($errors->has('identificacion') ? ' is-invalid' : ''); ?>"
+                                value="<?php echo e(old('identificacion')); ?>" placeholder="Identificacion" name="identificacion"
                                 autocomplete="off">
                         </div>
 
@@ -272,7 +270,7 @@ $almacenes = App\Models\Almacenes::where('disponibleventa', 1)->get();
                         <div class="row mb-2">
                             <div class="col-6">
                                 <label class="aiz-checkbox">
-                                    <input type="checkbox" name="remember" {{ old('remember') ? 'checked' : '' }}>
+                                    <input type="checkbox" name="remember" <?php echo e(old('remember') ? 'checked' : ''); ?>>
                                     <span class=opacity-60>Recuerdame</span>
                                     <span class="aiz-square-check"></span>
                                 </label>
@@ -284,36 +282,36 @@ $almacenes = App\Models\Almacenes::where('disponibleventa', 1)->get();
 
                         <div class="mb-2">
                             <button type="submit" class="btn btn-primary btn-block fw-600">Ingresar</button>
-                            @if (get_setting('registra_clientes') == 'on')
-                            <a href="{{ route('user.registration') }}"
+                            <?php if(get_setting('registra_clientes') == 'on'): ?>
+                            <a href="<?php echo e(route('user.registration')); ?>"
                                 class="btn btn-primary btn-block fw-600">Registrarse ahora</a>
-                            @endif
+                            <?php endif; ?>
                         </div>
                     </form>
-                    @if (get_setting('registra_clientes') == 'on')
+                    <?php if(get_setting('registra_clientes') == 'on'): ?>
 
-                    @if (get_setting('login_google') == 'on' || get_setting('login_facebook') == 'on')
+                    <?php if(get_setting('login_google') == 'on' || get_setting('login_facebook') == 'on'): ?>
                     <div class="separator mb-3">
                         <span class="bg-white px-3 opacity-60">O inicia sesion</span>
                     </div>
                     <ul class="list-inline social colored text-center mb-3">
-                        @if (get_setting('login_facebook') == 'on')
+                        <?php if(get_setting('login_facebook') == 'on'): ?>
                         <li class="list-inline-item">
-                            <a href="{{ route('social.login', ['provider' => 'facebook']) }}" class="facebook">
+                            <a href="<?php echo e(route('social.login', ['provider' => 'facebook'])); ?>" class="facebook">
                                 <i class="lab la-facebook-f"></i>
                             </a>
                         </li>
-                        @endif
-                        @if (get_setting('login_google') == 'on')
+                        <?php endif; ?>
+                        <?php if(get_setting('login_google') == 'on'): ?>
                         <li class="list-inline-item">
-                            <a href="{{ route('social.login', ['provider' => 'google']) }}" class="google">
+                            <a href="<?php echo e(route('social.login', ['provider' => 'google'])); ?>" class="google">
                                 <i class="lab la-google"></i>
                             </a>
                         </li>
-                        @endif
-                        @if (get_setting('login_apple') == 'on')
+                        <?php endif; ?>
+                        <?php if(get_setting('login_apple') == 'on'): ?>
                         <li class="list-inline-item">
-                            <a href="{{ route('social.login', ['provider' => 'apple']) }}" id="apple">
+                            <a href="<?php echo e(route('social.login', ['provider' => 'apple'])); ?>" id="apple">
                                 <svg style="color: rgb(0, 0, 0);" xmlns="http://www.w3.org/2000/svg" width="24"
                                     height="24" fill="currentColor" class="bi bi-apple" viewBox="0 0 16 16">
                                     <path
@@ -325,10 +323,10 @@ $almacenes = App\Models\Almacenes::where('disponibleventa', 1)->get();
                                 </svg>
                             </a>
                         </li>
-                        @endif
+                        <?php endif; ?>
                     </ul>
-                    @endif
-                    @endif
+                    <?php endif; ?>
+                    <?php endif; ?>
                 </div>
 
 
@@ -348,13 +346,13 @@ $almacenes = App\Models\Almacenes::where('disponibleventa', 1)->get();
             </div>
             <div class="modal-body">
                 <div class="p-3">
-                    <form class="form-default" role="form" action="{{ route('verificar.identificacion') }}"
+                    <form class="form-default" role="form" action="<?php echo e(route('verificar.identificacion')); ?>"
                         method="POST">
-                        @csrf
+                        <?php echo csrf_field(); ?>
 
                         <div class="form-group">
-                            <input type="hidden" value=" @if (isset($user)) {{ $user->email }} @endif" name="email">
-                            <input type="hidden" value=" @if (isset($user)) {{ $user->name }} @endif" name="nombre">
+                            <input type="hidden" value=" <?php if(isset($user)): ?> <?php echo e($user->email); ?> <?php endif; ?>" name="email">
+                            <input type="hidden" value=" <?php if(isset($user)): ?> <?php echo e($user->name); ?> <?php endif; ?>" name="nombre">
                             <input type="text" class="form-control h-auto form-control-lg" placeholder="Identificacion"
                                 name="identificacion" minlength="10" maxlength="13" pattern="[0-9]+"
                                 onkeypress="return validarNumero(event)" id="identificacion" autocomplete="off"
@@ -383,8 +381,8 @@ $almacenes = App\Models\Almacenes::where('disponibleventa', 1)->get();
             </div>
             <div class="modal-body">
                 <div class="p-3">
-                    <form class="form-default" role="form" action="{{ route('cart.updateObservacion') }}" method="POST">
-                        @csrf
+                    <form class="form-default" role="form" action="<?php echo e(route('cart.updateObservacion')); ?>" method="POST">
+                        <?php echo csrf_field(); ?>
 
                         <div class="form-group">
                             <input type="hidden" value="" name="ecommerce_carritosid" id="ecommerce_carritosid">
@@ -401,14 +399,14 @@ $almacenes = App\Models\Almacenes::where('disponibleventa', 1)->get();
         </div>
     </div>
 </div>
-@endsection
+<?php $__env->stopSection(); ?>
 
-@section('script')
+<?php $__env->startSection('script'); ?>
 <script type="text/javascript">
     $(document).ready(function() {
-            @if (isset($user))
+            <?php if(isset($user)): ?>
                 $('#modalIdentificacion').modal()
-            @endif
+            <?php endif; ?>
         });
 
         function validarNumero(e) {
@@ -534,8 +532,8 @@ $almacenes = App\Models\Almacenes::where('disponibleventa', 1)->get();
         }
 
         function updateQuantity(key, cantidad, element) {
-            $.post('{{ route('cart.updateQuantity') }}', {
-                _token: '{{ csrf_token() }}',
+            $.post('<?php echo e(route('cart.updateQuantity')); ?>', {
+                _token: '<?php echo e(csrf_token()); ?>',
                 id: key,
                 quantity: element.value,
                 cantidad: cantidad
@@ -547,8 +545,8 @@ $almacenes = App\Models\Almacenes::where('disponibleventa', 1)->get();
         }
 
         function updateObservacion(key, element) {
-            $.post('{{ route('cart.updateObservacion') }}', {
-                _token: '{{ csrf_token() }}',
+            $.post('<?php echo e(route('cart.updateObservacion')); ?>', {
+                _token: '<?php echo e(csrf_token()); ?>',
                 id: key,
                 observacion: element.value,
 
@@ -560,8 +558,8 @@ $almacenes = App\Models\Almacenes::where('disponibleventa', 1)->get();
         }
 
         function showObservacion(key) {
-            $.post('{{ route('cart.showObservacion') }}', {
-                _token: '{{ csrf_token() }}',
+            $.post('<?php echo e(route('cart.showObservacion')); ?>', {
+                _token: '<?php echo e(csrf_token()); ?>',
                 id: key,
 
             }, function(data) {
@@ -572,4 +570,5 @@ $almacenes = App\Models\Almacenes::where('disponibleventa', 1)->get();
             $('#modalObservacion').modal();
         }
 </script>
-@endsection
+<?php $__env->stopSection(); ?>
+<?php echo $__env->make('frontend.layouts.app', \Illuminate\Support\Arr::except(get_defined_vars(), ['__data', '__path']))->render(); ?><?php /**PATH C:\laragon\www\tienda\resources\views/frontend/view_cart.blade.php ENDPATH**/ ?>

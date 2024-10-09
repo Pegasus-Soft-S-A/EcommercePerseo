@@ -6,19 +6,36 @@ use App\Models\Clientes;
 use App\Models\Pedidos;
 use App\Models\PedidosDetalles;
 use App\Models\ParametrosEmpresa;
-
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
 
 class HistorialPedidosController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
+
+        $fecha = $request->fecha;
+        $estado = null;
+
         $orders = Pedidos::where('clientesid', Auth::user()->clientesid)
             ->where('usuariocreacion', 'Ecommerce')
-            ->orderBy('fechacreacion', 'desc')->paginate(9);
-        return view('frontend.cliente.purchase_history', compact('orders'));
+            ->orderBy('fechacreacion', 'desc');
+
+        if ($request->estado != null) {
+            $orders = $orders->where('pedidos.estado', $request->estado);
+            $estado = $request->estado;
+        }
+
+        if ($fecha != null) {
+            $orders = $orders->whereDate('pedidos.fechacreacion', '>=', date('Y-m-d', strtotime(explode(" a ", $fecha)[0])))
+                ->whereDate('pedidos.fechacreacion', '<=', date('Y-m-d', strtotime(explode(" a ", $fecha)[1])));
+        }
+
+        $orders = $orders->orderBy('pedidos.emision', 'desc')
+            ->paginate(9);
+
+        return view('frontend.cliente.purchase_history', compact('orders', 'estado', 'fecha'));
     }
 
     public function purchase_history_details(Request $request)
@@ -55,5 +72,33 @@ class HistorialPedidosController extends Controller
             'text_align' => $text_align,
             'not_text_align' => $not_text_align
         ], [], 'utf-8')->download('Pedido-' . $order->pedidos_codigo . '.pdf');
+    }
+
+    public function exportPdf(Request $request)
+    {
+        $fecha = $request->fecha;
+        $estado = null;
+
+        $orders = Pedidos::where('clientesid', Auth::user()->clientesid)
+            ->where('usuariocreacion', 'Ecommerce')
+            ->orderBy('fechacreacion', 'desc');
+
+        if ($request->estado != null) {
+            $orders = $orders->where('pedidos.estado', $request->estado);
+            $estado = $request->estado;
+        }
+
+        if ($fecha != null) {
+            $orders = $orders->whereDate('pedidos.fechacreacion', '>=', date('Y-m-d', strtotime(explode(" a ", $fecha)[0])))
+                ->whereDate('pedidos.fechacreacion', '<=', date('Y-m-d', strtotime(explode(" a ", $fecha)[1])));
+        }
+
+        // Generar la vista para el PDF
+        $pdf = \PDF::loadView('orders', [
+            'orders' => $orders->get(),
+        ]);
+
+        // Descargar el archivo PDF con un nombre adecuado
+        return $pdf->download('Pedidos.pdf');
     }
 }

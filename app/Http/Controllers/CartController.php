@@ -332,4 +332,22 @@ class CartController extends Controller
 
         return view('frontend.partials.cart_details', compact('carts', 'totales'));
     }
+
+    public function showObservacion(Request $request)
+    {
+        $carrito = Carrito::findOrFail($request->id);
+
+        return response()->json([
+            'observacion' => $carrito->observacion ?? ''
+        ]);
+    }
+
+    public function updateObservacion(Request $request)
+    {
+        $carrito = Carrito::findOrFail($request->ecommerce_carritosid);
+        $carrito->observacion = $request->observacion;
+        $carrito->save();
+
+        return back();
+    }
 }

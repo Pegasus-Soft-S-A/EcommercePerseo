@@ -68,6 +68,8 @@ if ($base) {
         Route::post('/cart/removeFromCart',  [CartController::class, 'removeFromCart'])->name('cart.removeFromCart');
         Route::post('/cart/show-cart-modal', [CartController::class, 'showCartModal'])->name('cart.showCartModal');
         Route::post('/cart/updateQuantity', [CartController::class, 'updateQuantity'])->name('cart.updateQuantity');
+        Route::post('/cart/show/Obervacion', [CartController::class, 'showObservacion'])->name('cart.showObservacion');
+        Route::post('/cart/updateObservacion', [CartController::class, 'updateObservacion'])->name('cart.updateObservacion');
 
         //Direcciones
         Route::resource('addresses', DireccionController::class);
@@ -79,6 +81,8 @@ if ($base) {
 
         Route::get('invoice/{order_id}', [HistorialPedidosController::class, 'descargar_pedido'])->name('invoice.download');
         Route::get('/orders/destroy/{id}', [PedidoController::class, 'destroy'])->name('orders.destroy');
+        Route::get('/export/pdf', [HistorialPedidosController::class, 'exportPdf'])->name('orders.export.pdf');
+
 
         Route::group(['middleware' => ['auth']], function () {
 

@@ -189,6 +189,7 @@ class CheckoutController extends Controller
                 $pedido->subtotalconiva = $request->subtotalnetoconiva;
                 $pedido->total_descuento = $request->descuento;
                 $pedido->subtotalneto = $request->subtotalneto;
+                $pedido->subtotal = $request->subtotal;
                 $pedido->total_iva = $request->totalIVA;
                 $pedido->total = $request->total;
                 if ($request->token) {
@@ -214,6 +215,7 @@ class CheckoutController extends Controller
                     $detallepedido->precioiva = $cartItem->precioiva;
                     $detallepedido->descuento = $cartItem->descuento;
                     $detallepedido->preciovisible = $parametros->tipopresentacionprecios == 1 ? $cartItem->precioiva : $cartItem->precio;
+                    $detallepedido->informacion = $cartItem->observacion;
                     $detallepedido->save();
                 }
                 //Si todo se inserto correctamente hace un commit a la base
@@ -379,6 +381,7 @@ class CheckoutController extends Controller
                 $detallefactura->descuentovalor = $cartItem['precio']  * ($cartItem['descuento'] / 100);
                 $detallefactura->preciovisible = $parametros->tipopresentacionprecios == 1 ? $cartItem->precioiva : $cartItem->precio;
                 $detallefactura->costo = $parametros->costocalculoprecio == 2 ? $producto->costoactual : $producto->costoultimacompra;
+                $detallefactura->informacion = $cartItem->observacion;
                 $detallefactura->save();
 
                 //Actualizar movinventarios_almacenes
