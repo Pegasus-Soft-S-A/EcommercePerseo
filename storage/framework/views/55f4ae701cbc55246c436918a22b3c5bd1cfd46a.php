@@ -575,23 +575,7 @@
                             </div>
                             <?php endif; ?>
 
-                            <?php if(Auth::check()): ?>
-                            <?php
-                            $commentable = false;
-                            $facturas = \App\Models\Facturas::where('clientesid', Auth::user()->clientesid)->get();
-                            ?>
-                            <?php $__currentLoopData = $facturas; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $key => $factura): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
-                            <?php $__currentLoopData = \App\Models\FacturasDetalles::where('facturasid', $factura->facturasid)->get(); $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $key => $detalle): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
-                            <?php if(\App\Models\Comentarios::where('clientesid',
-                            Auth::user()->clientesid)->where('productosid', $detallesProducto->productosid)->first() ==
-                            null && $detallesProducto->productosid == $detalle->productosid): ?>
-                            <?php
-                            $commentable = true;
-                            ?>
-                            <?php endif; ?>
-                            <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
-                            <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
-                            <?php if($commentable): ?>
+                            <?php if(Auth::check() && $commentable): ?>
                             <div class="pt-4">
                                 <div class="border-bottom mb-4">
                                     <h3 class="fs-17 fw-600">
@@ -601,21 +585,19 @@
                                 <form class="form-default" role="form" action="<?php echo e(route('reviews.store')); ?>"
                                     method="POST">
                                     <?php echo csrf_field(); ?>
-                                    <input type="hidden" name="productosid"
-                                        value="<?php echo e($detallesProducto->productosid); ?>">
+                                    <input type="hidden" name="productosid" value="<?php echo e($productosid); ?>">
                                     <div class="row">
                                         <div class="col-md-6">
                                             <div class="form-group">
-                                                <label for="" class="text-uppercase c-gray-light">Su
-                                                    Nombre</label>
-                                                <input type="text" name="name" value="<?php echo e(Auth::user()->razonsocial); ?>"
+                                                <label for="" class="text-uppercase c-gray-light">Su Nombre</label>
+                                                <input type="text" name="name" value="<?php echo e($user->razonsocial); ?>"
                                                     class="form-control" disabled required>
                                             </div>
                                         </div>
                                         <div class="col-md-6">
                                             <div class="form-group">
                                                 <label for="" class="text-uppercase c-gray-light">Email</label>
-                                                <input type="text" name="email" value="<?php echo e(Auth::user()->email); ?>"
+                                                <input type="text" name="email" value="<?php echo e($user->email); ?>"
                                                     class="form-control" required disabled>
                                             </div>
                                         </div>
@@ -623,35 +605,18 @@
                                     <div class="form-group">
                                         <label class="opacity-60">Rating</label>
                                         <div class="rating rating-input">
-                                            <label>
-                                                <input type="radio" name="rating" value="1" required>
+                                            <?php for($i = 1; $i <= 5; $i++): ?> <label>
+                                                <input type="radio" name="rating" value="<?php echo e($i); ?>" required>
                                                 <i class="las la-star"></i>
-                                            </label>
-                                            <label>
-                                                <input type="radio" name="rating" value="2">
-                                                <i class="las la-star"></i>
-                                            </label>
-                                            <label>
-                                                <input type="radio" name="rating" value="3">
-                                                <i class="las la-star"></i>
-                                            </label>
-                                            <label>
-                                                <input type="radio" name="rating" value="4">
-                                                <i class="las la-star"></i>
-                                            </label>
-                                            <label>
-                                                <input type="radio" name="rating" value="5">
-                                                <i class="las la-star"></i>
-                                            </label>
+                                                </label>
+                                                <?php endfor; ?>
                                         </div>
                                     </div>
-
                                     <div class="form-group">
                                         <label class="opacity-60">Comentario</label>
                                         <textarea class="form-control" rows="4" name="comentario"
                                             placeholder="Su comentario" required></textarea>
                                     </div>
-
                                     <div class="text-right">
                                         <button type="submit" class="btn btn-primary mt-3">
                                             Enviar Comentario
@@ -660,7 +625,7 @@
                                 </form>
                             </div>
                             <?php endif; ?>
-                            <?php endif; ?>
+
 
                         </div>
                     </div>

@@ -13,25 +13,27 @@ $almacenes = App\Models\Almacenes::where('disponibleventa', 1)->get();
                     <div class="col active">
                         <div class="text-center text-primary">
                             <i class="la-3x mb-2 las la-shopping-cart"></i>
-                            <h3 class="fs-14 fw-600 d-none d-lg-block">1. Mi Carrito</h3>
+                            <h3 class="fs-14 fw-600 d-none d-lg-block">Mi Carrito</h3>
                         </div>
                     </div>
+                    @if(get_setting('maneja_sucursales') != "on")
                     <div class="col">
                         <div class="text-center">
                             <i class="la-3x mb-2 opacity-50 las la-map"></i>
-                            <h3 class="fs-14 fw-600 d-none d-lg-block opacity-50">2. Información de la Compra</h3>
+                            <h3 class="fs-14 fw-600 d-none d-lg-block opacity-50">Información de la Compra</h3>
                         </div>
                     </div>
+                    @endif
                     <div class="col">
                         <div class="text-center">
                             <i class="la-3x mb-2 opacity-50 las la-credit-card"></i>
-                            <h3 class="fs-14 fw-600 d-none d-lg-block opacity-50">3. Pago</h3>
+                            <h3 class="fs-14 fw-600 d-none d-lg-block opacity-50">Pago</h3>
                         </div>
                     </div>
                     <div class="col">
                         <div class="text-center">
                             <i class="la-3x mb-2 opacity-50 las la-check-circle"></i>
-                            <h3 class="fs-14 fw-600 d-none d-lg-block opacity-50">4. Confirmación</h3>
+                            <h3 class="fs-14 fw-600 d-none d-lg-block opacity-50">Confirmación</h3>
                         </div>
                     </div>
                 </div>
@@ -182,6 +184,35 @@ $almacenes = App\Models\Almacenes::where('disponibleventa', 1)->get();
                         </ul>
                     </div>
 
+                    @if(get_setting('maneja_sucursales') == "on")
+                    <div class="px-3 py-2 border-top d-flex justify-content-between">
+                        <span class="opacity-60 fs-15">Centro de Costos</span>
+                        <select class="form-control aiz-selectpicker" name="centros_costosid" data-live-search="true">
+                            @foreach($centro_costos as $centro_costo)
+                            <option value="{{ $centro_costo->centros_costosid }}">{{ $centro_costo->centro_costocodigo
+                                }}-{{
+                                $centro_costo->descripcion }}
+                            </option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div class="px-3 py-2 border-top d-flex justify-content-between">
+                        <span class="opacity-60 fs-15">Sucursal</span>
+                        <select class="form-control aiz-selectpicker ml-5" name="sucursalesid" data-live-search="true">
+                            @foreach($sucursales as $sucursal)
+                            <option value="{{ $sucursal->clientes_sucursalesid }}" @if ($sucursal->clientes_sucursalesid
+                                ==session('sucursalid')) selected @endif>
+                                {{ $sucursal->descripcion }}
+                            </option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div class="px-3 py-2 border-top d-flex justify-content-between">
+                        <span class="opacity-60 fs-15">Destinatario</span>
+                        <input type="text" class="form-control ml-4" name="destinatario" id="destinatario"
+                            autocomplete="off">
+                    </div>
+                    @endif
 
                     <div class="px-3 py-2  border-top d-flex justify-content-between">
                         <span class="opacity-60 fs-15">Subtotal</span>
@@ -330,8 +361,6 @@ $almacenes = App\Models\Almacenes::where('disponibleventa', 1)->get();
                     @endif
                     @endif
                 </div>
-
-
             </div>
         </div>
     </div>
@@ -405,6 +434,44 @@ $almacenes = App\Models\Almacenes::where('disponibleventa', 1)->get();
 
 @section('script')
 <script type="text/javascript">
+    // Detectar cambios en los select e input y enviar los datos al controlador
+    $(document).on('change', 'select[name="centros_costosid"], select[name="sucursalesid"]', function () {
+        let fieldName = $(this).attr('name');
+        let fieldValue = $(this).val();
+
+        // Realiza una solicitud AJAX para almacenar el valor en la sesión
+        $.post('{{ route('update.session') }}', {
+            _token: '{{ csrf_token() }}',
+            field: fieldName,
+            value: fieldValue
+        }, function (response) {
+            if (response.success) {
+                console.log('Sesión actualizada con éxito');
+            } else {
+                console.error('Error al actualizar la sesión');
+            }
+        });
+    });
+
+    $(document).on('blur', 'input[name="destinatario"]', function () {
+        let fieldName = $(this).attr('name');
+        let fieldValue = $(this).val();
+
+        // Realiza una solicitud AJAX para almacenar el valor en la sesión
+        $.post('{{ route('update.session') }}', {
+            _token: '{{ csrf_token() }}',
+            field: fieldName,
+            value: fieldValue
+        }, function (response) {
+            if (response.success) {
+                console.log('Sesión actualizada con éxito');
+            } else {
+                console.error('Error al actualizar la sesión');
+            }
+        });
+    });
+
+
     $(document).ready(function() {
             @if (isset($user))
                 $('#modalIdentificacion').modal()

@@ -1,12 +1,23 @@
 
-
+<?php
+if (get_setting('maneja_sucursales') == "on") {
+$sucursal = \App\Models\ClientesSucursales::where('clientes_sucursalesid', session('sucursalid'))->first();
+}
+?>
 <div class="top-navbar bg-white border-bottom border-soft-secondary z-1035">
     <div class="container">
         <div class="row">
             <div class="col-12 text-right d-none d-lg-block">
                 <ul class="list-inline mb-0">
                     <?php if(auth()->guard()->check()): ?>
-                    <span class="text-reset py-2 d-inline-block "><?php echo e(auth()->user()->razonsocial); ?></span>
+                    <span class="text-reset py-2 d-inline-block ">
+                        <?php echo e(auth()->user()->razonsocial); ?>
+
+                        <?php if(get_setting('maneja_sucursales') == "on"): ?>
+                        -<?php echo e($sucursal->descripcion); ?>
+
+                        <?php endif; ?>
+                    </span>
                     <li class="list-inline-item mr-3 ml-3">
                         <a href="<?php echo e(route('dashboard')); ?>" class="text-reset py-2 d-inline-block opacity-60">Mi
                             Panel</a>
@@ -134,5 +145,4 @@
         </div>
         <?php endif; ?>
     </div>
-</header>
-<?php /**PATH C:\laragon\www\tienda\resources\views/frontend/inc/nav.blade.php ENDPATH**/ ?>
+</header><?php /**PATH C:\laragon\www\tienda\resources\views/frontend/inc/nav.blade.php ENDPATH**/ ?>

@@ -52,6 +52,12 @@ if ($base) {
         Route::get('/pedidos', [PedidoController::class, 'verTodos'])->name('pedidos.index');
         Route::get('/pedidos/{id}/show', [PedidoController::class, 'pedidos_show'])->name('pedidos.show');
         Route::post('/pedidos/actualizar-estado', [PedidoController::class, 'actualizar_estado'])->name('pedido.actualizarestado');
+        Route::get('/pedidos/exportar', [PedidoController::class, 'exportPdf'])->name('pedido.export.pdf');
+        Route::get('/pedidos/crear', [PedidoController::class, 'crear'])->name('pedidos.crear');
+        Route::post('/pedidos/guardar', [PedidoController::class, 'guardar'])->name('pedidos.guardar');
+        Route::get('/pedidos/editar/{pedidosid}', [PedidoController::class, 'editar'])->name('pedidos.editar');
+        Route::post('/pedidos/actualizar', [PedidoController::class, 'actualizar'])->name('pedidos.actualizar');
+        Route::post('/pedidos/importar', [PedidoController::class, 'importarExcel'])->name('pedidos.importarExcel');
 
         Route::get('/facturas', [FacturaController::class, 'verTodos'])->name('facturas.index');
         Route::get('/facturas/{id}/show', [FacturaController::class, 'facturas_show'])->name('facturas.show');
@@ -62,5 +68,9 @@ if ($base) {
         Route::post('/test/smtp', [ConfiguracionesController::class, 'testEmail'])->name('test.smtp');
         Route::get('/asignar-claves', [ConfiguracionesController::class, 'asignar_claves'])->name('asignar_claves');
         Route::get('/asignar-direcciones', [ConfiguracionesController::class, 'asignar_direcciones'])->name('asignar_direcciones');
+
+        Route::post('/busqueda/producto', [ConfiguracionesController::class, 'busquedaProducto'])->name('busqueda.producto');
+        Route::post('/busqueda/cliente', [ConfiguracionesController::class, 'busquedacliente'])->name('busqueda.cliente');
+        Route::post('/producto/medidas', [ConfiguracionesController::class, 'obtenerMedidas'])->name('producto.medidas');
     });
 }

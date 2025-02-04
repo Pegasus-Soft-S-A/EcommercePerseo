@@ -11,10 +11,16 @@ class ComentariosController extends Controller
 {
     public function reviews(Request $request)
     {
-        $reviews = Comentarios::select('ecommerce_comentarios.ecommerce_comentariosid', 'ecommerce_comentarios.productosid', 'ecommerce_comentarios.clientesid', 'ecommerce_comentarios.valoracion', 'ecommerce_comentarios.comentario', 'ecommerce_comentarios.estado', 'productos.descripcion', 'clientes.razonsocial', 'clientes.email')
-            ->join('productos', 'productos.productosid', '=', 'ecommerce_comentarios.productosid')
-            ->join('clientes', 'clientes.clientesid', '=', 'ecommerce_comentarios.clientesid');
 
+        if (get_setting('maneja_sucursales') == "on") {
+            $reviews = Comentarios::select('ecommerce_comentarios.ecommerce_comentariosid', 'ecommerce_comentarios.productosid', 'ecommerce_comentarios.clientesid', 'ecommerce_comentarios.valoracion', 'ecommerce_comentarios.comentario', 'ecommerce_comentarios.estado', 'productos.descripcion', 'clientes_sucursales.descripcion as razonsocial')
+                ->join('productos', 'productos.productosid', '=', 'ecommerce_comentarios.productosid')
+                ->join('clientes_sucursales', 'clientes_sucursales.clientes_sucursalesid', '=', 'ecommerce_comentarios.clientes_sucursalesid');
+        } else {
+            $reviews = Comentarios::select('ecommerce_comentarios.ecommerce_comentariosid', 'ecommerce_comentarios.productosid', 'ecommerce_comentarios.clientesid', 'ecommerce_comentarios.valoracion', 'ecommerce_comentarios.comentario', 'ecommerce_comentarios.estado', 'productos.descripcion', 'clientes.razonsocial')
+                ->join('productos', 'productos.productosid', '=', 'ecommerce_comentarios.productosid')
+                ->join('clientes', 'clientes.clientesid', '=', 'ecommerce_comentarios.clientesid');
+        }
         if ($request->rating) {
             $reviews = $reviews->orderBy('ecommerce_comentarios.valoracion', $request->rating)->paginate(15);
             return view('backend.reviews', compact('reviews'));
@@ -46,7 +52,12 @@ class ComentariosController extends Controller
     {
         $review = new Comentarios();
         $review->productosid = $request->productosid;
-        $review->clientesid = Auth::user()->clientesid;
+        if (get_setting('maneja_sucursales') == "on") {
+            $review->clientes_sucursalesid = session('sucursalid');
+        } else {
+            $review->clientesid = Auth::user()->clientesid;
+        }
+
         $review->valoracion = $request->rating;
         $review->comentario = $request->comentario;
         $review->estado = '1';

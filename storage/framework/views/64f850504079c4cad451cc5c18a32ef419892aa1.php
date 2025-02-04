@@ -181,17 +181,7 @@
     </div>
     <?php endif; ?>
 
-    <?php if(get_setting('controla_stock') == 2 && Auth::check()): ?>
-    <style>
-        .modal:nth-of-type(even) {
-            z-index: 1052 !important;
-        }
-
-        .modal-backdrop.show:nth-of-type(even) {
-            z-index: 1051 !important;
-        }
-    </style>
-    <?php endif; ?>
+    
 
     <?php echo $__env->yieldContent('modal'); ?>
 
@@ -213,11 +203,13 @@
                     _token: AIZ.data.csrf,
                     id: id
                 }, function(data) {
-                    if (data != 0) {
-                        $('#wishlist').html(data);
-                        AIZ.plugins.notify('success', "Item añadido correctamente a la lista de deseos.");
-                    } else {
-                        AIZ.plugins.notify('warning', "Por favor inicie sesion primero.");
+                    switch (data) {
+                        case '1':
+                            AIZ.plugins.notify('success', "Producto añadido correctamente a la lista de deseos.");
+                            break;
+                        case '2':
+                            AIZ.plugins.notify('warning', "El producto ya se encuentra en la lista de deseos.");
+                            break;
                     }
                 });
             <?php else: ?>

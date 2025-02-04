@@ -74,6 +74,12 @@
                                 {{ $ciudad->ciudad }}</td>
                             @endif
                         </tr>
+                        @if (get_setting('maneja_sucursales') == "on")
+                        <tr>
+                            <td class="w-50 fw-600">Destinatario:</td>
+                            <td>{{$destinatario}}</td>
+                        </tr>
+                        @endif
                     </table>
                 </div>
                 <div class="col-lg-6">
@@ -104,7 +110,12 @@
                             <td class="w-50 fw-600">Total del Pedido:</td>
                             <td>$ {{ number_format(round($pedido->total,2),2) }}</td>
                         </tr>
-
+                        @if(get_setting('maneja_sucursales') == "on")
+                        <tr>
+                            <td class="w-50 fw-600">Centro Costo:</td>
+                            <td>{{$centrocosto->descripcion}}</td>
+                        </tr>
+                        @endif
                     </table>
                 </div>
             </div>
@@ -124,7 +135,10 @@
                                 <th width="50%">Producto</th>
                                 <th width="20%">Medida</th>
                                 <th width="15%">Cantidad</th>
-                                <th width="15%">Precio Unitario</th>
+                                @if($modificado==true)
+                                <th width="15%">Cantidad Anterior</th>
+                                @endif
+                                <th width="15%">Precio</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -151,7 +165,13 @@
                                 <td>
                                     {{ number_format(round($pedidoDetail->cantidaddigitada,2),2) }}
                                 </td>
-
+                                @if($modificado==true)
+                                <td>
+                                    @if($pedidoDetail->cantidadentregada<>0)
+                                        {{ number_format(round($pedidoDetail->cantidadentregada,2),2) }}
+                                        @endif
+                                </td>
+                                @endif
                                 <td>
                                     $ {{ number_format(round($pedidoDetail->preciovisible,2),2) }}
                                 </td>

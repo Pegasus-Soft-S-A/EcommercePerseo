@@ -74,6 +74,12 @@
                                 <?php echo e($ciudad->ciudad); ?></td>
                             <?php endif; ?>
                         </tr>
+                        <?php if(get_setting('maneja_sucursales') == "on"): ?>
+                        <tr>
+                            <td class="w-50 fw-600">Destinatario:</td>
+                            <td><?php echo e($destinatario); ?></td>
+                        </tr>
+                        <?php endif; ?>
                     </table>
                 </div>
                 <div class="col-lg-6">
@@ -104,7 +110,12 @@
                             <td class="w-50 fw-600">Total del Pedido:</td>
                             <td>$ <?php echo e(number_format(round($pedido->total,2),2)); ?></td>
                         </tr>
-
+                        <?php if(get_setting('maneja_sucursales') == "on"): ?>
+                        <tr>
+                            <td class="w-50 fw-600">Centro Costo:</td>
+                            <td><?php echo e($centrocosto->descripcion); ?></td>
+                        </tr>
+                        <?php endif; ?>
                     </table>
                 </div>
             </div>
@@ -124,7 +135,10 @@
                                 <th width="50%">Producto</th>
                                 <th width="20%">Medida</th>
                                 <th width="15%">Cantidad</th>
-                                <th width="15%">Precio Unitario</th>
+                                <?php if($modificado==true): ?>
+                                <th width="15%">Cantidad Anterior</th>
+                                <?php endif; ?>
+                                <th width="15%">Precio</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -152,7 +166,14 @@
                                     <?php echo e(number_format(round($pedidoDetail->cantidaddigitada,2),2)); ?>
 
                                 </td>
+                                <?php if($modificado==true): ?>
+                                <td>
+                                    <?php if($pedidoDetail->cantidadentregada<>0): ?>
+                                        <?php echo e(number_format(round($pedidoDetail->cantidadentregada,2),2)); ?>
 
+                                        <?php endif; ?>
+                                </td>
+                                <?php endif; ?>
                                 <td>
                                     $ <?php echo e(number_format(round($pedidoDetail->preciovisible,2),2)); ?>
 
@@ -217,4 +238,5 @@
             </div>
         </div>
     </div>
-</div><?php /**PATH C:\laragon\www\tienda\resources\views/frontend/cliente/order_details_customer.blade.php ENDPATH**/ ?>
+</div>
+<?php /**PATH C:\laragon\www\tienda\resources\views/frontend/cliente/order_details_customer.blade.php ENDPATH**/ ?>

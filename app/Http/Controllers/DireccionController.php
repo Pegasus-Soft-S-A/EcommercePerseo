@@ -2,8 +2,11 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Ciudades;
 use App\Models\ClientesSucursales;
+use App\Models\Parroquias;
 use App\Models\Pedidos;
+use App\Models\Provincias;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -11,9 +14,13 @@ class DireccionController extends Controller
 {
     public function store(Request $request)
     {
+
         $address = new ClientesSucursales();
         $address->clientesid = Auth::user()->clientesid;
-        $address->ciudadesid = str_pad($request->ciudad, '4', "0", STR_PAD_LEFT);
+        $address->provinciasid = str_pad($request->provinciasid, '2', "0", STR_PAD_LEFT);
+        $address->ciudadesid = str_pad($request->ciudadesid, '4', "0", STR_PAD_LEFT);
+        $address->parroquiasid = str_pad($request->parroquiasid, '6', "0", STR_PAD_LEFT);
+        $address->descripcion = $request->descripcion;
         $address->direccion = $request->direccion;
         $address->telefono1 = $request->telefono;
         $address->fechacreacion = now();
@@ -26,6 +33,11 @@ class DireccionController extends Controller
     public function edit($id)
     {
         $data['address_data'] = ClientesSucursales::findOrFail($id);
+        $data['provincias'] = Provincias::all();
+        // $data['ciudades'] = Ciudades::all();
+        // $data['parroquias'] = Parroquias::all();
+
+
         return view('frontend.edit_address_modal', $data);
     }
 
@@ -34,7 +46,10 @@ class DireccionController extends Controller
         $address = ClientesSucursales::findOrFail($id);
 
         $address->clientesid = Auth::user()->clientesid;
-        $address->ciudadesid = str_pad($request->ciudad, '4', "0", STR_PAD_LEFT);
+        $address->provinciasid = str_pad($request->provinciasid, '2', "0", STR_PAD_LEFT);
+        $address->ciudadesid = str_pad($request->ciudadesid, '4', "0", STR_PAD_LEFT);
+        $address->parroquiasid = str_pad($request->parroquiasid, '6', "0", STR_PAD_LEFT);
+        $address->descripcion = $request->descripcion;
         $address->direccion = $request->direccion;
         $address->telefono1 = $request->telefono;
         $address->fechamodificacion = now();

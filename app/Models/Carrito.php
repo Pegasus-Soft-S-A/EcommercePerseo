@@ -11,6 +11,6 @@ class Carrito extends Model
     protected $connection = "empresa";
     protected $table = 'ecommerce_carrito';
     protected $primaryKey = 'ecommerce_carritosid';
-    protected $fillable = ['clientesid', 'precio', 'medidasid', 'productosid', 'cantidad', 'cantidadfactor', 'iva', 'precio', 'precioiva', 'descuento', 'usuario_temporalid','almacenesid'];
+    protected $fillable = ['clientesid', 'precio', 'medidasid', 'productosid', 'cantidad', 'cantidadfactor', 'iva', 'precio', 'precioiva', 'descuento', 'usuario_temporalid', 'almacenesid', 'clientes_sucursalesid'];
     public $timestamps = false;
 }

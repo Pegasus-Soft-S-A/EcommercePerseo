@@ -21,7 +21,7 @@
                 <label class="col-md-2 col-form-label">Identificacion</label>
                 <div class="col-md-10">
                     <input type="text" class="form-control" placeholder="Identificacion" name="identificacion"
-                        value="{{ Auth::user()->identificacion }}" @if (Auth::user()->identificacion != '') readonly
+                        value="{{$cliente->identificacion }}" @if (Auth::user()->identificacion != '') readonly
                     @endif autocomplete="off">
                 </div>
             </div>
@@ -30,32 +30,36 @@
                 <label class="col-md-2 col-form-label">Nombre</label>
                 <div class="col-md-10">
                     <input type="text" class="form-control" placeholder="Nombre" name="razonsocial"
-                        value="{{ Auth::user()->razonsocial }}" @if (Auth::user()->identificacion != '')
-                    @endif autocomplete="off">
+                        value="{{$cliente->razonsocial }}" @if (Auth::user()->identificacion != '')
+                    @endif @if (get_setting('maneja_sucursales') == "on") readonly @endif
+                    autocomplete="off">
                 </div>
             </div>
 
             <div class="form-group row">
                 <label class="col-md-2 col-form-label">Email</label>
                 <div class="col-md-10">
-                    <input type="text" class="form-control" placeholder="Email" name="email"
-                        value="{{ Auth::user()->email_login }}" autocomplete="off" required>
+                    <input @if (get_setting('maneja_sucursales')=="on" ) readonly @endif type="text"
+                        class="form-control" placeholder="Email" name="email" value="{{$cliente->email_login }}"
+                        autocomplete="off" required>
                 </div>
             </div>
 
             <div class="form-group row">
                 <label class="col-md-2 col-form-label">Telefono</label>
                 <div class="col-md-10">
-                    <input type="text" class="form-control" placeholder="Telefono" name="telefono1"
-                        value="{{ Auth::user()->telefono1 }}" autocomplete="off">
+                    <input @if (get_setting('maneja_sucursales')=="on" ) readonly @endif type="text"
+                        class="form-control" placeholder="Telefono" name="telefono1" value="{{$cliente->telefono1 }}"
+                        autocomplete="off">
                 </div>
             </div>
 
             <div class="form-group row">
                 <label class="col-md-2 col-form-label">Convencional</label>
                 <div class="col-md-10">
-                    <input type="text" class="form-control" placeholder="Convencional" name="telefono2"
-                        value="{{ Auth::user()->telefono2 }}" autocomplete="off">
+                    <input @if (get_setting('maneja_sucursales')=="on" ) readonly @endif type="text"
+                        class="form-control" placeholder="Convencional" name="telefono2"
+                        value="{{$cliente->telefono2 }}" autocomplete="off">
                 </div>
             </div>
 
@@ -63,7 +67,7 @@
                 <label class="col-md-2 col-form-label">Whatsapp</label>
                 <div class="col-md-10">
                     <input type="text" class="form-control" placeholder="Whatsapp" name="telefono3"
-                        value="{{ Auth::user()->telefono3 }}" autocomplete="off">
+                        value="{{$cliente->telefono3}}" autocomplete="off">
                 </div>
             </div>
 
@@ -98,49 +102,53 @@
     </div>
     <div class="card-body">
         <div class="row gutters-10">
-            @php
-            $sucursales = \App\Models\ClientesSucursales::select('clientes_sucursales.clientes_sucursalesid',
-            'clientes_sucursales.direccion', 'clientes_sucursales.telefono1', 'ciudades.ciudad')
-            ->join('ciudades', 'ciudades.ciudadesid', 'clientes_sucursales.ciudadesid')
-            ->where('clientes_sucursales.clientesid', Auth::user()->clientesid)
-            ->get();
-            @endphp
             @foreach ($sucursales as $key => $address)
             <div class="col-lg-6">
                 <div class="border p-3 pr-5 rounded mb-3 position-relative">
-                    <div>
-                        <span class="w-50 fw-600">Direccion:</span>
-                        <span class="ml-2">{{ $address->direccion }}</span>
-                    </div>
-                    <div>
-                        <span class="w-50 fw-600">Ciudad:</span>
-                        <span class="ml-2">{{ $address->ciudad }}</span>
-                    </div>
-                    <div>
-                        <span class="w-50 fw-600">Telefono:</span>
-                        <span class="ml-2">{{ $address->telefono1 }}</span>
-                    </div>
-                    <div class="dropdown position-absolute right-0 top-0">
-                        <button class="btn bg-gray px-2" type="button" data-toggle="dropdown">
-                            <i class="la la-ellipsis-v"></i>
-                        </button>
-                        <div class="dropdown-menu dropdown-menu-right" aria-labelledby="dropdownMenuButton">
-                            <a class="dropdown-item" onclick="edit_address('{{ $address->clientes_sucursalesid }}')">
-                                Editar
-                            </a>
-                            <a class="dropdown-item"
-                                href="{{ route('addresses.destroy', $address->clientes_sucursalesid) }}">Eliminar</a>
+                    @if($address->descripcion<>'')
+                        <div>
+                            <span class="w-50 fw-600">Descripción:</span>
+                            <span class="ml-2">{{ $address->descripcion }}</span>
                         </div>
-                    </div>
+                        @endif
+                        <div>
+                            <span class="w-50 fw-600">Direccion:</span>
+                            <span class="ml-2">{{ $address->direccion }}</span>
+                        </div>
+                        <div>
+                            <span class="w-50 fw-600">Ciudad:</span>
+                            <span class="ml-2">{{ $address->ciudad }}</span>
+                        </div>
+                        <div>
+                            <span class="w-50 fw-600">Telefono:</span>
+                            <span class="ml-2">{{ $address->telefono1 }}</span>
+                        </div>
+                        @if (get_setting('maneja_sucursales') != "on")
+                        <div class="dropdown position-absolute right-0 top-0">
+                            <button class="btn bg-gray px-2" type="button" data-toggle="dropdown">
+                                <i class="la la-ellipsis-v"></i>
+                            </button>
+                            <div class="dropdown-menu dropdown-menu-right" aria-labelledby="dropdownMenuButton">
+                                <a class="dropdown-item"
+                                    onclick="edit_address('{{ $address->clientes_sucursalesid }}')">
+                                    Editar
+                                </a>
+                                <a class="dropdown-item"
+                                    href="{{ route('addresses.destroy', $address->clientes_sucursalesid) }}">Eliminar</a>
+                            </div>
+                        </div>
+                        @endif
                 </div>
             </div>
             @endforeach
+            @if (get_setting('maneja_sucursales') != "on")
             <div class="col-lg-6 mx-auto" onclick="add_new_address()">
-                <div class="border p-3 rounded mb-3 c-pointer text-center bg-light">
+                <div class="border p-4 rounded c-pointer text-center bg-light">
                     <i class="la la-plus la-2x"></i>
                     <div class="alpha-7">Agregar Nueva Direccion</div>
                 </div>
             </div>
+            @endif
         </div>
     </div>
 </div>
@@ -162,18 +170,51 @@
                 @csrf
                 <div class="modal-body">
                     <div class="p-3">
+                        <div class="row">
+                            <div class="col-md-2">
+                                <label>Descripción</label>
+                            </div>
+                            <div class="col-md-10">
+                                <input type="text" class="form-control mb-3" placeholder="Casa, Trabajo, etc."
+                                    name="descripcion" value="" autocomplete="off" required>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-2">
+                                <label>Provincia</label>
+                            </div>
+                            <div class="col-md-10">
+                                <select class="form-control mb-3 aiz-selectpicker" data-live-search="true"
+                                    name="provinciasid" id="provinciasid" required>
+                                    <option value="">Seleccione Provincia</option>
+                                    @foreach ($provincias as $provincia)
+                                    <option value="{{ $provincia->provinciasid }}">{{ $provincia->provincia }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                        </div>
 
                         <div class="row">
                             <div class="col-md-2">
                                 <label>Ciudad</label>
                             </div>
                             <div class="col-md-10">
-                                <select class="form-control mb-3 aiz-selectpicker" data-live-search="true" name="ciudad"
-                                    required>
+                                <select class="form-control mb-3 aiz-selectpicker" data-live-search="true"
+                                    name="ciudadesid" id="ciudadesid" required disabled>
                                     <option value="">Seleccione Ciudad</option>
-                                    @foreach (\App\Models\Ciudades::get() as $key => $ciudad)
-                                    <option value="{{ $ciudad->ciudadesid }}">{{ $ciudad->ciudad }}</option>
-                                    @endforeach
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-2">
+                                <label>Parroquias</label>
+                            </div>
+                            <div class="col-md-10">
+                                <select class="form-control mb-3 aiz-selectpicker" data-live-search="true"
+                                    name="parroquiasid" id="parroquiasid" required disabled>
+                                    <option value="">Seleccione Parroquia</option>
                                 </select>
                             </div>
                         </div>
@@ -237,9 +278,9 @@
                 e.preventDefault();
                 return false;
             }
-        }
+    }
 
-        function edit_address(address) {
+    function edit_address(address) {
             var url = '{{ route('addresses.edit', 'clientes_sucursalesid') }}';
             url = url.replace('clientes_sucursalesid', address);
 
@@ -255,10 +296,73 @@
                     AIZ.plugins.bootstrapSelect('refresh');
                 }
             });
-        }
+    }
 
-        function add_new_address() {
-            $('#new-address-modal').modal('show');
-        }
+    function add_new_address() {
+        $('#new-address-modal').modal('show');
+    }
+
+    $(document).ready(function() {
+        // Obtener los segmentos de la URL
+        var pathSegments = window.location.pathname.split('/').filter(segment => segment !== "");
+
+        // Verificar si "tienda" está en la URL
+        var tieneTienda = pathSegments.includes("tienda");
+
+        // Buscar el primer número en la URL (ID de la empresa)
+        var empresaSegment = pathSegments.find(segment => !isNaN(segment));
+
+        // Construir la URL base dinámicamente
+        var baseURL = tieneTienda ? '/tienda/' + empresaSegment : '/' + empresaSegment;
+        // Cuando cambia la provincia
+        $('#provinciasid').change(function() {
+            var provinciaId = $(this).val();
+
+            $('#ciudadesid').prop('disabled', true);
+            $('#parroquiasid').prop('disabled', true);
+
+            if(provinciaId) {
+                $.ajax({
+                    url: baseURL + '/obtener-ciudades/' + provinciaId,
+                    type: 'GET',
+                    success: function(data) {
+                        $('#ciudadesid').empty();
+                        $('#ciudadesid').append('<option value="">Seleccione Ciudad</option>');
+
+                        $.each(data, function(key, value) {
+                            $('#ciudadesid').append('<option value="' + value.ciudadesid + '">' + value.ciudad + '</option>');
+                        });
+
+                        $('#ciudadesid').prop('disabled', false);
+                        $('.aiz-selectpicker').selectpicker('refresh');
+                    }
+                });
+            }
+        });
+
+        // Cuando cambia la ciudad
+        $('#ciudadesid').change(function() {
+            var ciudadId = $(this).val();
+            $('#parroquiasid').prop('disabled', true);
+
+            if(ciudadId) {
+                $.ajax({
+                    url: baseURL + '/obtener-parroquias/' + ciudadId,
+                    type: 'GET',
+                    success: function(data) {
+                        $('#parroquiasid').empty();
+                        $('#parroquiasid').append('<option value="">Seleccione Parroquia</option>');
+
+                        $.each(data, function(key, value) {
+                            $('#parroquiasid').append('<option value="' + value.parroquiasid + '">' + value.parroquia + '</option>');
+                        });
+
+                        $('#parroquiasid').prop('disabled', false);
+                        $('.aiz-selectpicker').selectpicker('refresh');
+                    }
+                });
+            }
+        });
+    });
 </script>
 @endsection

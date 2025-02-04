@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Models\Carrito;
+use App\Models\CentroCostos;
+use App\Models\ClientesSucursales;
 use App\Models\MovimientosInventariosAlmacenes;
 use App\Models\ParametrosEmpresa;
 use App\Models\Producto;
@@ -18,6 +20,7 @@ class CartController extends Controller
     {
         $carts = $this->getCarts($request);
         $parametros = ParametrosEmpresa::first();
+        $sucursales = ClientesSucursales::where('clientesid', get_setting('cliente_pedidos'))->orderBy('descripcion')->get();
 
         foreach ($carts as &$cartItem) {
             $product = Producto::where('productosid', $cartItem['productosid'])->first();
@@ -29,14 +32,35 @@ class CartController extends Controller
         }
         // Calcula los totales
         $totales = $this->calcularTotales($carts, $parametros);
+        $centro_costos = CentroCostos::where('estado', 1)
+            // Primero ordenamos por el prefijo alfabético (antes del primer punto)
+            ->orderByRaw("SUBSTRING_INDEX(centro_costocodigo, '.', 1) ASC")
+            // Luego ordenamos por los segmentos numéricos posteriores, de forma que se interpreten como enteros
+            ->orderByRaw("CONVERT(SUBSTRING_INDEX(SUBSTRING_INDEX(centro_costocodigo, '.', 2), '.', -1), UNSIGNED) ASC")  // Segmento 1 (después del primer punto)
+            ->orderByRaw("CONVERT(SUBSTRING_INDEX(SUBSTRING_INDEX(centro_costocodigo, '.', 3), '.', -1), UNSIGNED) ASC")  // Segmento 2 (después del segundo punto)
+            ->orderByRaw("CONVERT(SUBSTRING_INDEX(SUBSTRING_INDEX(centro_costocodigo, '.', 4), '.', -1), UNSIGNED) ASC")  // Segmento 3 (después del tercer punto)
+            // Agrega más líneas si hay más segmentos que ordenar
+            ->get();
+        // Extrae el primer registro (si existe)
+        $primerCentroCosto = $centro_costos->first();  // Obtienes el primer registro de la colección
+
+        // Si hay al menos un centro de costo, guarda el 'centros_costosid' en la sesión
+        if ($primerCentroCosto) {
+            session(['centro_costo' => $primerCentroCosto->centros_costosid]);
+        }
+        session(['sucursal_carrito' => session('sucursalid')]);
+        session(['destinatario' => '']);
         // Retorna la vista con los carritos y los totales ya calculados
-        return view('frontend.view_cart', compact('carts', 'totales'));
+        return view('frontend.view_cart', compact('carts', 'totales', 'centro_costos', 'sucursales'));
     }
 
     protected function getCarts(Request $request)
     {
         if (auth()->user() != null) {
             $clientesid = Auth::user()->clientesid;
+            if (get_setting('maneja_sucursales') == "on") {
+                return Carrito::where('clientesid', $clientesid)->where('clientes_sucursalesid', session('sucursalid'))->get();
+            }
             return Carrito::where('clientesid', $clientesid)->get();
         } else {
             $usuario_temporalid = $request->session()->get('usuario_temporalid');
@@ -242,12 +266,15 @@ class CartController extends Controller
             $data['cantidad'] = 1;
         }
 
+        if (get_setting('maneja_sucursales') == "on") {
+            $data['clientes_sucursalesid'] = session('sucursalid');
+        }
 
         if ($carts && count($carts) > 0) {
             $encontroEnCarro = false;
 
             foreach ($carts as $key => $cartItem) {
-                if ($cartItem['productosid'] == $request->id && $cartItem['medidasid'] == $request->medidasid && $cartItem['almacenesid'] == $request->variableinicio) {
+                if ($cartItem['productosid'] == $request->id && $cartItem['medidasid'] == $request->medidasid && $cartItem['almacenesid'] == $request->variableinicio && $cartItem['sucursalid'] == session('sucursalid')) {
 
                     $encontroEnCarro = true;
                     $cartItem['cantidad'] += $request['quantity'];
@@ -290,7 +317,18 @@ class CartController extends Controller
 
     public function updateQuantity(Request $request)
     {
+
         $carrito = Carrito::findOrFail($request->id);
+        $sucursales = ClientesSucursales::where('clientesid', get_setting('cliente_pedidos'))->orderBy('descripcion')->get();
+        $centro_costos = CentroCostos::where('estado', 1)
+            // Primero ordenamos por el prefijo alfabético (antes del primer punto)
+            ->orderByRaw("SUBSTRING_INDEX(centro_costocodigo, '.', 1) ASC")
+            // Luego ordenamos por los segmentos numéricos posteriores, de forma que se interpreten como enteros
+            ->orderByRaw("CONVERT(SUBSTRING_INDEX(SUBSTRING_INDEX(centro_costocodigo, '.', 2), '.', -1), UNSIGNED) ASC")  // Segmento 1 (después del primer punto)
+            ->orderByRaw("CONVERT(SUBSTRING_INDEX(SUBSTRING_INDEX(centro_costocodigo, '.', 3), '.', -1), UNSIGNED) ASC")  // Segmento 2 (después del segundo punto)
+            ->orderByRaw("CONVERT(SUBSTRING_INDEX(SUBSTRING_INDEX(centro_costocodigo, '.', 4), '.', -1), UNSIGNED) ASC")  // Segmento 3 (después del tercer punto)
+            // Agrega más líneas si hay más segmentos que ordenar
+            ->get();
 
         if ($carrito['ecommerce_carritosid'] == $request->id) {
             $product = Producto::where('productosid', $carrito['productosid'])->first();
@@ -329,8 +367,7 @@ class CartController extends Controller
         }
         // Calcula los totales
         $totales = $this->calcularTotales($carts, $parametros);
-
-        return view('frontend.partials.cart_details', compact('carts', 'totales'));
+        return view('frontend.partials.cart_details', compact('carts', 'totales', 'centro_costos', 'sucursales'));
     }
 
     public function showObservacion(Request $request)

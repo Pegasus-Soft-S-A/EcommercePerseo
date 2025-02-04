@@ -19,7 +19,7 @@
                 <label class="col-md-2 col-form-label">Identificacion</label>
                 <div class="col-md-10">
                     <input type="text" class="form-control" placeholder="Identificacion" name="identificacion"
-                        value="<?php echo e(Auth::user()->identificacion); ?>" <?php if(Auth::user()->identificacion != ''): ?> readonly
+                        value="<?php echo e($cliente->identificacion); ?>" <?php if(Auth::user()->identificacion != ''): ?> readonly
                     <?php endif; ?> autocomplete="off">
                 </div>
             </div>
@@ -28,32 +28,36 @@
                 <label class="col-md-2 col-form-label">Nombre</label>
                 <div class="col-md-10">
                     <input type="text" class="form-control" placeholder="Nombre" name="razonsocial"
-                        value="<?php echo e(Auth::user()->razonsocial); ?>" <?php if(Auth::user()->identificacion != ''): ?>
-                    <?php endif; ?> autocomplete="off">
+                        value="<?php echo e($cliente->razonsocial); ?>" <?php if(Auth::user()->identificacion != ''): ?>
+                    <?php endif; ?> <?php if(get_setting('maneja_sucursales') == "on"): ?> readonly <?php endif; ?>
+                    autocomplete="off">
                 </div>
             </div>
 
             <div class="form-group row">
                 <label class="col-md-2 col-form-label">Email</label>
                 <div class="col-md-10">
-                    <input type="text" class="form-control" placeholder="Email" name="email"
-                        value="<?php echo e(Auth::user()->email_login); ?>" autocomplete="off" required>
+                    <input <?php if(get_setting('maneja_sucursales')=="on" ): ?> readonly <?php endif; ?> type="text"
+                        class="form-control" placeholder="Email" name="email" value="<?php echo e($cliente->email_login); ?>"
+                        autocomplete="off" required>
                 </div>
             </div>
 
             <div class="form-group row">
                 <label class="col-md-2 col-form-label">Telefono</label>
                 <div class="col-md-10">
-                    <input type="text" class="form-control" placeholder="Telefono" name="telefono1"
-                        value="<?php echo e(Auth::user()->telefono1); ?>" autocomplete="off">
+                    <input <?php if(get_setting('maneja_sucursales')=="on" ): ?> readonly <?php endif; ?> type="text"
+                        class="form-control" placeholder="Telefono" name="telefono1" value="<?php echo e($cliente->telefono1); ?>"
+                        autocomplete="off">
                 </div>
             </div>
 
             <div class="form-group row">
                 <label class="col-md-2 col-form-label">Convencional</label>
                 <div class="col-md-10">
-                    <input type="text" class="form-control" placeholder="Convencional" name="telefono2"
-                        value="<?php echo e(Auth::user()->telefono2); ?>" autocomplete="off">
+                    <input <?php if(get_setting('maneja_sucursales')=="on" ): ?> readonly <?php endif; ?> type="text"
+                        class="form-control" placeholder="Convencional" name="telefono2"
+                        value="<?php echo e($cliente->telefono2); ?>" autocomplete="off">
                 </div>
             </div>
 
@@ -61,7 +65,7 @@
                 <label class="col-md-2 col-form-label">Whatsapp</label>
                 <div class="col-md-10">
                     <input type="text" class="form-control" placeholder="Whatsapp" name="telefono3"
-                        value="<?php echo e(Auth::user()->telefono3); ?>" autocomplete="off">
+                        value="<?php echo e($cliente->telefono3); ?>" autocomplete="off">
                 </div>
             </div>
 
@@ -96,49 +100,53 @@
     </div>
     <div class="card-body">
         <div class="row gutters-10">
-            <?php
-            $sucursales = \App\Models\ClientesSucursales::select('clientes_sucursales.clientes_sucursalesid',
-            'clientes_sucursales.direccion', 'clientes_sucursales.telefono1', 'ciudades.ciudad')
-            ->join('ciudades', 'ciudades.ciudadesid', 'clientes_sucursales.ciudadesid')
-            ->where('clientes_sucursales.clientesid', Auth::user()->clientesid)
-            ->get();
-            ?>
             <?php $__currentLoopData = $sucursales; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $key => $address): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
             <div class="col-lg-6">
                 <div class="border p-3 pr-5 rounded mb-3 position-relative">
-                    <div>
-                        <span class="w-50 fw-600">Direccion:</span>
-                        <span class="ml-2"><?php echo e($address->direccion); ?></span>
-                    </div>
-                    <div>
-                        <span class="w-50 fw-600">Ciudad:</span>
-                        <span class="ml-2"><?php echo e($address->ciudad); ?></span>
-                    </div>
-                    <div>
-                        <span class="w-50 fw-600">Telefono:</span>
-                        <span class="ml-2"><?php echo e($address->telefono1); ?></span>
-                    </div>
-                    <div class="dropdown position-absolute right-0 top-0">
-                        <button class="btn bg-gray px-2" type="button" data-toggle="dropdown">
-                            <i class="la la-ellipsis-v"></i>
-                        </button>
-                        <div class="dropdown-menu dropdown-menu-right" aria-labelledby="dropdownMenuButton">
-                            <a class="dropdown-item" onclick="edit_address('<?php echo e($address->clientes_sucursalesid); ?>')">
-                                Editar
-                            </a>
-                            <a class="dropdown-item"
-                                href="<?php echo e(route('addresses.destroy', $address->clientes_sucursalesid)); ?>">Eliminar</a>
+                    <?php if($address->descripcion<>''): ?>
+                        <div>
+                            <span class="w-50 fw-600">Descripción:</span>
+                            <span class="ml-2"><?php echo e($address->descripcion); ?></span>
                         </div>
-                    </div>
+                        <?php endif; ?>
+                        <div>
+                            <span class="w-50 fw-600">Direccion:</span>
+                            <span class="ml-2"><?php echo e($address->direccion); ?></span>
+                        </div>
+                        <div>
+                            <span class="w-50 fw-600">Ciudad:</span>
+                            <span class="ml-2"><?php echo e($address->ciudad); ?></span>
+                        </div>
+                        <div>
+                            <span class="w-50 fw-600">Telefono:</span>
+                            <span class="ml-2"><?php echo e($address->telefono1); ?></span>
+                        </div>
+                        <?php if(get_setting('maneja_sucursales') != "on"): ?>
+                        <div class="dropdown position-absolute right-0 top-0">
+                            <button class="btn bg-gray px-2" type="button" data-toggle="dropdown">
+                                <i class="la la-ellipsis-v"></i>
+                            </button>
+                            <div class="dropdown-menu dropdown-menu-right" aria-labelledby="dropdownMenuButton">
+                                <a class="dropdown-item"
+                                    onclick="edit_address('<?php echo e($address->clientes_sucursalesid); ?>')">
+                                    Editar
+                                </a>
+                                <a class="dropdown-item"
+                                    href="<?php echo e(route('addresses.destroy', $address->clientes_sucursalesid)); ?>">Eliminar</a>
+                            </div>
+                        </div>
+                        <?php endif; ?>
                 </div>
             </div>
             <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
+            <?php if(get_setting('maneja_sucursales') != "on"): ?>
             <div class="col-lg-6 mx-auto" onclick="add_new_address()">
-                <div class="border p-3 rounded mb-3 c-pointer text-center bg-light">
+                <div class="border p-4 rounded c-pointer text-center bg-light">
                     <i class="la la-plus la-2x"></i>
                     <div class="alpha-7">Agregar Nueva Direccion</div>
                 </div>
             </div>
+            <?php endif; ?>
         </div>
     </div>
 </div>
@@ -160,18 +168,51 @@
                 <?php echo csrf_field(); ?>
                 <div class="modal-body">
                     <div class="p-3">
+                        <div class="row">
+                            <div class="col-md-2">
+                                <label>Descripción</label>
+                            </div>
+                            <div class="col-md-10">
+                                <input type="text" class="form-control mb-3" placeholder="Casa, Trabajo, etc."
+                                    name="descripcion" value="" autocomplete="off" required>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-2">
+                                <label>Provincia</label>
+                            </div>
+                            <div class="col-md-10">
+                                <select class="form-control mb-3 aiz-selectpicker" data-live-search="true"
+                                    name="provinciasid" id="provinciasid" required>
+                                    <option value="">Seleccione Provincia</option>
+                                    <?php $__currentLoopData = $provincias; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $provincia): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                                    <option value="<?php echo e($provincia->provinciasid); ?>"><?php echo e($provincia->provincia); ?></option>
+                                    <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
+                                </select>
+                            </div>
+                        </div>
 
                         <div class="row">
                             <div class="col-md-2">
                                 <label>Ciudad</label>
                             </div>
                             <div class="col-md-10">
-                                <select class="form-control mb-3 aiz-selectpicker" data-live-search="true" name="ciudad"
-                                    required>
+                                <select class="form-control mb-3 aiz-selectpicker" data-live-search="true"
+                                    name="ciudadesid" id="ciudadesid" required disabled>
                                     <option value="">Seleccione Ciudad</option>
-                                    <?php $__currentLoopData = \App\Models\Ciudades::get(); $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $key => $ciudad): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
-                                    <option value="<?php echo e($ciudad->ciudadesid); ?>"><?php echo e($ciudad->ciudad); ?></option>
-                                    <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-2">
+                                <label>Parroquias</label>
+                            </div>
+                            <div class="col-md-10">
+                                <select class="form-control mb-3 aiz-selectpicker" data-live-search="true"
+                                    name="parroquiasid" id="parroquiasid" required disabled>
+                                    <option value="">Seleccione Parroquia</option>
                                 </select>
                             </div>
                         </div>
@@ -235,9 +276,9 @@
                 e.preventDefault();
                 return false;
             }
-        }
+    }
 
-        function edit_address(address) {
+    function edit_address(address) {
             var url = '<?php echo e(route('addresses.edit', 'clientes_sucursalesid')); ?>';
             url = url.replace('clientes_sucursalesid', address);
 
@@ -253,11 +294,74 @@
                     AIZ.plugins.bootstrapSelect('refresh');
                 }
             });
-        }
+    }
 
-        function add_new_address() {
-            $('#new-address-modal').modal('show');
-        }
+    function add_new_address() {
+        $('#new-address-modal').modal('show');
+    }
+
+    $(document).ready(function() {
+        // Obtener los segmentos de la URL
+        var pathSegments = window.location.pathname.split('/').filter(segment => segment !== "");
+
+        // Verificar si "tienda" está en la URL
+        var tieneTienda = pathSegments.includes("tienda");
+
+        // Buscar el primer número en la URL (ID de la empresa)
+        var empresaSegment = pathSegments.find(segment => !isNaN(segment));
+
+        // Construir la URL base dinámicamente
+        var baseURL = tieneTienda ? '/tienda/' + empresaSegment : '/' + empresaSegment;
+        // Cuando cambia la provincia
+        $('#provinciasid').change(function() {
+            var provinciaId = $(this).val();
+
+            $('#ciudadesid').prop('disabled', true);
+            $('#parroquiasid').prop('disabled', true);
+
+            if(provinciaId) {
+                $.ajax({
+                    url: baseURL + '/obtener-ciudades/' + provinciaId,
+                    type: 'GET',
+                    success: function(data) {
+                        $('#ciudadesid').empty();
+                        $('#ciudadesid').append('<option value="">Seleccione Ciudad</option>');
+
+                        $.each(data, function(key, value) {
+                            $('#ciudadesid').append('<option value="' + value.ciudadesid + '">' + value.ciudad + '</option>');
+                        });
+
+                        $('#ciudadesid').prop('disabled', false);
+                        $('.aiz-selectpicker').selectpicker('refresh');
+                    }
+                });
+            }
+        });
+
+        // Cuando cambia la ciudad
+        $('#ciudadesid').change(function() {
+            var ciudadId = $(this).val();
+            $('#parroquiasid').prop('disabled', true);
+
+            if(ciudadId) {
+                $.ajax({
+                    url: baseURL + '/obtener-parroquias/' + ciudadId,
+                    type: 'GET',
+                    success: function(data) {
+                        $('#parroquiasid').empty();
+                        $('#parroquiasid').append('<option value="">Seleccione Parroquia</option>');
+
+                        $.each(data, function(key, value) {
+                            $('#parroquiasid').append('<option value="' + value.parroquiasid + '">' + value.parroquia + '</option>');
+                        });
+
+                        $('#parroquiasid').prop('disabled', false);
+                        $('.aiz-selectpicker').selectpicker('refresh');
+                    }
+                });
+            }
+        });
+    });
 </script>
 <?php $__env->stopSection(); ?>
 <?php echo $__env->make('frontend.layouts.user_panel', \Illuminate\Support\Arr::except(get_defined_vars(), ['__data', '__path']))->render(); ?><?php /**PATH C:\laragon\www\tienda\resources\views/frontend/cliente/profile.blade.php ENDPATH**/ ?>

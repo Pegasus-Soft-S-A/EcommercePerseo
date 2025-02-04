@@ -12,10 +12,6 @@
     <div class="col-md-4">
         <div class="bg-grad-1 text-white rounded-lg mb-4 overflow-hidden">
             <div class="px-3 pt-3">
-                @php
-                $clientesid = Auth::user()->clientesid;
-                $cart = \App\Models\Carrito::where('clientesid', $clientesid)->get();
-                @endphp
                 @if(count($cart) > 0)
                 <div class="h3 fw-700">
                     {{ count($cart) }} Producto(s)
@@ -38,7 +34,7 @@
         <div class="bg-grad-2 text-white rounded-lg mb-4 overflow-hidden">
             <div class="px-3 pt-3">
                 <div class="h3 fw-700">
-                    {{count(\App\Models\Wishlist::where('clientesid',Auth::user()->clientesid)->get())}} Producto(s)
+                    {{count($wishlist)}} Producto(s)
                 </div>
                 <div class="opacity-50">en la lista de deseos</div>
             </div>
@@ -52,10 +48,6 @@
     <div class="col-md-4">
         <div class="bg-grad-3 text-white rounded-lg mb-4 overflow-hidden">
             <div class="px-3 pt-3">
-                @php
-                $orders = \App\Models\Pedidos::where('clientesid',
-                Auth::user()->clientesid)->where('usuariocreacion','Ecommerce')->get();
-                @endphp
                 <div class="h3 fw-700">{{ count($orders) }} Pedidos(s)</div>
                 <div class="opacity-50">realizados</div>
             </div>

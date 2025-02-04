@@ -5,9 +5,13 @@ namespace App\Http\Controllers;
 use App\Mail\Factura;
 use App\Mail\Pedido;
 use App\Models\Carrito;
+use App\Models\CentroCostos;
+use App\Models\Clientes;
+use App\Models\ClientesSucursales;
 use App\Models\Facturador;
 use App\Models\Facturas;
 use App\Models\FacturasDetalles;
+use App\Models\LogSistema;
 use App\Models\MovimientosInventariosAlmacenes;
 use App\Models\ParametrosEmpresa;
 use App\Models\Pedidos;
@@ -15,6 +19,7 @@ use App\Models\PedidosDetalles;
 use App\Models\Producto;
 use App\Models\ProductoImagen;
 use App\Models\ProductoTarifa;
+use App\Models\Provincias;
 use App\Models\Secuenciales;
 use App\Models\Secuencias;
 use Illuminate\Http\Request;
@@ -34,24 +39,36 @@ class CheckoutController extends Controller
     public function get_shipping_info(Request $request)
     {
         $carts = Carrito::where('clientesid', Auth::user()->clientesid)->get();
-        if ($carts && count($carts) > 0) {
-            // $categories = Categorias::all();
-            return view('frontend.shipping_info', compact('carts'));
+        if (get_setting('maneja_sucursales') == "on") {
+            $sucursales = ClientesSucursales::where('clientesid', Auth::user()->clientesid)->where('clientes_sucursalesid', session('sucursalid'))->get();
+        } else {
+            $sucursales = ClientesSucursales::where('clientesid', Auth::user()->clientesid)->get();
         }
-        flash('El carrito esta vacio')->success();
+
+        if ($carts && count($carts) > 0) {
+            $provincias = Provincias::all();
+            return view('frontend.shipping_info', ['sucursales' => $sucursales, 'provincias' => $provincias]);
+        }
+        flash('El carrito esta vacio')->warning();
         return back();
     }
 
     public function store_shipping_info(Request $request)
     {
+
+        $cupo = ClientesSucursales::where('clientes_sucursalesid', $request->clientes_sucursalesid)->first();
+
         if ($request->clientes_sucursalesid == null) {
             flash('Agregue una direccion')->warning();
             return back();
         }
         $direccion = $request->clientes_sucursalesid;
 
-        $carts = Carrito::where('clientesid', Auth::user()->clientesid)
-            ->get();
+        if (get_setting('maneja_sucursales') == "on") {
+            $carts = Carrito::where('clientesid', Auth::user()->clientesid)->where('clientes_sucursalesid', session('sucursalid'))->get();
+        } else {
+            $carts = Carrito::where('clientesid', Auth::user()->clientesid)->get();
+        }
 
         $parametros = ParametrosEmpresa::first();
 
@@ -62,6 +79,12 @@ class CheckoutController extends Controller
         }
         // Calcula los totales
         $totales = $this->calcularTotales($carts, $parametros);
+
+        if (get_setting('cupo_sucursal') == "on" && $totales['total'] > $cupo->cupocredito) {
+            flash('El monto total supera el cupo de crédito')->warning();
+            return back();
+        }
+
 
         return view('frontend.payment_select', compact('carts', 'direccion', 'totales', 'parametros'));
     }
@@ -148,7 +171,6 @@ class CheckoutController extends Controller
 
     public function checkout(Request $request)
     {
-
         $parametros = ParametrosEmpresa::first();
 
 
@@ -169,6 +191,15 @@ class CheckoutController extends Controller
                     ->where('facturadoresid', get_setting('facturador'))
                     ->where('principal', '1')
                     ->first();
+
+                if (get_setting('maneja_sucursales') == "on") {
+                    $carts = Carrito::where('clientesid', Auth::user()->clientesid)->where('clientes_sucursalesid', session('sucursalid'))->get();
+                    $centrocosto = session('centro_costo');
+                } else {
+                    $carts = Carrito::where('clientesid', Auth::user()->clientesid)->get();
+                    $centrocosto = 1;
+                }
+
                 $pedido = new Pedidos;
                 $pedido->emision = now()->format('Y-m-d');
                 $pedido->pedidos_codigo = $secuencial->prefijo . str_pad($secuencial->valor, $secuencial->numeroceros, "0", STR_PAD_LEFT);
@@ -176,7 +207,7 @@ class CheckoutController extends Controller
                 $pedido->clientesid = Auth::user()->clientesid;
                 $pedido->clientes_sucursalesid = $request->clientes_sucursalesid;
                 $pedido->almacenesid = get_setting('controla_stock') != 2 ? $almacenes->almacenesid : session('almacenesid');
-                $pedido->centros_costosid = 1;
+                $pedido->centros_costosid = $centrocosto;
                 $pedido->vendedoresid = get_setting('facturador');
                 $pedido->facturadoresid =  get_setting('facturador');
                 $pedido->tarifasid = Auth::user()->tarifasid;
@@ -195,10 +226,10 @@ class CheckoutController extends Controller
                 if ($request->token) {
                     $pedido->observacion = "Tarjeta: " . $request->nombre_tarjeta . "\nNumero Voucher: " . $request->token;
                 }
+                if (get_setting('maneja_sucursales') == "on") {
+                    $pedido->observacion = 'Destinatario: ' . session('destinatario');
+                }
                 $pedido->save();
-
-                $carts = Carrito::where('clientesid', Auth::user()->clientesid)
-                    ->get();
 
                 foreach ($carts as $key => $cartItem) {
                     $detallepedido = new PedidosDetalles;
@@ -215,21 +246,105 @@ class CheckoutController extends Controller
                     $detallepedido->precioiva = $cartItem->precioiva;
                     $detallepedido->descuento = $cartItem->descuento;
                     $detallepedido->preciovisible = $parametros->tipopresentacionprecios == 1 ? $cartItem->precioiva : $cartItem->precio;
-                    $detallepedido->informacion = $cartItem->observacion;
+                    $detallepedido->informacion = $cartItem->observacion ?? '';
                     $detallepedido->save();
                 }
+                // Crear el objeto de log
+                $log = new LogSistema();
+
+                // Llenar los campos del log
+                $log->sis_subcategoriasid = 113;
+                $log->equipo = "Ecommerce";
+                $log->sis_empresasid = $request->segment(1);
+                $log->sis_usuariosid = 1; // ID del usuario autenticado
+                $log->tipooperacion = 'N';
+                $log->fecha = now();
+
+                if (get_setting('maneja_sucursales') == "on") {
+                    $sucursal = ClientesSucursales::findOrFail(session('sucursalid'));
+                } else {
+                    $sucursal = 0;
+                }
+                // Construir el detalle a partir de los datos del pedido y detalles
+                $detalle = [
+                    "pedidos" => array_merge([
+                        "pedidosid" => $pedido->pedidosid,
+                        "emision" => now()->format('Ymd'),
+                        "pedidos_codigo" => $pedido->pedidos_codigo,
+                        "forma_pago_empresaid" => $pedido->forma_pago_empresaid,
+                        "facturadoresid" => $pedido->facturadoresid,
+                        "clientesid" => $pedido->clientesid,
+                        "clientes_sucursalesid" => $pedido->clientes_sucursalesid,
+                        "almacenesid" => $pedido->almacenesid,
+                        "centros_costosid" => $pedido->centros_costosid,
+                        "vendedoresid" => $pedido->vendedoresid,
+                        "tarifasid" => $pedido->tarifasid,
+                        "concepto" => $pedido->concepto,
+                        "origen" => $pedido->origen,
+                        "documentosid" => 0,
+                        "promocionesid" => 1,
+                        "observacion" => $pedido->observacion,
+                        "subtotal" => $pedido->subtotal,
+                        "subtotalsiniva" => $pedido->subtotalsiniva,
+                        "subtotalconiva" => $pedido->subtotalconiva,
+                        "subtotalconiva2" => $pedido->subtotalconiva2,
+                        "total_descuento" => $pedido->total_descuento,
+                        "subtotalneto" => $pedido->subtotalneto,
+                        "total_iva" => $pedido->total_iva,
+                        "total_iva2" => $pedido->total_iva2,
+                        "total" => $pedido->total,
+                        "ecommerceid" => 0,
+                        "restaurante_mesasid" => 0,
+                        "estado" => $pedido->estado,
+                        "uuid" => "",
+                        "estado_sync" => 0,
+                        "prioridad" => $pedido->prioridad,
+                        "fechacreacion" => $pedido->fechacreacion,
+                        "usuariocreacion" => $pedido->usuariocreacion,
+                        "fechamodificacion" => null,
+                        "usuariomodificacion" => ""
+                    ], get_setting('maneja_sucursales') == "on" ? [
+                        "sucursalcreacionid" => session('sucursalid'),
+                        "sucursalcreacion" => $sucursal->descripcion,
+                    ] : []),
+                    "Detalles" => $carts->map(function ($cartItem) {
+                        $producto = Producto::findOrFail($cartItem->productosid);
+
+                        return [
+                            "ProductoID" => $cartItem->productosid,
+                            "Codigo" => $producto->productocodigo ?? '',
+                            "Descripcion" => $producto->descripcion ?? '',
+                            "Cantidad" => $cartItem->cantidad,
+                            "Costo" => $cartItem->precio,
+                            "Descuento" => $cartItem->descuento,
+                            "Total" => $cartItem->cantidad * $cartItem->precio
+                        ];
+                    })->toArray(),
+                ];
+
+                // Asignar el detalle serializado al campo correspondiente
+                $log->detalle = json_encode($detalle);
+                $log->save();
+
                 //Si todo se inserto correctamente hace un commit a la base
                 DB::connection('empresa')->commit();
                 $request->session()->put('forma_pago', 'pedido');
 
                 flash('Su pedido ha sido realizado correctamente')->success();
             } catch (\Exception $e) {
-
+                dd($e->getMessage());
                 //Si ocurrio algun error mientras insertaba datos hace un rollback y no guarda ninguna ejecucion
                 DB::connection('empresa')->rollback();
                 $direccion = $request->clientes_sucursalesid;
-                $carts = Carrito::where('clientesid', Auth::user()->clientesid)
-                    ->get();
+
+                if (get_setting('maneja_sucursales') == "on") {
+                    $carts = Carrito::where('clientesid', Auth::user()->clientesid)->where('clientes_sucursalesid', session('sucursalid'))->get();
+                } else {
+                    $carts = Carrito::where('clientesid', Auth::user()->clientesid)->get();
+                }
+
+                // Calcula los totales
+                $totales = $this->calcularTotales($carts, $parametros);
 
                 flash('Ocurrio un error al realizar el pedido')->error();
                 return view('frontend.payment_select', compact('carts', 'direccion', 'totales', 'parametros'));
@@ -258,12 +373,23 @@ class CheckoutController extends Controller
 
     public function order_confirmed($id, $cliente)
     {
-        Carrito::where('clientesid', $cliente)
-            ->delete();
+        if (get_setting('maneja_sucursales') == "on") {
+            $carts = Carrito::where('clientesid', $cliente)->where('clientes_sucursalesid', session('sucursalid'))->delete();
+        } else {
+            $carts = Carrito::where('clientesid', $cliente)->delete();
+        }
 
         if (session('forma_pago') == 'pedido') {
-
             $pedido = Pedidos::findOrFail($id);
+            // Extraemos la parte que sigue a "Destinatario:" considerando saltos de línea
+            $observacion = $pedido->observacion;
+            $destinatario = null;
+            $centro_costos = CentroCostos::where('centros_costosid', $pedido->centros_costosid)->first();
+            // Primero, extraemos el "Destinatario"
+            if (preg_match('/Destinatario:\s*([^;]+)/', $observacion, $matches)) {
+                $destinatario = $matches[1]; // El valor del destinatario
+            }
+
             $detalles = DB::connection('empresa')->table('pedidos_detalles')
                 ->select('medidas.descripcion AS medida', 'productos.descripcion AS producto', 'pedidos_detalles.cantidaddigitada', 'pedidos_detalles.preciovisible', 'pedidos_detalles.precio', 'pedidos_detalles.cantidad')
                 ->where('pedidosid', $id)
@@ -271,7 +397,7 @@ class CheckoutController extends Controller
                 ->join('productos', 'productos.productosid', '=', 'pedidos_detalles.productosid')
                 ->get();
 
-            return view('frontend.order_confirmed', compact('pedido', 'detalles'));
+            return view('frontend.order_confirmed', compact('pedido', 'detalles', 'destinatario', 'centro_costos'));
         } else {
             $factura = Facturas::findOrFail($id);
             $detalles = DB::connection('empresa')->table('facturas_detalles')
@@ -357,9 +483,11 @@ class CheckoutController extends Controller
                     ]
                 );
 
-            //Recorrer Carrito
-            $carts = Carrito::where('clientesid', Auth::user()->clientesid)
-                ->get();
+            if (get_setting('maneja_sucursales') == "on") {
+                $carts = Carrito::where('clientesid', Auth::user()->clientesid)->where('clientes_sucursalesid', session('sucursalid'))->get();
+            } else {
+                $carts = Carrito::where('clientesid', Auth::user()->clientesid)->get();
+            }
 
             foreach ($carts as $key => $cartItem) {
 
@@ -543,7 +671,6 @@ class CheckoutController extends Controller
 
     public function verificar_existencias(Request $request, $cliente)
     {
-
         $carrito = Carrito::select(DB::raw('SUM(cantidad * cantidadfactor) as cantidad_total'), 'productosid', 'medidasid', 'almacenesid')->where('clientesid', $cliente)->groupBy('productosid')->get();
         $productos = [];
         foreach ($carrito as $key => $carro) {
@@ -555,8 +682,6 @@ class CheckoutController extends Controller
                 if (Auth::check()) {
 
                     if (get_setting('controla_stock') == 2) {
-
-
                         $cantidad = MovimientosInventariosAlmacenes::where('productosid', $carro->productosid)
                             ->where('almacenesid', $carro->almacenesid)
                             ->first();
@@ -593,7 +718,35 @@ class CheckoutController extends Controller
 
             return view('frontend.view_cart', compact('productos', 'carts', 'totales'));
         } else {
-            return redirect()->route('checkout.shipping_info');
+            if (get_setting('maneja_sucursales') == "on") {
+                if (get_setting('maneja_sucursales') == "on") {
+                    $carts = Carrito::where('clientesid', Auth::user()->clientesid)->where('clientes_sucursalesid', session('sucursalid'))->get();
+                } else {
+                    $carts = Carrito::where('clientesid', Auth::user()->clientesid)->get();
+                }
+
+                $parametros = ParametrosEmpresa::first();
+                $direccion = session('sucursal_carrito');
+
+                foreach ($carts as &$cartItem) {
+                    $product = Producto::where('productosid', $cartItem['productosid'])->first();
+                    $cartItem['producto_descripcion'] = $product->descripcion;
+                    $cartItem['precio_visible'] = $this->getPrecioVisible($cartItem, $parametros);
+                }
+                // Calcula los totales
+                $totales = $this->calcularTotales($carts, $parametros);
+
+                $cupo = ClientesSucursales::where('clientes_sucursalesid', $direccion)->first();
+                if (get_setting('cupo_sucursal') == "on" && $totales['total'] > $cupo->cupocredito) {
+                    flash('El monto total supera el cupo de crédito')->warning();
+                    return back();
+                }
+
+
+                return view('frontend.payment_select', compact('carts', 'direccion', 'totales', 'parametros'));
+            } else {
+                return redirect()->route('checkout.shipping_info');
+            }
         }
     }
 
@@ -601,7 +754,11 @@ class CheckoutController extends Controller
     {
         if (auth()->user() != null) {
             $clientesid = Auth::user()->clientesid;
-            return Carrito::where('clientesid', $clientesid)->get();
+            if (get_setting('maneja_sucursales') == "on") {
+                return Carrito::where('clientesid', Auth::user()->clientesid)->where('clientes_sucursalesid', session('sucursalid'))->get();
+            } else {
+                return Carrito::where('clientesid', $clientesid)->get();
+            }
         } else {
             $usuario_temporalid = $request->session()->get('usuario_temporalid');
             return Carrito::where('usuario_temporalid', $usuario_temporalid)->get();
@@ -617,5 +774,28 @@ class CheckoutController extends Controller
             ->first();
 
         return $imagenProducto->imagen ?? null;
+    }
+
+    public function updateSession(Request $request)
+    {
+        $field = $request->field; // El nombre del campo modificado
+        $value = $request->value; // El nuevo valor del campo
+
+        // Actualizar la sesión según el campo modificado
+        switch ($field) {
+            case 'centros_costosid':
+                session(['centro_costo' => $value]);
+                break;
+            case 'sucursalesid':
+                session(['sucursal_carrito' => $value]);
+                break;
+            case 'destinatario':
+                session(['destinatario' => $value]);
+                break;
+            default:
+                return response()->json(['success' => false, 'message' => 'Campo no válido']);
+        }
+
+        return response()->json(['success' => true]);
     }
 }

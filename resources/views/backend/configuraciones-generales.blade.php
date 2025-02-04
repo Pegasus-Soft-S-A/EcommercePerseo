@@ -210,6 +210,56 @@
 
                         </div>
                     </div>
+
+                    <div class="form-group row">
+                        <label class="col-md-3 col-from-label">Cupo por Sucursal de Cliente</label>
+                        <div class="col-md-8">
+                            <label class="aiz-switch aiz-switch-success mb-0">
+                                <input type="checkbox" name="cupo_sucursal" @if( get_setting('cupo_sucursal')=='on' )
+                                    checked @endif>
+                                <span></span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="form-group row">
+                        <label class="col-md-3 col-from-label">Manejar Sucursales</label>
+                        <div class="col-md-8">
+                            <label class="aiz-switch aiz-switch-success mb-0">
+                                <input type="checkbox" name="maneja_sucursales" @if(
+                                    get_setting('maneja_sucursales')=='on' ) checked @endif>
+                                <span></span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="form-group row">
+                        <label class="col-lg-3 col-from-label">Cliente para pedidos</label>
+                        <div class="col-lg-8">
+                            <div class="input-group">
+                                <!-- Campo hidden para el cliente_pedidos -->
+                                <input type="hidden" name="cliente_pedidos" id="cliente_pedidos"
+                                    value="{{ $clientes ? $clientes->clientesid : '' }}">
+
+                                <!-- Campo para la identificación del cliente -->
+                                <input type="text" class="form-control" name="identificacion_cliente_pedidos"
+                                    id="identificacion_cliente_pedidos"
+                                    value="{{ $clientes ? $clientes->identificacion : '' }}"
+                                    placeholder="Identificación Cliente" autocomplete="off">
+
+                                <!-- Botón para buscar -->
+                                <button class="btn btn-sm btn-primary" type="button" id="buscar">
+                                    <i class="las la-search"></i>
+                                </button>
+
+                                <!-- Campo para el nombre del cliente -->
+                                <input type="text" class="form-control" name="nombre_cliente_pedidos"
+                                    id="nombre_cliente_pedidos" value="{{ $clientes ? $clientes->razonsocial : '' }}"
+                                    placeholder="Nombre Cliente" autocomplete="off" disabled>
+                            </div>
+                        </div>
+                    </div>
+
                 </div>
 
                 <div class="card-header">
@@ -414,5 +464,28 @@
         }
 
     }
+
+    // Evento para hacer la búsqueda y abrir el modal cuando se presiona el botón buscar
+    $('#buscar').on('click', function() {
+            // Obtener el valor del producto ingresado
+            let cliente = $('#identificacion_cliente_pedidos').val();
+            // Realizar solicitud POST para buscar los productos
+            $.post('{{ route('busqueda.cliente') }}', {
+                _token: '{{ csrf_token() }}',
+                cliente: cliente,
+            }, function(data) {
+                if (data && data.razonsocial && data.clientesid) {
+                    $('#nombre_cliente_pedidos').val(data.razonsocial);
+                    $('#cliente_pedidos').val(data.clientesid);
+                } else {
+                    // Mostrar un mensaje si no se encontró el cliente
+                    alert('No se encontró el cliente con la identificación ingresada.');
+                    $('#nombre_cliente_pedidos').val('');
+                    $('#cliente_pedidos').val('');
+                }
+            }).fail(function() {
+                alert('Error al buscar productos. Intente de nuevo.');
+            });
+        });
 </script>
 @endsection

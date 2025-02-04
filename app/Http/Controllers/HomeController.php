@@ -6,22 +6,28 @@ use App\Mail\Registro;
 use App\Models\Almacenes;
 use App\Models\Carrito;
 use App\Models\Categorias;
+use App\Models\Ciudades;
 use App\Models\Clientes;
+use App\Models\ClientesSucursales;
 use App\Models\Comentarios;
 use App\Models\Facturas;
+use App\Models\FacturasDetalles;
 use App\Models\Integraciones;
 use App\Models\Lineas;
 use App\Models\MovimientosInventariosAlmacenes;
 use App\Models\ParametrosEmpresa;
+use App\Models\Parroquias;
 use App\Models\Pedidos;
 use App\Models\Producto;
 use App\Models\ProductoImagen;
 use App\Models\ProductoTarifa;
+use App\Models\Provincias;
 use App\Models\Secuenciales;
 use App\Models\Subcategorias;
 use App\Models\Subgrupos;
 use App\Models\User;
 use App\Models\Usuarios;
+use App\Models\Wishlist;
 use Carbon\Carbon;
 use Illuminate\Auth\Events\PasswordReset;
 use Illuminate\Http\Request;
@@ -50,93 +56,139 @@ class HomeController extends Controller
 
     public function process_login(Request $request)
     {
-
         $identificacionIngresada = substr($request->identificacion, 0, 10);
         $cliente = Clientes::where(DB::raw('substr(identificacion, 1, 10)'), $identificacionIngresada)->first();
+
+        if (!$cliente || empty($cliente->clave)) {
+            flash("Identificación o contraseña incorrecta")->warning();
+            return back();
+        }
+
+        if ($cliente->estado == 0) {
+            flash("Usuario Inactivo")->warning();
+            return back();
+        }
+
+        // Si se necesita seleccionar la sucursal y no lo hizo
         if ($request->almacenesid == 0 && get_setting('controla_stock') == 2) {
             flash("Seleccione Sucursal")->warning();
             return back();
         }
 
-        if ($cliente != null && $cliente->clave != "") {
-            if ($cliente->estado == 0) {
-                flash("Usuario Inactivo")->warning();
-                return back();
-            }
-            $clave = json_decode($cliente->clave);
-            $clave_cliente = encrypt_openssl($request->clave, "Perseo1232*");
-            if ($clave->ecommerce == $clave_cliente) {
-                if ($request->has('remember')) {
-                    Auth::login($cliente, true);
-                } else {
-                    Auth::login($cliente, false);
-                }
-                session(['almacenesid' => $request->almacenesid]);
+        // Autenticamos al cliente
+        $authenticated = $this->authenticateClient($request, $cliente);
 
-                $carrito = Carrito::where('usuario_temporalid', $request->session()->get('usuario_temporalid'))->get();
-                if (count($carrito) > 0) {
-                    foreach ($carrito as $key => $carro) {
-                        $precioProducto = ProductoTarifa::select('productos_tarifas.precio', 'productos_tarifas.precioiva')
-                            ->join('productos', 'productos.productosid', '=', 'productos_tarifas.productosid')
-                            ->where('productos_tarifas.productosid', $carro->productosid)
-                            ->where('productos_tarifas.medidasid', '=', $carro->medidasid)
-                            ->where('productos_tarifas.tarifasid', '=', auth()->user()->tarifasid)
-                            ->first();
-
-                        Carrito::where('usuario_temporalid', $request->session()->get('usuario_temporalid'))
-                            ->where('productosid', $carro->productosid)
-                            ->where('medidasid', $carro->medidasid)
-                            ->update(
-                                [
-                                    'precio' => $precioProducto->precio,
-                                    'precioiva' => $precioProducto->precioiva,
-                                    'descuento' => auth()->user()->descuento,
-                                ]
-                            );
-                    }
-
-                    Carrito::where('usuario_temporalid', $request->session()->get('usuario_temporalid'))
-                        ->update(
-                            [
-                                'clientesid' => auth()->user()->clientesid,
-                                'usuario_temporalid' => null
-                            ]
-                        );
-
-                    Session::forget('usuario_temporalid');
-
-                    $carro = Carrito::where('clientesid', auth()->user()->clientesid)->get();
-
-
-                    foreach ($carro as $key => $valor) {
-                        $carrito = Carrito::select('ecommerce_carritosid')->where('clientesid', auth()->user()->clientesid)->where('almacenesid', $valor->almacenesid)->where('productosid', $valor->productosid)->where('medidasid', $valor->medidasid)->get();
-                        if (count($carrito) > 1) {
-                            $carritoCantidad = Carrito::select(DB::raw('SUM(cantidad) as cantidadtotal'))->where('clientesid', auth()->user()->clientesid)->where('almacenesid', $valor->almacenesid)->where('productosid', $valor->productosid)->where('medidasid', $valor->almacenesid)->get();
-                            Carrito::where('productosid', $valor->productosid)->where('clientesid', $valor->clientesid)->where('almacenesid', $valor->almacenesid)->where('medidasid', $valor->medidasid)->where('productosid', $valor->productosid)
-                                ->update(
-                                    [
-                                        'cantidad' => $carritoCantidad[0]['cantidadtotal']
-
-                                    ]
-                                );
-                            foreach ($carrito as $key => $value) {
-                                if ($key != 0) {
-
-                                    $value->delete();
-                                }
-                            }
-                            $carro = Carrito::where('clientesid', auth()->user()->clientesid)->get();
-                        }
-                    }
-                }
-            } else {
-                flash("Identificacion o contraseña incorrecta")->warning();
-            }
-        } else {
-            flash("Identificacion o contraseña incorrecta")->warning();
+        if (!$authenticated) {
+            flash("Identificación o contraseña incorrecta")->warning();
+            return back();
         }
-        return back();
+
+        // Procesamos el carrito si es necesario
+        $this->processCart($request);
+
+        return redirect()->route('home'); // Redirecciona donde prefieras luego del login exitoso
     }
+
+    private function authenticateClient(Request $request, $cliente)
+    {
+        $clave_cliente = encrypt_openssl($request->clave, "Perseo1232*");
+
+        // Si no maneja sucursales
+        if (get_setting('maneja_sucursales') != "on") {
+            $clave = json_decode($cliente->clave);
+            if ($clave->ecommerce != $clave_cliente) {
+                return false;
+            }
+            $this->loginClient($request, $cliente);
+            return true;
+        }
+
+        // Si maneja sucursales
+        $sucursales = ClientesSucursales::where('clientesid', $cliente->clientesid)->get();
+        $sucursalCoincidente = $sucursales->first(function ($sucursal) use ($clave_cliente) {
+            return $sucursal->clave == $clave_cliente;
+        });
+
+        if (!$sucursalCoincidente) {
+            return false;
+        }
+
+        session(['sucursalid' => $sucursalCoincidente->clientes_sucursalesid]);
+        $this->loginClient($request, $cliente);
+        return true;
+    }
+
+    private function loginClient(Request $request, $cliente)
+    {
+        if ($request->has('remember')) {
+            Auth::login($cliente, true);
+        } else {
+            Auth::login($cliente, false);
+        }
+
+        session(['almacenesid' => $request->almacenesid]);
+    }
+
+    private function processCart(Request $request)
+    {
+        $carrito = Carrito::where('usuario_temporalid', $request->session()->get('usuario_temporalid'))->get();
+        if ($carrito->isEmpty()) {
+            return;
+        }
+
+        foreach ($carrito as $carro) {
+            $precioProducto = ProductoTarifa::select('productos_tarifas.precio', 'productos_tarifas.precioiva')
+                ->join('productos', 'productos.productosid', '=', 'productos_tarifas.productosid')
+                ->where('productos_tarifas.productosid', $carro->productosid)
+                ->where('productos_tarifas.medidasid', '=', $carro->medidasid)
+                ->where('productos_tarifas.tarifasid', '=', auth()->user()->tarifasid)
+                ->first();
+
+            if ($precioProducto) {
+                $carro->update([
+                    'precio' => $precioProducto->precio,
+                    'precioiva' => $precioProducto->precioiva,
+                    'descuento' => auth()->user()->descuento,
+                ]);
+            }
+        }
+
+        Carrito::where('usuario_temporalid', $request->session()->get('usuario_temporalid'))
+            ->update([
+                'clientesid' => auth()->user()->clientesid,
+                'clientes_sucursalesid' => session('sucursalid', null),
+                'usuario_temporalid' => null
+            ]);
+
+        Session::forget('usuario_temporalid');
+
+        // Consolidar productos repetidos en el carrito
+        $this->consolidateCart(auth()->user()->clientesid);
+    }
+
+    private function consolidateCart($clientesid)
+    {
+        $carritos = Carrito::where('clientesid', $clientesid)->get();
+
+        foreach ($carritos as $carro) {
+            $duplicados = Carrito::where('clientesid', $clientesid)
+                ->where('almacenesid', $carro->almacenesid)
+                ->where('productosid', $carro->productosid)
+                ->where('medidasid', $carro->medidasid)
+                ->get();
+
+            if ($duplicados->count() > 1) {
+                $cantidadTotal = $duplicados->sum('cantidad');
+                $duplicados->first()->update(['cantidad' => $cantidadTotal]);
+
+                // Eliminamos los duplicados excepto el primero
+                foreach ($duplicados->skip(1) as $duplicado) {
+                    $duplicado->delete();
+                }
+            }
+        }
+    }
+
 
     public function admin_login(Request $request)
     {
@@ -244,7 +296,10 @@ class HomeController extends Controller
             "ver_codigo" => 0,
             "tipo_tienda" => 'publico',
             "controla_stock" => 0,
-            "vista_categorias" => 1
+            "vista_categorias" => 1,
+            "cupo_sucursal" => 0,
+            "cliente_pedidos" => null,
+            "maneja_sucursales" => null,
         ];
     }
 
@@ -420,45 +475,111 @@ class HomeController extends Controller
 
     public function dashboard()
     {
-        if (Auth::check()) {
-            return view('frontend.cliente.dashboard');
+        if (get_setting('maneja_sucursales') == "on") {
+            $cart = Carrito::where('clientesid',  Auth::user()->clientesid)->where('clientes_sucursalesid', session('sucursalid'))->get();
+            $wishlist = Wishlist::where('clientes_sucursalesid', session('sucursalid'))->get();
+            $orders = Pedidos::where('usuariocreacion', 'Ecommerce')->where('clientes_sucursalesid', session('sucursalid'))->where('pedidos.documentosid', 0)->get();
         } else {
-            abort(404);
+            $cart = Carrito::where('clientesid',  Auth::user()->clientesid)->get();
+            $wishlist = Wishlist::where('clientesid', Auth::user()->clientesid)->get();
+            $orders = Pedidos::where('clientesid', Auth::user()->clientesid)->where('usuariocreacion', 'Ecommerce')->where('pedidos.documentosid', 0)->get();
         }
+        return view('frontend.cliente.dashboard', ['cart' => $cart, 'wishlist' => $wishlist, 'orders' => $orders]);
     }
 
     public function profile()
     {
-        return view('frontend.cliente.profile');
+        if (get_setting('maneja_sucursales') == "on") {
+            $sucursales = ClientesSucursales::select(
+                'clientes_sucursales.clientes_sucursalesid',
+                'clientes_sucursales.direccion',
+                'clientes_sucursales.telefono1',
+                'ciudades.ciudad',
+                'clientes_sucursales.descripcion'
+            )
+                ->join('ciudades', 'ciudades.ciudadesid', 'clientes_sucursales.ciudadesid')
+                ->where('clientes_sucursalesid', session('sucursalid'))
+                ->get();
+            $cliente = Clientes::select('clientes.identificacion', 'clientes.razonsocial', 'clientes.email_login', 'clientes.telefono1', 'clientes.telefono2', 'clientes_sucursales.telefono1 as telefono3')
+                ->join('clientes_sucursales', 'clientes_sucursales.clientesid', 'clientes.clientesid')
+                ->where('clientes.clientesid', Auth::user()->clientesid)
+                ->where('clientes_sucursales.clientes_sucursalesid', session('sucursalid'))
+                ->first();
+        } else {
+            $sucursales = ClientesSucursales::select(
+                'clientes_sucursales.clientes_sucursalesid',
+                'clientes_sucursales.direccion',
+                'clientes_sucursales.telefono1',
+                'ciudades.ciudad',
+                'clientes_sucursales.descripcion'
+            )
+                ->join('ciudades', 'ciudades.ciudadesid', 'clientes_sucursales.ciudadesid')
+                ->where('clientes_sucursales.clientesid', Auth::user()->clientesid)
+                ->get();
+            $cliente = Clientes::where('clientesid', Auth::user()->clientesid)->first();
+        }
+        $provincias = Provincias::all();
+
+        return view('frontend.cliente.profile', ['sucursales' => $sucursales, 'cliente' => $cliente, 'provincias' => $provincias]);
+    }
+
+    public function getCiudades($provinciaId)
+    {
+        $ciudades = Ciudades::where('ciudadesid', 'like', $provinciaId . '%')
+            ->get();
+        return response()->json($ciudades);
+    }
+
+    public function getParroquias($ciudadId)
+    {
+        $parroquias = Parroquias::where('parroquiasid', 'like', $ciudadId . '%')
+            ->get();
+        return response()->json($parroquias);
     }
 
     public function update_profile(Request $request)
     {
-        $cliente = Clientes::findOrFail(Auth::user()->clientesid);
-        $cliente->identificacion = $request->identificacion;
-        $cliente->tipoidentificacion = strlen($request->identificacion) == 10 ? 'C' : 'R';
-        $cliente->razonsocial = $request->razonsocial;
-        $cliente->email_login = $request->email;
-        $cliente->telefono1 = $request->telefono1;
-        $cliente->telefono2 = $request->telefono2;
-        $cliente->telefono3 = $request->telefono3;
-        $cliente->usuariomodificacion = 'Ecommerce';
-        $cliente->fechamodificacion = now();
-
-        if ($request->new_password != null) {
-            if ($request->new_password == $request->confirm_password) {
-                $clave = json_decode($cliente->clave);
-                $clave->ecommerce = encrypt_openssl($request->new_password, "Perseo1232*");
-                $cliente->clave = json_encode($clave);
-            } else {
-                flash('Las contraseñas no coinciden')->error();
+        if (get_setting('maneja_sucursales') == "on") {
+            $sucursal = ClientesSucursales::where('clientes_sucursalesid', session('sucursalid'))->first();
+            $sucursal->telefono1 = $request->telefono3;
+            if ($request->new_password != null) {
+                if ($request->new_password == $request->confirm_password) {
+                    $sucursal->clave = encrypt_openssl($request->new_password, "Perseo1232*");
+                } else {
+                    flash('Las contraseñas no coinciden')->error();
+                    return back();
+                }
+            }
+            if ($sucursal->save()) {
+                flash('Perfil Actualizado Correctamente')->success();
                 return back();
             }
-        }
+        } else {
+            $cliente = Clientes::findOrFail(Auth::user()->clientesid);
+            $cliente->identificacion = $request->identificacion;
+            $cliente->tipoidentificacion = strlen($request->identificacion) == 10 ? 'C' : 'R';
+            $cliente->razonsocial = $request->razonsocial;
+            $cliente->email_login = $request->email;
+            $cliente->telefono1 = $request->telefono1;
+            $cliente->telefono2 = $request->telefono2;
+            $cliente->telefono3 = $request->telefono3;
+            $cliente->usuariomodificacion = 'Ecommerce';
+            $cliente->fechamodificacion = now();
 
-        if ($cliente->save()) {
-            flash('Perfil Actualizado Correctamente')->success();
-            return back();
+            if ($request->new_password != null) {
+                if ($request->new_password == $request->confirm_password) {
+                    $clave = json_decode($cliente->clave);
+                    $clave->ecommerce = encrypt_openssl($request->new_password, "Perseo1232*");
+                    $cliente->clave = json_encode($clave);
+                } else {
+                    flash('Las contraseñas no coinciden')->error();
+                    return back();
+                }
+            }
+            if ($cliente->save()) {
+                flash('Perfil Actualizado Correctamente')->success();
+                return back();
+            }
         }
 
         flash('Algo ha salido mal')->error();
@@ -648,11 +769,19 @@ class HomeController extends Controller
             ];
         });
 
-        $comentarios = Comentarios::select('ecommerce_comentarios.comentario', 'ecommerce_comentarios.valoracion', 'ecommerce_comentarios.fechacreacion', 'clientes.razonsocial')
-            ->join('clientes', 'clientes.clientesid', '=', 'ecommerce_comentarios.clientesid')
-            ->where('ecommerce_comentarios.productosid', $productosid)
-            ->where('ecommerce_comentarios.estado', 1)
-            ->get();
+        if (get_setting('maneja_sucursales') == "on") {
+            $comentarios = Comentarios::select('ecommerce_comentarios.comentario', 'ecommerce_comentarios.valoracion', 'ecommerce_comentarios.fechacreacion', 'clientes_sucursales.descripcion as razonsocial')
+                ->join('clientes_sucursales', 'clientes_sucursales.clientes_sucursalesid', '=', 'ecommerce_comentarios.clientes_sucursalesid')
+                ->where('ecommerce_comentarios.productosid', $productosid)
+                ->where('ecommerce_comentarios.estado', 1)
+                ->get();
+        } else {
+            $comentarios = Comentarios::select('ecommerce_comentarios.comentario', 'ecommerce_comentarios.valoracion', 'ecommerce_comentarios.fechacreacion', 'clientes.razonsocial')
+                ->join('clientes', 'clientes.clientesid', '=', 'ecommerce_comentarios.clientesid')
+                ->where('ecommerce_comentarios.productosid', $productosid)
+                ->where('ecommerce_comentarios.estado', 1)
+                ->get();
+        }
 
         $numerocomentarios = Comentarios::where('ecommerce_comentarios.productosid', $productosid)
             ->where('ecommerce_comentarios.estado', 1)
@@ -767,7 +896,40 @@ class HomeController extends Controller
 
         $min_qty = 1;
 
-        return view('frontend.product_details', compact('detallesProducto', 'precioProducto', 'precioProducto2', 'imagenProducto', 'min_qty', 'comentarios', 'medidas', 'numerocomentarios', 'relacionados', 'top'));
+        $user = Auth::user();
+        $commentable = false;
+
+        if ($user) {
+            if (get_setting('maneja_sucursales') == "on") {
+                $productoCompradoSinComentario = DB::connection('empresa')->table('facturas')
+                    ->join('facturas_detalles', 'facturas.facturasid', '=', 'facturas_detalles.facturasid')
+                    ->leftJoin('ecommerce_comentarios', function ($join) use ($user, $productosid) {
+                        $join->on('facturas_detalles.productosid', '=', 'ecommerce_comentarios.productosid')
+                            ->where('ecommerce_comentarios.clientes_sucursalesid', '=', session('sucursalid'));
+                    })
+                    ->where('facturas.clientes_sucursalesid', session('sucursalid'))
+                    ->where('facturas_detalles.productosid', $productosid)
+                    ->whereNull('ecommerce_comentarios.ecommerce_comentariosid') // Si no hay comentario
+                    ->exists();
+            } else {
+                $productoCompradoSinComentario = DB::connection('empresa')->table('facturas')
+                    ->join('facturas_detalles', 'facturas.facturasid', '=', 'facturas_detalles.facturasid')
+                    ->leftJoin('ecommerce_comentarios', function ($join) use ($user, $productosid) {
+                        $join->on('facturas_detalles.productosid', '=', 'ecommerce_comentarios.productosid')
+                            ->where('ecommerce_comentarios.clientesid', '=', $user->clientesid);
+                    })
+                    ->where('facturas.clientesid', $user->clientesid)
+                    ->where('facturas_detalles.productosid', $productosid)
+                    ->whereNull('ecommerce_comentarios.ecommerce_comentariosid') // Si no hay comentario
+                    ->exists();
+            }
+
+            if ($productoCompradoSinComentario) {
+                $commentable = true;
+            }
+        }
+
+        return view('frontend.product_details', compact('detallesProducto', 'precioProducto', 'precioProducto2', 'imagenProducto', 'min_qty', 'comentarios', 'medidas', 'numerocomentarios', 'relacionados', 'top', 'commentable', 'user', 'productosid'));
     }
 
     public function terminos_condiciones()
@@ -1164,12 +1326,33 @@ class HomeController extends Controller
 
     public function estado_cartera()
     {
-        $documentos = DB::connection('empresa')->table('cuentasporcobrar')
-            ->select('cuentasporcobrar.secuencial', 'cuentasporcobrar.documentosid AS documentoid', 'cuentasporcobrar.secuencial AS secuencia', DB::raw('max(cuentasporcobrar.importe) AS valor'), DB::raw('SUM(cuentasporcobrar.importe) AS saldo'), DB::raw('CASE WHEN MAX(cuentasporcobrar.importe)=0 THEN cuentasporcobrar.emision ELSE cuentasporcobrar.emision END AS emision'), DB::raw('CASE WHEN MAX(cuentasporcobrar.importe)=0 THEN cuentasporcobrar.vence ELSE cuentasporcobrar.vence END AS vence'), DB::raw('case WHEN DATEDIFF(now(),cuentasporcobrar.vence) > 0 then DATEDIFF(now(),cuentasporcobrar.vence) ELSE 0 END as diasvence'))
-            ->where('cuentasporcobrar.clientesid', auth()->user()->clientesid)
-            ->groupBy('cuentasporcobrar.secuencial', 'cuentasporcobrar.documentosid')
-            ->orderBy('emision', 'desc')
-            ->paginate(9);
+        if (get_setting('maneja_sucursales') == "on") {
+            $documentos = DB::connection('empresa')->table('cuentasporcobrar')
+                ->select(
+                    'cuentasporcobrar.secuencial',
+                    'cuentasporcobrar.documentosid AS documentoid',
+                    'cuentasporcobrar.secuencial AS secuencia',
+                    DB::raw('max(cuentasporcobrar.importe) AS valor'),
+                    DB::raw('SUM(cuentasporcobrar.importe) AS saldo'),
+                    DB::raw('CASE WHEN MAX(cuentasporcobrar.importe)=0 THEN cuentasporcobrar.emision ELSE cuentasporcobrar.emision END AS emision'),
+                    DB::raw('CASE WHEN MAX(cuentasporcobrar.importe)=0 THEN cuentasporcobrar.vence ELSE cuentasporcobrar.vence END AS vence'),
+                    DB::raw('case WHEN DATEDIFF(now(),cuentasporcobrar.vence) > 0 then DATEDIFF(now(),cuentasporcobrar.vence) ELSE 0 END as diasvence')
+                )
+                ->join('clientes', 'cuentasporcobrar.clientesid', '=', 'clientes.clientesid') // Suponiendo que la relación es con clientes.clientesid
+                ->join('clientes_sucursales', 'clientes.clientesid', '=', 'clientes_sucursales.clientesid') // Relacionar con clientes_sucursales
+                // ->where('cuentasporcobrar.clientesid', auth()->user()->clientesid)
+                ->where('clientes_sucursales.clientes_sucursalesid', session('sucursalid')) // Filtrar por la sucursal de la sesión
+                ->groupBy('cuentasporcobrar.secuencial', 'cuentasporcobrar.documentosid')
+                ->orderBy('emision', 'desc')
+                ->paginate(9);
+        } else {
+            $documentos = DB::connection('empresa')->table('cuentasporcobrar')
+                ->select('cuentasporcobrar.secuencial', 'cuentasporcobrar.documentosid AS documentoid', 'cuentasporcobrar.secuencial AS secuencia', DB::raw('max(cuentasporcobrar.importe) AS valor'), DB::raw('SUM(cuentasporcobrar.importe) AS saldo'), DB::raw('CASE WHEN MAX(cuentasporcobrar.importe)=0 THEN cuentasporcobrar.emision ELSE cuentasporcobrar.emision END AS emision'), DB::raw('CASE WHEN MAX(cuentasporcobrar.importe)=0 THEN cuentasporcobrar.vence ELSE cuentasporcobrar.vence END AS vence'), DB::raw('case WHEN DATEDIFF(now(),cuentasporcobrar.vence) > 0 then DATEDIFF(now(),cuentasporcobrar.vence) ELSE 0 END as diasvence'))
+                ->where('cuentasporcobrar.clientesid', auth()->user()->clientesid)
+                ->groupBy('cuentasporcobrar.secuencial', 'cuentasporcobrar.documentosid')
+                ->orderBy('emision', 'desc')
+                ->paginate(9);
+        }
 
         return view('frontend.cliente.estado_cartera', compact('documentos'));
     }
@@ -1189,9 +1372,6 @@ class HomeController extends Controller
 
     public function verificar_existencia(Request $request)
     {
-
-
-
         $productos = [];
         $almacenes = DB::connection('empresa')->table('facturadores_almacenes')
             ->where('facturadoresid', get_setting('facturador'))

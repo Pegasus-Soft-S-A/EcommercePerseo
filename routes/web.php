@@ -5,6 +5,7 @@ use App\Http\Controllers\HomeController;
 use App\Http\Controllers\CartController;
 use App\Http\Controllers\CheckoutController;
 use App\Http\Controllers\ComentariosController;
+use App\Http\Controllers\ConfiguracionesController;
 use App\Http\Controllers\DireccionController;
 use App\Http\Controllers\HistorialFacturasController;
 use App\Http\Controllers\HistorialPedidosController;
@@ -32,6 +33,8 @@ if ($base) {
         Route::get('/social-login/{provider}/callback', [LoginController::class, 'handleProviderCallback'])->name('social.callback');
         Route::post('/social-login/apple/callback', [LoginController::class, 'handleAppleCallback'])->name('social.callback');
         Route::get('/logout', [LoginController::class, 'logout']);
+
+        Route::post('/tracking', [ConfiguracionesController::class, 'trackingUrbano'])->name('trackingUrbano');
 
         /* Validacion  */
         Route::post('/validacion', [HomeController::class, 'validacion'])->name('validacionCampos');
@@ -81,10 +84,14 @@ if ($base) {
 
         Route::get('invoice/{order_id}', [HistorialPedidosController::class, 'descargar_pedido'])->name('invoice.download');
         Route::get('/orders/destroy/{id}', [PedidoController::class, 'destroy'])->name('orders.destroy');
-        Route::get('/export/pdf', [HistorialPedidosController::class, 'exportPdf'])->name('orders.export.pdf');
-
+        Route::get('/obtener-ciudades/{provincia}', [HomeController::class, 'getCiudades'])->name('get.ciudades');
+        Route::get('/obtener-parroquias/{ciudad}',  [HomeController::class, 'getParroquias'])->name('get.parroquias');
 
         Route::group(['middleware' => ['auth']], function () {
+
+            Route::get('/export/pdf', [HistorialPedidosController::class, 'exportPdf'])->name('orders.export.pdf');
+            Route::get('/factura/export/pdf', [HistorialFacturasController::class, 'exportarPdf'])->name('factura.export.pdf');
+            Route::get('/orders/download-xml/{id}', [HistorialFacturasController::class, 'downloadXml'])->name('orders.downloadXml');
 
             //Cliente
             Route::get('/dashboard', [HomeController::class, 'dashboard'])->name('dashboard');
@@ -106,6 +113,7 @@ if ($base) {
             Route::post('/checkout/payment', [CheckoutController::class, 'checkout'])->name('payment.checkout');
             Route::get('/checkout/order-confirmed/{ordenid}/{clientesid}', [CheckoutController::class, 'order_confirmed'])->name('order_confirmed');
             Route::post('/checkout/factura', [CheckoutController::class, 'crear_factura'])->name('factura.crear');
+            Route::post('/update/session', [CheckoutController::class, 'updateSession'])->name('update.session');
 
             /* WISHLISTS */
             Route::resource('wishlist', WishlistController::class);

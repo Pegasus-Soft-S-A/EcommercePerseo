@@ -6,28 +6,30 @@
         <div class="row">
             <div class="col-xl-8 mx-auto">
                 <div class="row aiz-steps arrow-divider">
-                    <div class="col done">
-                        <div class="text-center text-success">
-                            <i class="la-3x mb-2 las la-shopping-cart"></i>
-                            <h3 class="fs-14 fw-600 d-none d-lg-block ">1. Mi Carrito</h3>
-                        </div>
-                    </div>
-                    <div class="col done">
-                        <div class="text-center text-success">
-                            <i class="la-3x mb-2 las la-map"></i>
-                            <h3 class="fs-14 fw-600 d-none d-lg-block ">2. Información de la Compra</h3>
-                        </div>
-                    </div>
-                    <div class="col done">
-                        <div class="text-center text-success">
-                            <i class="la-3x mb-2 las la-credit-card"></i>
-                            <h3 class="fs-14 fw-600 d-none d-lg-block">3. Pago</h3>
-                        </div>
-                    </div>
                     <div class="col active">
                         <div class="text-center text-primary">
-                            <i class="la-3x mb-2 las la-check-circle"></i>
-                            <h3 class="fs-14 fw-600 d-none d-lg-block">4. Confirmación</h3>
+                            <i class="la-3x mb-2 las la-shopping-cart"></i>
+                            <h3 class="fs-14 fw-600 d-none d-lg-block">Mi Carrito</h3>
+                        </div>
+                    </div>
+                    @if(get_setting('maneja_sucursales') != "on")
+                    <div class="col">
+                        <div class="text-center">
+                            <i class="la-3x mb-2 opacity-50 las la-map"></i>
+                            <h3 class="fs-14 fw-600 d-none d-lg-block opacity-50">Información de la Compra</h3>
+                        </div>
+                    </div>
+                    @endif
+                    <div class="col">
+                        <div class="text-center">
+                            <i class="la-3x mb-2 opacity-50 las la-credit-card"></i>
+                            <h3 class="fs-14 fw-600 d-none d-lg-block opacity-50">Pago</h3>
+                        </div>
+                    </div>
+                    <div class="col">
+                        <div class="text-center">
+                            <i class="la-3x mb-2 opacity-50 las la-check-circle"></i>
+                            <h3 class="fs-14 fw-600 d-none d-lg-block opacity-50">Confirmación</h3>
                         </div>
                     </div>
                 </div>
@@ -44,8 +46,9 @@
                         <div class="text-center py-4 mb-4">
                             <i class="la la-check-circle la-3x text-success mb-3"></i>
                             <h1 class="h3 mb-3 fw-600">Gracias por su pedido</h1>
-                            <h2 class="h5">Secuencial: <span
-                                    class="fw-700 text-primary">{{ $factura->establecimiento.'-'.$factura->puntoemision.'-'.$factura->secuencial }}</span>
+                            <h2 class="h5">Secuencial: <span class="fw-700 text-primary">{{
+                                    $factura->establecimiento.'-'.$factura->puntoemision.'-'.$factura->secuencial
+                                    }}</span>
                             </h2>
                             <p class="opacity-70 font-italic">
                                 Se ha enviado una copia o el resumen de su pedido a
@@ -58,7 +61,9 @@
                                     <table class="table">
                                         <tr>
                                             <td class="w-50 fw-600">Secuencial:</td>
-                                            <td>{{ $factura->establecimiento.'-'.$factura->puntoemision.'-'.$factura->secuencial }}
+                                            <td>{{
+                                                $factura->establecimiento.'-'.$factura->puntoemision.'-'.$factura->secuencial
+                                                }}
                                             </td>
                                         </tr>
                                         <tr>
@@ -84,7 +89,7 @@
                                     <table class="table">
                                         <tr>
                                             <td class="w-50 fw-600">Fecha de Orden:</td>
-                                            <td>{{  $factura->emision }}</td>
+                                            <td>{{ $factura->emision }}</td>
                                         </tr>
                                         <tr>
                                             <td class="w-50 fw-600">Estado de Orden:</td>
@@ -142,35 +147,36 @@
                                             <tr>
                                                 <th>Subtotal</th>
                                                 <td class="text-right">
-                                                    <span
-                                                        class="fw-600">{{ number_format(round($factura->subtotalconiva,2),2) }}</span>
+                                                    <span class="fw-600">{{
+                                                        number_format(round($factura->subtotalconiva,2),2) }}</span>
                                                 </td>
                                             </tr>
                                             <tr>
                                                 <th>Descuento</th>
                                                 <td class="text-right">
-                                                    <span
-                                                        class="fw-600">{{ number_format(round($factura->total_descuento,2),2) }}</span>
+                                                    <span class="fw-600">{{
+                                                        number_format(round($factura->total_descuento,2),2) }}</span>
                                                 </td>
                                             </tr>
                                             <tr>
                                                 <th>Subtotal Neto</th>
                                                 <td class="text-right">
-                                                    <span
-                                                        class="fw-600">{{ number_format(round($factura->subtotalneto,2),2) }}</span>
+                                                    <span class="fw-600">{{
+                                                        number_format(round($factura->subtotalneto,2),2) }}</span>
                                                 </td>
                                             </tr>
                                             <tr>
                                                 <th>Total IVA</th>
                                                 <td class="text-right">
-                                                    <span
-                                                        class="fw-600">{{ number_format(round($factura->total_iva,2),2) }}</span>
+                                                    <span class="fw-600">{{
+                                                        number_format(round($factura->total_iva,2),2) }}</span>
                                                 </td>
                                             </tr>
                                             <tr>
                                                 <th><span class="fw-600">Total</span></th>
                                                 <td class="text-right">
-                                                    <strong><span>{{ number_format(round($factura->total,2),2) }}</span></strong>
+                                                    <strong><span>{{ number_format(round($factura->total,2),2)
+                                                            }}</span></strong>
                                                 </td>
                                             </tr>
                                         </tbody>

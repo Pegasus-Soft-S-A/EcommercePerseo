@@ -8,32 +8,72 @@
             <div class="col">
                 <h5 class="mb-md-0 h6">Facturas</h5>
             </div>
-            <div class="col-lg-3 ml-auto">
-                <select class="form-control aiz-selectpicker" name="estado" id="estado">
-                    <option value="">Todos</option>
-                    <option value="0" @isset($estado)@if($estado==0 ) selected @endif @endisset>Facturado</option>
-                    <option value="1" @isset($estado)@if($estado==1 ) selected @endif @endisset>En la Entrega</option>
-                    <option value="2" @isset($estado)@if($estado==2 ) selected @endif @endisset>Entregado</option>
-
-                </select>
-            </div>
-            <div class="col-lg-3">
-                <div class="form-group mb-0">
-                    <input type="text" class="aiz-date-range form-control" value="{{ $fecha }}" name="fecha"
-                        placeholder="Filtrar por Fecha" data-format="DD-MM-Y" data-separator=" a "
-                        data-advanced-range="true" autocomplete="off">
-                </div>
-            </div>
-            <div class="col-lg-3">
-                <div class="form-group mb-0">
-                    <input type="text" class="form-control" id="busqueda" name="busqueda" @isset($busqueda)
-                        value="{{ $busqueda }}" @endisset placeholder="Buscar por cliente" autocomplete="off">
-                </div>
+            <div class="col-auto">
+                <!-- Botón para mostrar/ocultar los filtros -->
+                <button type="button" class="btn btn-secondary" id="toggleFilterButton">Filtrar</button>
             </div>
             <div class="col-auto">
-                <div class="form-group mb-0">
-                    <button type="submit" class="btn btn-primary">Filtrar</button>
+                <a href="{{route('pedidos.crear')}}" class="btn btn-primary">Nuevo</a>
+            </div>
+        </div>
+
+        <!-- Sección de filtros, inicialmente oculta -->
+        <div class="card-header row gutters-5" id="filterSection" style="display: none;">
+            <div class="col-lg-3">
+                <div class="form-group mb-3">
+                    <label for="fecha">Fecha</label>
+                    <input type="text" class="aiz-date-range form-control" value="{{ $fecha }}" name="fecha"
+                        placeholder="Filtrar por Fecha" data-format="DD-MM-Y" data-separator=" a "
+                        data-advanced-range="true" autocomplete="off" id="fecha">
                 </div>
+            </div>
+            @if (get_setting('maneja_sucursales') == "on")
+            <div class="col-lg-4">
+                <div class="form-group mb-3">
+                    <label for="busqueda">Sucursal</label>
+                    @php
+                    $sucursales = \App\Models\ClientesSucursales::where('clientesid',
+                    get_setting('cliente_pedidos'))->get();
+                    @endphp
+                    <select class="form-control aiz-selectpicker" name="busqueda">
+                        <option value="">Todos</option>
+                        @foreach ($sucursales as $sucursal)
+                        <option value="{{$sucursal->clientes_sucursalesid}}">{{$sucursal->descripcion}}</option>
+                        @endforeach
+                    </select>
+                </div>
+            </div>
+            @else
+            <div class="col-lg-4">
+                <div class="form-group mb-3">
+                    <label for="busqueda">Búsqueda</label>
+                    <input type="text" class="form-control" id="busqueda" name="busqueda" @isset($busqueda)
+                        value="{{ $busqueda }}" @endisset placeholder="Buscar por código o cliente" autocomplete="off">
+                </div>
+            </div>
+            @endif
+            @if (get_setting('maneja_sucursales') == "on")
+            <div class="col-lg-4">
+                <div class="form-group mb-3">
+                    <label for="busqueda">Centro Costos</label>
+                    <select class="form-control aiz-selectpicker" name="centrocostoid" id="centrocostoid">
+                        <option value="">Todos</option>
+                        @foreach ($centrocostos as $centrocosto)
+                        <option value="{{ $centrocosto->centros_costosid }}"
+                            @isset($centrocostoid)@if($centrocostoid==$centrocosto->centros_costosid ) selected @endif
+                            @endisset>{{ $centrocosto->descripcion }}</option>
+                        @endforeach
+                    </select>
+                </div>
+            </div>
+            @endif
+        </div>
+
+        <!-- Nueva fila con los botones "Aplicar Filtros" y "Exportar PDF" -->
+        <div class="card-header row gutters-5" id="actionButtonsSection" style="display: none;">
+            <div class="col-auto">
+                <button type="submit" class="btn btn-primary">Aplicar Filtros</button>
+                <a id="exportPdfButton" class="btn btn-primary text-white">Exportar PDF</a>
             </div>
         </div>
 
@@ -42,7 +82,11 @@
                 <thead>
                     <tr>
                         <th width="25%">Secuencia</th>
-                        <th data-breakpoints="md">Cliente</th>
+                        @if (get_setting('maneja_sucursales') == "on")
+                        <th data-breakpoints="sm">Sucursal</th>
+                        @else
+                        <th data-breakpoints="sm">Cliente</th>
+                        @endif
                         <th data-breakpoints="md">Total</th>
                         <th data-breakpoints="md">Estado</th>
                         <th class="text-center" width="15%">Opciones</th>
@@ -57,9 +101,11 @@
                         <td>
                             {{ $secuencial }}
                         </td>
-                        <td>
-                            {{ $factura->razonsocial }}
-                        </td>
+                        @if (get_setting('maneja_sucursales') == "on")
+                        <td>{{ $factura->descripcion }}</td>
+                        @else
+                        <td>{{ $factura->razonsocial }}</td>
+                        @endif
                         <td>
                             $ {{ number_format(round(($factura->total),2),2) }}
                         </td>
@@ -124,4 +170,39 @@
     </div>
 </div>
 
+@endsection
+
+@section('script')
+<script>
+    $(document).ready(function() {
+        // Botón para mostrar/ocultar los filtros con animación
+        $('#toggleFilterButton').on('click', function() {
+            $('#filterSection, #actionButtonsSection').toggle(200); // Cambia la visibilidad con una animación de 300ms
+
+            // Cambia el texto del botón entre "Filtrar" y "Ocultar Filtros"
+            var buttonText = $(this).text() === 'Filtrar' ? 'Ocultar Filtros' : 'Filtrar';
+            $(this).text(buttonText);
+        });
+
+        $('#exportPdfButton').on('click', function() {
+            var params = gatherFilterParams();
+            var url = '{{ route("pedido.export.pdf") }}' + (params.length > 0 ? '?' + params.join('&') : '');
+            window.location.href = url;
+        });
+
+        function gatherFilterParams() {
+            var params = [];
+            var estado = $('#estado').val();
+            var fecha = $('#fecha').val();
+            var busqueda = $('#busqueda').val();
+
+            if (estado) params.push('estado=' + encodeURIComponent(estado));
+            if (fecha) params.push('fecha=' + encodeURIComponent(fecha));
+            if (busqueda) params.push('busqueda=' + encodeURIComponent(busqueda));
+
+            return params;
+        }
+    });
+
+</script>
 @endsection

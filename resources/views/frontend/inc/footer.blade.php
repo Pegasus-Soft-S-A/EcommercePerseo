@@ -169,8 +169,11 @@
         </a>
         @php
         if(auth()->user() != null) {
-        $clientesid = Auth::user()->clientesid;
-        $cart = \App\Models\Carrito::where('clientesid', $clientesid)->get();
+        if (get_setting('maneja_sucursales') == "on") {
+        $cart = \App\Models\Carrito::where('clientes_sucursalesid',session('sucursalid'))->get();
+        }else{
+        $cart = \App\Models\Carrito::where('clientesid', Auth::user()->clientesid)->get();
+        }
         } else {
         $usuario_temporalid = Session()->get('usuario_temporalid');
         if($usuario_temporalid) {

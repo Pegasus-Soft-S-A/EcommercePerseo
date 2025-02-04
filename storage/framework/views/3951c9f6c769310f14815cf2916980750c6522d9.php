@@ -1,16 +1,19 @@
 <?php
 if(auth()->user() != null) {
 $clientesid = Auth::user()->clientesid;
+if (get_setting('maneja_sucursales') == "on") {
+$cart = \App\Models\Carrito::where('clientes_sucursalesid',session('sucursalid'))->get();
+}else{
 $cart = \App\Models\Carrito::where('clientesid', $clientesid)->get();
+}
 } else {
 $usuario_temporalid = Session()->get('usuario_temporalid');
 if($usuario_temporalid) {
 $cart = \App\Models\Carrito::where('usuario_temporalid', $usuario_temporalid)->get();
 }
 }
-
-
 ?>
+
 <a href="javascript:void(0)" class="d-flex align-items-center text-reset h-100" data-toggle="dropdown"
     data-display="static">
     <i class="la la-shopping-cart la-2x opacity-80"></i>
@@ -92,11 +95,13 @@ $cart = \App\Models\Carrito::where('usuario_temporalid', $usuario_temporalid)->g
                 </a>
             </li>
             <?php if(Auth::check()): ?>
+            <?php if(get_setting('maneja_sucursales') != "on"): ?>
             <li class="list-inline-item">
                 <a href="<?php echo e(route('checkout.shipping_info')); ?>" class="btn btn-primary btn-sm">
                     Comprar
                 </a>
             </li>
+            <?php endif; ?>
             <?php endif; ?>
         </ul>
     </div>

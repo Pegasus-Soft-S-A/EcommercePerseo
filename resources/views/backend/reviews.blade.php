@@ -2,12 +2,6 @@
 
 @section('content')
 
-<div class="aiz-titlebar text-left mt-2 mb-3">
-    <div class="align-items-center">
-        <h1 class="h3">Reseñas de Productos</h1>
-    </div>
-</div>
-
 <div class="card">
     <div class="card-header">
         <div class="row flex-grow-1">
@@ -32,9 +26,12 @@
         <table class="table aiz-table mb-0">
             <thead>
                 <tr>
-                    <th data-breakpoints="lg">#</th>
                     <th>Producto</th>
+                    @if (get_setting('maneja_sucursales') == "on")
+                    <th>Sucursal</th>
+                    @else
                     <th data-breakpoints="lg">Cliente</th>
+                    @endif
                     <th>Valoracion</th>
                     <th data-breakpoints="lg">Comentario</th>
                     <th data-breakpoints="lg">Publicado</th>
@@ -42,14 +39,12 @@
             </thead>
             <tbody>
                 @foreach($reviews as $key => $review)
-                @if ($review->productosid != null && $review->clientesid != null)
                 <tr>
-                    <td>{{ ($key+1) + ($reviews->currentPage() - 1)*$reviews->perPage() }}</td>
                     <td>
-                        <a href="{{route('product',$review->productosid)}}"
-                            target="_blank">{{ $review->descripcion}}</a>
+                        <a href="{{route('product',$review->productosid)}}" target="_blank">{{
+                            $review->descripcion}}</a>
                     </td>
-                    <td>{{ $review->razonsocial }} ({{ $review->email }})</td>
+                    <td>{{ $review->razonsocial }}</td>
                     <td>{{ $review->valoracion }}</td>
                     <td>{{ $review->comentario }}</td>
                     <td><label class="aiz-switch aiz-switch-success mb-0">
@@ -58,7 +53,6 @@
                             <span class="slider round"></span></label>
                     </td>
                 </tr>
-                @endif
                 @endforeach
             </tbody>
         </table>

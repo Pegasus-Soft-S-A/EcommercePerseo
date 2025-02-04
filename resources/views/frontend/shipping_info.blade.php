@@ -47,10 +47,7 @@
                     @if (Auth::check())
                     <div class="shadow-sm bg-white p-4 rounded mb-4">
                         <div class="row gutters-5">
-                            @php
-                            $sucursales = \App\Models\ClientesSucursales::where('clientesid',
-                            Auth::user()->clientesid)->get();
-                            @endphp
+
                             @foreach ($sucursales as $key => $address)
                             <div class="col-md-6 mb-3">
                                 <label class="aiz-megabox d-block bg-white mb-0">
@@ -60,26 +57,33 @@
                                     <span class="d-flex p-3 aiz-megabox-elem">
                                         <span class="aiz-rounded-check flex-shrink-0 mt-1"></span>
                                         <span class="flex-grow-1 pl-3 text-left">
-                                            <div>
-                                                <span class="opacity-60">Direccion:</span>
-                                                <span class="fw-600 ml-2">{{ $address->direccion }}</span>
-                                            </div>
-                                            <div>
-                                                @php
-                                                $direccion =
-                                                \App\Models\ClientesSucursales::findOrFail($address->clientes_sucursalesid);
-                                                $ciudad = \App\Models\Ciudades::findOrFail($direccion->ciudadesid);
-                                                @endphp
-                                                <span class="opacity-60">Ciudad:</span>
-                                                <span class="fw-600 ml-2">{{ $ciudad->ciudad }}</span>
-                                            </div>
-                                            <div>
-                                                <span class="opacity-60">Telefono:</span>
-                                                <span class="fw-600 ml-2">{{ $address->telefono1 }}</span>
-                                            </div>
+                                            @if($address->descripcion<>'')
+                                                <div>
+                                                    <span class="opacity-60">Descripción:</span>
+                                                    <span class="fw-600 ml-2">{{ $address->descripcion }}</span>
+                                                </div>
+                                                @endif
+                                                <div>
+                                                    <span class="opacity-60">Direccion:</span>
+                                                    <span class="fw-600 ml-2">{{ $address->direccion }}</span>
+                                                </div>
+                                                <div>
+                                                    @php
+                                                    $direccion =
+                                                    \App\Models\ClientesSucursales::findOrFail($address->clientes_sucursalesid);
+                                                    $ciudad = \App\Models\Ciudades::findOrFail($direccion->ciudadesid);
+                                                    @endphp
+                                                    <span class="opacity-60">Ciudad:</span>
+                                                    <span class="fw-600 ml-2">{{ $ciudad->ciudad }}</span>
+                                                </div>
+                                                <div>
+                                                    <span class="opacity-60">Telefono:</span>
+                                                    <span class="fw-600 ml-2">{{ $address->telefono1 }}</span>
+                                                </div>
                                         </span>
                                     </span>
                                 </label>
+                                @if (get_setting('maneja_sucursales') != "on")
                                 <div class="dropdown position-absolute right-0 top-0">
                                     <button class="btn bg-gray px-2" type="button" data-toggle="dropdown">
                                         <i class="la la-ellipsis-v"></i>
@@ -91,9 +95,11 @@
                                         </a>
                                     </div>
                                 </div>
+                                @endif
                             </div>
                             @endforeach
                             <input type="hidden" name="checkout_type" value="logged">
+                            @if (get_setting('maneja_sucursales') != "on")
                             <div class="col-md-6 mx-auto mb-3">
                                 <div class="border  rounded mb-3 c-pointer text-center bg-white h-100 d-flex flex-column justify-content-center"
                                     onclick="add_new_address()">
@@ -101,6 +107,7 @@
                                     <div class="alpha-7">Agregar Nueva Direccion</div>
                                 </div>
                             </div>
+                            @endif
                         </div>
                     </div>
                     @endif
@@ -124,8 +131,8 @@
 @endsection
 
 @section('modal')
-<div class="modal fade" id="new-address-modal" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-zoom" role="document">
+<div class="modal fade" id="new-address-modal">
+    <div class="modal-dialog ">
         <div class="modal-content">
             <div class="modal-header">
                 <h6 class="modal-title" id="exampleModalLabel">Nueva Direccion</h6>
@@ -137,18 +144,51 @@
                 @csrf
                 <div class="modal-body">
                     <div class="p-3">
+                        <div class="row">
+                            <div class="col-md-2">
+                                <label>Descripción</label>
+                            </div>
+                            <div class="col-md-10">
+                                <input type="text" class="form-control mb-3" placeholder="Casa, Trabajo, etc."
+                                    name="descripcion" value="" autocomplete="off" required>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-2">
+                                <label>Provincia</label>
+                            </div>
+                            <div class="col-md-10">
+                                <select class="form-control mb-3 aiz-selectpicker" data-live-search="true"
+                                    name="provinciasid" id="provinciasid" required>
+                                    <option value="">Seleccione Provincia</option>
+                                    @foreach ($provincias as $provincia)
+                                    <option value="{{ $provincia->provinciasid }}">{{ $provincia->provincia }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                        </div>
 
                         <div class="row">
                             <div class="col-md-2">
                                 <label>Ciudad</label>
                             </div>
                             <div class="col-md-10">
-                                <select class="form-control mb-3 aiz-selectpicker" data-live-search="true" name="ciudad"
-                                    required>
+                                <select class="form-control mb-3 aiz-selectpicker" data-live-search="true"
+                                    name="ciudadesid" id="ciudadesid" required disabled>
                                     <option value="">Seleccione Ciudad</option>
-                                    @foreach (\App\Models\Ciudades::get() as $key => $ciudad)
-                                    <option value="{{ $ciudad->ciudadesid }}">{{ $ciudad->ciudad }}</option>
-                                    @endforeach
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-2">
+                                <label>Parroquias</label>
+                            </div>
+                            <div class="col-md-10">
+                                <select class="form-control mb-3 aiz-selectpicker" data-live-search="true"
+                                    name="parroquiasid" id="parroquiasid" required disabled>
+                                    <option value="">Seleccione Parroquia</option>
                                 </select>
                             </div>
                         </div>
@@ -159,8 +199,7 @@
                             </div>
                             <div class="col-md-10">
                                 <textarea class="form-control textarea-autogrow mb-3" placeholder="Su Direccion"
-                                    rows="1" name="direccion" onkeydown="controlar(event)" required
-                                    maxlength="100"></textarea>
+                                    rows="1" name="direccion" onkeydown="controlar(event)" required></textarea>
                             </div>
                         </div>
 
@@ -183,8 +222,7 @@
     </div>
 </div>
 
-<div class="modal fade" id="edit-address-modal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel"
-    aria-hidden="true">
+<div class="modal fade" id="edit-address-modal">
     <div class="modal-dialog modal-dialog-centered" role="document">
         <div class="modal-content">
             <div class="modal-header">
@@ -200,6 +238,7 @@
         </div>
     </div>
 </div>
+
 @endsection
 
 @section('script')
@@ -232,5 +271,68 @@
                 return false;
             }
         }
+
+        $(document).ready(function() {
+            // Obtener los segmentos de la URL
+            var pathSegments = window.location.pathname.split('/').filter(segment => segment !== "");
+
+            // Verificar si "tienda" está en la URL
+            var tieneTienda = pathSegments.includes("tienda");
+
+            // Buscar el primer número en la URL (ID de la empresa)
+            var empresaSegment = pathSegments.find(segment => !isNaN(segment));
+
+            // Construir la URL base dinámicamente
+            var baseURL = tieneTienda ? '/tienda/' + empresaSegment : '/' + empresaSegment;
+            // Cuando cambia la provincia
+            $('#provinciasid').change(function() {
+                var provinciaId = $(this).val();
+
+                $('#ciudadesid').prop('disabled', true);
+                $('#parroquiasid').prop('disabled', true);
+
+                if(provinciaId) {
+                    $.ajax({
+                        url: baseURL + '/obtener-ciudades/' + provinciaId,
+                        type: 'GET',
+                        success: function(data) {
+                            $('#ciudadesid').empty();
+                            $('#ciudadesid').append('<option value="">Seleccione Ciudad</option>');
+
+                            $.each(data, function(key, value) {
+                                $('#ciudadesid').append('<option value="' + value.ciudadesid + '">' + value.ciudad + '</option>');
+                            });
+
+                            $('#ciudadesid').prop('disabled', false);
+                            $('.aiz-selectpicker').selectpicker('refresh');
+                        }
+                    });
+                }
+            });
+
+            // Cuando cambia la ciudad
+            $('#ciudadesid').change(function() {
+                var ciudadId = $(this).val();
+                $('#parroquiasid').prop('disabled', true);
+
+                if(ciudadId) {
+                    $.ajax({
+                        url: baseURL + '/obtener-parroquias/' + ciudadId,
+                        type: 'GET',
+                        success: function(data) {
+                            $('#parroquiasid').empty();
+                            $('#parroquiasid').append('<option value="">Seleccione Parroquia</option>');
+
+                            $.each(data, function(key, value) {
+                                $('#parroquiasid').append('<option value="' + value.parroquiasid + '">' + value.parroquia + '</option>');
+                            });
+
+                            $('#parroquiasid').prop('disabled', false);
+                            $('.aiz-selectpicker').selectpicker('refresh');
+                        }
+                    });
+                }
+            });
+        });
 </script>
 @endsection

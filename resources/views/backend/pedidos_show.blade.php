@@ -7,29 +7,12 @@
         <div class="col">
             <h5 class="mb-md-0 h5">Pedido</h5>
         </div>
-        <div class="col-lg-2 ml-auto">
-            <h5 class="mb-md-0 h6">Actualizar Estado</h5>
-        </div>
-        <div class="col-lg-3 ml-auto">
-            <select class="form-control aiz-selectpicker" name="estado" id="estado">
-                <option value="1" @isset($pedido->estado)@if($pedido->estado==1 ) selected @endif @endisset>Realizado
-                </option>
-                <option value="2" @isset($pedido->estado)@if($pedido->estado==2 ) selected @endif @endisset>Confirmado
-                </option>
-                <option value="3" @isset($pedido->estado)@if($pedido->estado==3 ) selected @endif @endisset>Facturado
-                </option>
-                <option value="4" @isset($pedido->estado)@if($pedido->estado==4 ) selected @endif @endisset>En Entrega
-                </option>
-                <option value="5" @isset($pedido->estado)@if($pedido->estado==5 ) selected @endif @endisset>Entregado
-                </option>
-                <option value="6" @isset($pedido->estado)@if($pedido->estado==6 ) selected @endif @endisset>No Aplica
-                </option>
-            </select>
-        </div>
+
     </div>
 
     <div class="card-body">
-
+        <a href="{{ route('pedidos.index') }}" id="btnVolver"
+            class="btn btn-sm btn-secondary mr-2 text-white">Volver</a>
         <div class="card mt-4">
             <div class="card-header">
                 <b class="fs-15">Resumen del Pedido</b>
@@ -63,6 +46,12 @@
                                     {{ $ciudad->ciudad }}</td>
                                 @endif
                             </tr>
+                            @if (get_setting('maneja_sucursales') == "on")
+                            <tr>
+                                <td class="w-50 fw-600">Destinatario:</td>
+                                <td>{{$destinatario}}</td>
+                            </tr>
+                            @endif
                         </table>
                     </div>
                     <div class="col-lg-6">
@@ -90,14 +79,19 @@
                                 </td>
                             </tr>
                             <tr>
-                                <td class="w-50 fw-600">Total:</td>
-                                <td>$ {{ number_format(round($pedido->total,2),2) }}</td>
-                            </tr>
-                            <tr>
                                 <td class="w-50 fw-600">Telefono:</td>
                                 <td>{{$cliente->telefono1}}</td>
                             </tr>
-
+                            @if (get_setting('maneja_sucursales') == "on")
+                            <tr>
+                                <td class="w-50 fw-600">Centro Costo:</td>
+                                <td>{{$centrocosto->centro_costocodigo}}-{{$centrocosto->descripcion}}</td>
+                            </tr>
+                            <tr>
+                                <td class="w-50 fw-600">Sucursal:</td>
+                                <td>{{$sucursal->descripcion}}</td>
+                            </tr>
+                            @endif
                         </table>
                     </div>
                 </div>
@@ -115,9 +109,13 @@
                                 <tr>
                                     <th>#</th>
                                     <th width="50%">Producto</th>
-                                    <th width="20%">Medida</th>
+                                    <th width="10%">Medida</th>
                                     <th width="15%">Cantidad</th>
+                                    @if($modificado==true)
+                                    <th width="15%">Cantidad Anterior</th>
+                                    @endif
                                     <th width="15%">Precio Unitario</th>
+                                    <th width="10%">Observacion</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -144,9 +142,24 @@
                                     <td>
                                         {{ number_format(round($pedidoDetail->cantidaddigitada,2),2) }}
                                     </td>
-
+                                    @if($modificado==true)
+                                    <td>
+                                        @if($pedidoDetail->cantidadentregada<>0)
+                                            {{ number_format(round($pedidoDetail->cantidadentregada,2),2) }}
+                                            @endif
+                                    </td>
+                                    @endif
                                     <td>
                                         $ {{ number_format(round($pedidoDetail->preciovisible,2),2) }}
+                                    </td>
+                                    <td>
+                                        @if($pedidoDetail->informacion)
+                                        <a href="javascript:void(0)"
+                                            onclick="showObservationModal('{{ $pedidoDetail->informacion }}')"
+                                            class="btn btn-icon btn-sm btn-soft-success btn-circle">
+                                            <i class="las la-eye"></i>
+                                        </a>
+                                        @endif
                                     </td>
                                 </tr>
                                 @endforeach
@@ -213,22 +226,39 @@
 </div>
 @endsection
 
+@section('modal')
+<div class="modal fade" id="modalObservacion">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h6 class="modal-title fw-600">Observación</h6>
+                <button type="button" class="close" data-dismiss="modal">
+                    <span aria-hidden="true"></span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="p-3">
+                    <div class="form-group">
+                        <input type="hidden" value="" name="ecommerce_carritosid" id="ecommerce_carritosid">
+                        <textarea class="form-control h-auto form-control-lg" placeholder="Observación"
+                            name="observacion" id="observacion" autocomplete="off" required rows="4"
+                            disabled></textarea>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+@endsection
+
 @section('script')
 <script type="text/javascript">
-    $('#estado').on('change', function() {
-            var order_id = {{ $pedido->pedidosid }};
-            var status = $('#estado').val();
-            $.post('{{ route('pedido.actualizarestado') }}', {
-                _token: '{{ @csrf_token() }}',
-                order_id: order_id,
-                status: status
-            }, function(data) {
-                AIZ.plugins.notify('success', 'Estado Actualizado Correctamente');
-                setTimeout(esperar, 2500);
-            });
-        });
-        function esperar(){
-            location.reload();
-        }
+    function showObservationModal(observacion) {
+    // Set the value of the observation textarea in the modal
+    document.getElementById('observacion').value = observacion;
+
+    // Show the modal
+    $('#modalObservacion').modal('show');
+}
 </script>
 @endsection

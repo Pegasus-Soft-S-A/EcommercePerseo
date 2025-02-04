@@ -8,6 +8,7 @@
         table {
             width: 100%;
             border-collapse: collapse;
+            font-size: 12px;
         }
 
         table,
@@ -18,7 +19,7 @@
 
         th,
         td {
-            padding: 8px;
+            padding: 2px;
             text-align: left;
         }
     </style>

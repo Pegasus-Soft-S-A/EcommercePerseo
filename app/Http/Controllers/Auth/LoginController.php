@@ -148,7 +148,7 @@ class LoginController extends Controller
         } else {
             $redirect_route = 'home';
             Auth::logout();
-            Session::forget('almacenesid');
+            Session::forget(['almacenesid', 'sucursalid']);
         }
 
         //$request->session()->invalidate();

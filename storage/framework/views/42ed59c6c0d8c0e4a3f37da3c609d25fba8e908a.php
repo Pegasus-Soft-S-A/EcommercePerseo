@@ -5,29 +5,12 @@
         <div class="col">
             <h5 class="mb-md-0 h5">Pedido</h5>
         </div>
-        <div class="col-lg-2 ml-auto">
-            <h5 class="mb-md-0 h6">Actualizar Estado</h5>
-        </div>
-        <div class="col-lg-3 ml-auto">
-            <select class="form-control aiz-selectpicker" name="estado" id="estado">
-                <option value="1" <?php if(isset($pedido->estado)): ?><?php if($pedido->estado==1 ): ?> selected <?php endif; ?> <?php endif; ?>>Realizado
-                </option>
-                <option value="2" <?php if(isset($pedido->estado)): ?><?php if($pedido->estado==2 ): ?> selected <?php endif; ?> <?php endif; ?>>Confirmado
-                </option>
-                <option value="3" <?php if(isset($pedido->estado)): ?><?php if($pedido->estado==3 ): ?> selected <?php endif; ?> <?php endif; ?>>Facturado
-                </option>
-                <option value="4" <?php if(isset($pedido->estado)): ?><?php if($pedido->estado==4 ): ?> selected <?php endif; ?> <?php endif; ?>>En Entrega
-                </option>
-                <option value="5" <?php if(isset($pedido->estado)): ?><?php if($pedido->estado==5 ): ?> selected <?php endif; ?> <?php endif; ?>>Entregado
-                </option>
-                <option value="6" <?php if(isset($pedido->estado)): ?><?php if($pedido->estado==6 ): ?> selected <?php endif; ?> <?php endif; ?>>No Aplica
-                </option>
-            </select>
-        </div>
+
     </div>
 
     <div class="card-body">
-
+        <a href="<?php echo e(route('pedidos.index')); ?>" id="btnVolver"
+            class="btn btn-sm btn-secondary mr-2 text-white">Volver</a>
         <div class="card mt-4">
             <div class="card-header">
                 <b class="fs-15">Resumen del Pedido</b>
@@ -61,6 +44,12 @@
                                     <?php echo e($ciudad->ciudad); ?></td>
                                 <?php endif; ?>
                             </tr>
+                            <?php if(get_setting('maneja_sucursales') == "on"): ?>
+                            <tr>
+                                <td class="w-50 fw-600">Destinatario:</td>
+                                <td><?php echo e($destinatario); ?></td>
+                            </tr>
+                            <?php endif; ?>
                         </table>
                     </div>
                     <div class="col-lg-6">
@@ -88,14 +77,19 @@
                                 </td>
                             </tr>
                             <tr>
-                                <td class="w-50 fw-600">Total:</td>
-                                <td>$ <?php echo e(number_format(round($pedido->total,2),2)); ?></td>
-                            </tr>
-                            <tr>
                                 <td class="w-50 fw-600">Telefono:</td>
                                 <td><?php echo e($cliente->telefono1); ?></td>
                             </tr>
-
+                            <?php if(get_setting('maneja_sucursales') == "on"): ?>
+                            <tr>
+                                <td class="w-50 fw-600">Centro Costo:</td>
+                                <td><?php echo e($centrocosto->centro_costocodigo); ?>-<?php echo e($centrocosto->descripcion); ?></td>
+                            </tr>
+                            <tr>
+                                <td class="w-50 fw-600">Sucursal:</td>
+                                <td><?php echo e($sucursal->descripcion); ?></td>
+                            </tr>
+                            <?php endif; ?>
                         </table>
                     </div>
                 </div>
@@ -113,9 +107,13 @@
                                 <tr>
                                     <th>#</th>
                                     <th width="50%">Producto</th>
-                                    <th width="20%">Medida</th>
+                                    <th width="10%">Medida</th>
                                     <th width="15%">Cantidad</th>
+                                    <?php if($modificado==true): ?>
+                                    <th width="15%">Cantidad Anterior</th>
+                                    <?php endif; ?>
                                     <th width="15%">Precio Unitario</th>
+                                    <th width="10%">Observacion</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -143,10 +141,26 @@
                                         <?php echo e(number_format(round($pedidoDetail->cantidaddigitada,2),2)); ?>
 
                                     </td>
+                                    <?php if($modificado==true): ?>
+                                    <td>
+                                        <?php if($pedidoDetail->cantidadentregada<>0): ?>
+                                            <?php echo e(number_format(round($pedidoDetail->cantidadentregada,2),2)); ?>
 
+                                            <?php endif; ?>
+                                    </td>
+                                    <?php endif; ?>
                                     <td>
                                         $ <?php echo e(number_format(round($pedidoDetail->preciovisible,2),2)); ?>
 
+                                    </td>
+                                    <td>
+                                        <?php if($pedidoDetail->informacion): ?>
+                                        <a href="javascript:void(0)"
+                                            onclick="showObservationModal('<?php echo e($pedidoDetail->informacion); ?>')"
+                                            class="btn btn-icon btn-sm btn-soft-success btn-circle">
+                                            <i class="las la-eye"></i>
+                                        </a>
+                                        <?php endif; ?>
                                     </td>
                                 </tr>
                                 <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
@@ -213,23 +227,40 @@
 </div>
 <?php $__env->stopSection(); ?>
 
+<?php $__env->startSection('modal'); ?>
+<div class="modal fade" id="modalObservacion">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h6 class="modal-title fw-600">Observación</h6>
+                <button type="button" class="close" data-dismiss="modal">
+                    <span aria-hidden="true"></span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="p-3">
+                    <div class="form-group">
+                        <input type="hidden" value="" name="ecommerce_carritosid" id="ecommerce_carritosid">
+                        <textarea class="form-control h-auto form-control-lg" placeholder="Observación"
+                            name="observacion" id="observacion" autocomplete="off" required rows="4"
+                            disabled></textarea>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<?php $__env->stopSection(); ?>
+
 <?php $__env->startSection('script'); ?>
 <script type="text/javascript">
-    $('#estado').on('change', function() {
-            var order_id = <?php echo e($pedido->pedidosid); ?>;
-            var status = $('#estado').val();
-            $.post('<?php echo e(route('pedido.actualizarestado')); ?>', {
-                _token: '<?php echo e(@csrf_token()); ?>',
-                order_id: order_id,
-                status: status
-            }, function(data) {
-                AIZ.plugins.notify('success', 'Estado Actualizado Correctamente');
-                setTimeout(esperar, 2500);
-            });
-        });
-        function esperar(){
-            location.reload();
-        }
+    function showObservationModal(observacion) {
+    // Set the value of the observation textarea in the modal
+    document.getElementById('observacion').value = observacion;
+
+    // Show the modal
+    $('#modalObservacion').modal('show');
+}
 </script>
 <?php $__env->stopSection(); ?>
 <?php echo $__env->make('backend.layouts.app', \Illuminate\Support\Arr::except(get_defined_vars(), ['__data', '__path']))->render(); ?><?php /**PATH C:\laragon\www\tienda\resources\views/backend/pedidos_show.blade.php ENDPATH**/ ?>

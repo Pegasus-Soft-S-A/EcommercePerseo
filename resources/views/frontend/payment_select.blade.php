@@ -12,25 +12,27 @@ $parametros = \App\Models\ParametrosEmpresa::first();
                     <div class="col done">
                         <div class="text-center text-success">
                             <i class="la-3x mb-2 las la-shopping-cart"></i>
-                            <h3 class="fs-14 fw-600 d-none d-lg-block ">1. Mi Carrito</h3>
+                            <h3 class="fs-14 fw-600 d-none d-lg-block ">Mi Carrito</h3>
                         </div>
                     </div>
+                    @if(get_setting('maneja_sucursales') != "on")
                     <div class="col done">
                         <div class="text-center text-success">
                             <i class="la-3x mb-2 las la-map"></i>
-                            <h3 class="fs-14 fw-600 d-none d-lg-block ">2. Información de la Compra</h3>
+                            <h3 class="fs-14 fw-600 d-none d-lg-block ">Información de la Compra</h3>
                         </div>
                     </div>
+                    @endif
                     <div class="col active">
                         <div class="text-center text-primary">
                             <i class="la-3x mb-2 las la-credit-card"></i>
-                            <h3 class="fs-14 fw-600 d-none d-lg-block">3. Pago</h3>
+                            <h3 class="fs-14 fw-600 d-none d-lg-block">Pago</h3>
                         </div>
                     </div>
                     <div class="col">
                         <div class="text-center">
                             <i class="la-3x mb-2 opacity-50 las la-check-circle"></i>
-                            <h3 class="fs-14 fw-600 d-none d-lg-block opacity-50">4. Confirmación</h3>
+                            <h3 class="fs-14 fw-600 d-none d-lg-block opacity-50">Confirmación</h3>
                         </div>
                     </div>
                 </div>

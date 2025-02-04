@@ -571,24 +571,7 @@
                             </div>
                             @endif
 
-                            @if (Auth::check())
-                            @php
-                            $commentable = false;
-                            $facturas = \App\Models\Facturas::where('clientesid', Auth::user()->clientesid)->get();
-                            @endphp
-                            @foreach ($facturas as $key => $factura)
-                            @foreach (\App\Models\FacturasDetalles::where('facturasid', $factura->facturasid)->get() as
-                            $key => $detalle)
-                            @if (\App\Models\Comentarios::where('clientesid',
-                            Auth::user()->clientesid)->where('productosid', $detallesProducto->productosid)->first() ==
-                            null && $detallesProducto->productosid == $detalle->productosid)
-                            @php
-                            $commentable = true;
-                            @endphp
-                            @endif
-                            @endforeach
-                            @endforeach
-                            @if ($commentable)
+                            @if (Auth::check() && $commentable)
                             <div class="pt-4">
                                 <div class="border-bottom mb-4">
                                     <h3 class="fs-17 fw-600">
@@ -598,21 +581,19 @@
                                 <form class="form-default" role="form" action="{{ route('reviews.store') }}"
                                     method="POST">
                                     @csrf
-                                    <input type="hidden" name="productosid"
-                                        value="{{ $detallesProducto->productosid }}">
+                                    <input type="hidden" name="productosid" value="{{ $productosid }}">
                                     <div class="row">
                                         <div class="col-md-6">
                                             <div class="form-group">
-                                                <label for="" class="text-uppercase c-gray-light">Su
-                                                    Nombre</label>
-                                                <input type="text" name="name" value="{{ Auth::user()->razonsocial }}"
+                                                <label for="" class="text-uppercase c-gray-light">Su Nombre</label>
+                                                <input type="text" name="name" value="{{ $user->razonsocial }}"
                                                     class="form-control" disabled required>
                                             </div>
                                         </div>
                                         <div class="col-md-6">
                                             <div class="form-group">
                                                 <label for="" class="text-uppercase c-gray-light">Email</label>
-                                                <input type="text" name="email" value="{{ Auth::user()->email }}"
+                                                <input type="text" name="email" value="{{ $user->email }}"
                                                     class="form-control" required disabled>
                                             </div>
                                         </div>
@@ -620,35 +601,18 @@
                                     <div class="form-group">
                                         <label class="opacity-60">Rating</label>
                                         <div class="rating rating-input">
-                                            <label>
-                                                <input type="radio" name="rating" value="1" required>
+                                            @for ($i = 1; $i <= 5; $i++) <label>
+                                                <input type="radio" name="rating" value="{{ $i }}" required>
                                                 <i class="las la-star"></i>
-                                            </label>
-                                            <label>
-                                                <input type="radio" name="rating" value="2">
-                                                <i class="las la-star"></i>
-                                            </label>
-                                            <label>
-                                                <input type="radio" name="rating" value="3">
-                                                <i class="las la-star"></i>
-                                            </label>
-                                            <label>
-                                                <input type="radio" name="rating" value="4">
-                                                <i class="las la-star"></i>
-                                            </label>
-                                            <label>
-                                                <input type="radio" name="rating" value="5">
-                                                <i class="las la-star"></i>
-                                            </label>
+                                                </label>
+                                                @endfor
                                         </div>
                                     </div>
-
                                     <div class="form-group">
                                         <label class="opacity-60">Comentario</label>
                                         <textarea class="form-control" rows="4" name="comentario"
                                             placeholder="Su comentario" required></textarea>
                                     </div>
-
                                     <div class="text-right">
                                         <button type="submit" class="btn btn-primary mt-3">
                                             Enviar Comentario
@@ -657,7 +621,7 @@
                                 </form>
                             </div>
                             @endif
-                            @endif
+
 
                         </div>
                     </div>

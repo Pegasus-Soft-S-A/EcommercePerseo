@@ -11,10 +11,13 @@ use App\Models\GrupoClientes;
 use Illuminate\Http\Request;
 use App\Models\Integraciones;
 use App\Models\Lineas;
+use App\Models\Medidas;
 use App\Models\ParametrosEmpresa;
+use App\Models\Producto;
 use App\Models\Subcategorias;
 use App\Models\Subgrupos;
 use App\Models\Tarifas;
+use GuzzleHttp\Client;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
@@ -48,8 +51,8 @@ class ConfiguracionesController extends Controller
         $tarifas = Tarifas::all();
         $grupos = GrupoClientes::all();
         $almacenes = DB::connection('empresa')->table('almacenes')->where('estado', '1')->get();
-
-        return view('backend.configuraciones-generales', compact('facturadores', 'productos_existencias', 'tarifas', 'grupos', 'almacenes'));
+        $clientes = Clientes::where('clientesid', get_setting('cliente_pedidos'))->first();
+        return view('backend.configuraciones-generales', compact('facturadores', 'productos_existencias', 'tarifas', 'grupos', 'almacenes', 'clientes'));
     }
 
     public function update_general(Request $request)
@@ -82,6 +85,9 @@ class ConfiguracionesController extends Controller
             'controla_stock' => $request->controla_stock,
             'vista_categorias' => $request->vista_categorias,
             'email_pedidos' => implode(',', $tags),
+            'cupo_sucursal' => $request->cupo_sucursal,
+            'cliente_pedidos' => $request->cliente_pedidos,
+            'maneja_sucursales' => $request->maneja_sucursales,
         ];
 
         if ($request->file('imagen_defecto')) {
@@ -400,5 +406,107 @@ class ConfiguracionesController extends Controller
             }
         }
         return 1;
+    }
+
+    public function trackingUrbano(Request $request)
+    {
+        $integracion = Integraciones::where('tipo', 8)->first();
+        $integracion = json_decode($integracion->parametros);
+
+        // Inicializar el cliente de Guzzle
+        $client = new Client();
+
+        // URL base de la API
+        $url = $integracion->SMTP_Servidor . 'tracking/';
+
+        // Parámetros de consulta en formato JSON
+        $queryParams = [
+            'json' => json_encode([
+                'vp_linea' => 3,
+                'guia' => $request->codigo,  // Aquí se usa el código que se pasa como parámetro
+                'docref' => ''
+            ])
+        ];
+
+        // Encabezados de la petición
+        $headers = [
+            'user' => $integracion->SMTP_Usuario,
+            'pass' => $integracion->SMTP_Pass,
+        ];
+
+        try {
+            // Realizar la petición GET
+            $response = $client->request('GET', $url, [
+                'query' => $queryParams,
+                'headers' => $headers
+            ]);
+            // Obtener el cuerpo de la respuesta
+            $data = json_decode($response->getBody(), true);
+
+            // Extraer el estado de la primera entrada
+            $estado = $data[0]['estado'] ?? 'Estado no disponible';
+
+            // Retornar solo el estado en la respuesta
+            return response()->json(['estado' => $estado]);
+        } catch (\Exception $e) {
+            // Manejo de errores
+            return response()->json([
+                'error' => 'Error al consultar la API',
+                'message' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    public function busquedaProducto(Request $request)
+    {
+        // Obtenemos el término de búsqueda enviado desde el input
+        $termino = $request->producto;
+
+        // Buscamos en la base de datos utilizando el modelo Producto
+        // donde coincida el término con alguno de los campos indicados
+        $productos = Producto::select('productos.productosid', 'productos.productocodigo', 'productos.barras', 'productos.descripcion', 'productos_tarifas.tarifasid', 'productos_tarifas.medidasid', 'medidas.descripcioncorta as medida', 'productos_tarifas.precio', 'productos_tarifas.precioiva', 'productos_tarifas.factor', 'sri_tipos_ivas.valor as valoriva')
+            ->join('productos_tarifas', 'productos_tarifas.productosid', '=', 'productos.productosid')
+            ->join('medidas', 'productos_tarifas.medidasid', '=', 'medidas.medidasid')
+            ->join('sri_tipos_ivas', 'productos.sri_tipos_ivas_codigo', '=', 'sri_tipos_ivas.sri_tipos_ivas_codigo')
+            ->where('productos.estado', 1)
+            ->where('productos_tarifas.tarifasid', get_setting('tarifa_productos'))
+            ->where('productos.venta', '1')
+            ->where('productos.servicio', '0')
+            ->where('productos.bien', '0')
+            ->where('productos.ecommerce_estado', '1')
+            ->where(function ($query) use ($termino) {
+                $query->where('productos.productocodigo', 'like', '%' . $termino . '%')
+                    ->orWhere('productos.barras', 'like', '%' . $termino . '%')
+                    ->orWhere('productos.descripcion', 'like', '%' . $termino . '%');
+            })
+            ->get();
+
+        // Devolvemos los resultados como JSON
+        return response()->json($productos);
+    }
+
+    public function busquedaCliente(Request $request)
+    {
+        $identificacion = $request->cliente;
+
+        $clientes = Clientes::select('clientesid', 'identificacion', 'razonsocial')
+            ->where('identificacion', $identificacion)
+            ->first();
+
+        return response()->json($clientes);
+    }
+
+    public function obtenerMedidas(Request $request)
+    {
+        $productoId = $request->input('id');
+
+        $medidas = Producto::select('productos.productosid', 'productos.productocodigo', 'productos.barras', 'productos.descripcion', 'productos_tarifas.tarifasid', 'productos_tarifas.medidasid', 'productos_tarifas.factor', 'medidas.descripcioncorta as medida', 'productos_tarifas.precio', 'productos_tarifas.precioiva')
+            ->join('productos_tarifas', 'productos_tarifas.productosid', '=', 'productos.productosid')
+            ->join('medidas', 'productos_tarifas.medidasid', '=', 'medidas.medidasid')
+            ->where('productos.productosid', $productoId)
+            ->where('productos_tarifas.tarifasid', get_setting('tarifa_productos'))
+            ->get();
+
+        return response()->json(['medidas' => $medidas]);
     }
 }
