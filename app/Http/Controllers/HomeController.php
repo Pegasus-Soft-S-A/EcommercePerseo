@@ -156,7 +156,7 @@ class HomeController extends Controller
         Carrito::where('usuario_temporalid', $request->session()->get('usuario_temporalid'))
             ->update([
                 'clientesid' => auth()->user()->clientesid,
-                'clientes_sucursalesid' => session('sucursalid', null),
+                'clientes_sucursalesid' => session('sucursalid', 0),
                 'usuario_temporalid' => null
             ]);
 
