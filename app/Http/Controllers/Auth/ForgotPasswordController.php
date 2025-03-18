@@ -38,16 +38,46 @@ class ForgotPasswordController extends Controller
                     $user->codigo_verificacion = rand(100000, 999999);
                     $user->save();
 
-                    configurar_smtp();
+                    $parametros = ParametrosEmpresa::first();
 
-                    $array['view'] = 'emails.verification';
-                    $array['from'] = Config::get('mail.from.address');
-                    $array['subject'] = 'Reestablecer Contraseña';
-                    $array['codigo'] = $user->codigo_verificacion;
+                    // Seleccionar método de envío según el tipo SMTP
+                    if ($parametros->smtp_tipo == 1) {
+                        // Método SMTP tradicional
+                        configurar_smtp();
+                        // Preparar datos del correo
+                        $array = [
+                            'view' => 'emails.verification',
+                            'subject' => "Reestablecer Contraseña",
+                            'from' => Config::get('mail.from.address'),
+                            // Datos para la plantilla Blade
+                            'codigo' => $user->codigo_verificacion
+                        ];
+                        try {
+                            Mail::mailer('smtp')->to($user->email_login)->send(new ReestablecerContrasena($array));
+                            flash('Email enviado correctamente')->success();
+                        } catch (\Exception $e) {
+                            flash('Error enviando email: ' . $e->getMessage())->error();
+                        }
+                    } elseif ($parametros->smtp_tipo == 2) {
+                        // Preparar datos del correo
+                        $array = [
+                            'view' => 'emails.verification',
+                            'subject' => "Reestablecer Contraseña",
+                            'from' => Config::get('mail.from.address'),
+                            // Datos para la plantilla Blade
+                            'codigo' => $user->codigo_verificacion
+                        ];
+                        // Enviar por API de Gmail usando el helper
+                        [$success, $message] = enviar_por_gmail_api($user->email_login, $array, $parametros);
+                        if ($success) {
+                            flash('Se ha enviado un codigo de verificacion a su correo electronico')->success();
+                        } else {
+                            flash($message)->error();
+                        }
+                    } else {
+                        flash('Tipo de configuración de correo no válido')->error();
+                    }
 
-                    Mail::mailer('smtp')->to($user->email_login)->send(new ReestablecerContrasena($array));
-
-                    flash('Se ha enviado un codigo de verificacion a su correo electronico')->success();
                     return view('auth.passwords.reset');
                 } else {
                     flash('El email no corresponde al usuario')->error();

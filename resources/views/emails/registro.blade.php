@@ -26,15 +26,13 @@
                                     <table border="0" cellpadding="0" cellspacing="0" width="100%">
                                         <tbody>
                                             <tr>
-                                                <td
-                                                    style="font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;">
+                                                <td style="font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;">
                                                     @php
-                                                    $base = Request::segment(1);
+                                                        $base = Request::segment(1);
                                                     @endphp
                                                     @if ($base)
-                                                    <img src="{{ $message->embed(public_path() . '/assets/img/logo-'.$base.'.png') }}"
-                                                        alt="" width="500" height="100"
-                                                        style="display: block; margin-left: auto; margin-right: auto;">
+                                                        <img src="{{ url('/assets/img/logo-' . $base . '.png') }}" alt="Logo" width="500"
+                                                            height="100" style="display: block; margin-left: auto; margin-right: auto;">
                                                     @endif
                                                 </td>
                                             </tr>
@@ -43,7 +41,7 @@
                                                     style="font-family: 'Benton Sans', -apple-system, BlinkMacSystemFont, Roboto, 'Helvetica neue', Helvetica, Tahoma, Arial, sans-serif; padding: 32px 40px; border-radius: 6px 6px 0 0;"
                                                     align="">
                                                     <h2 style="color: #404040; font-weight: 300; margin: 0 0 12px 0; font-size: 24px; line-height: 30px; font-family: 'Benton Sans', -apple-system, BlinkMacSystemFont, Roboto, 'Helvetica neue', Helvetica, Tahoma, Arial, sans-serif;"
-                                                        class="">Hola, {{$array['razonsocial']}}. Gracias por
+                                                        class="">Hola, {{ $array['razonsocial'] }}. Gracias por
                                                         registrarte a nuestra
                                                         tienda online.
                                                     </h2>

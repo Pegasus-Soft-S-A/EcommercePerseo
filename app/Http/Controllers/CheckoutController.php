@@ -332,7 +332,6 @@ class CheckoutController extends Controller
 
                 flash('Su pedido ha sido realizado correctamente')->success();
             } catch (\Exception $e) {
-                dd($e->getMessage());
                 //Si ocurrio algun error mientras insertaba datos hace un rollback y no guarda ninguna ejecucion
                 DB::connection('empresa')->rollback();
                 $direccion = $request->clientes_sucursalesid;
@@ -350,21 +349,55 @@ class CheckoutController extends Controller
                 return view('frontend.payment_select', compact('carts', 'direccion', 'totales', 'parametros'));
             }
 
-            configurar_smtp();
+            // Preparar lista de correos
+            $emails = array_filter(
+                array_unique(
+                    array_map('trim', array_merge(
+                        explode(',', get_setting('email_pedidos')),
+                        [auth()->user()->email_login]
+                    ))
+                ),
+                fn($email) => filter_var($email, FILTER_VALIDATE_EMAIL)
+            );
 
-            //Armar erray para enviar email
-            $array['view'] = 'emails.pedido';
-            $array['from'] = Config::get('mail.from.address');
-            $array['subject'] = 'Pedido Ecommerce';
-            $array['cliente'] = auth()->user()->razonsocial;
-            $array['pedido'] = $pedido;
-            $emails = explode(",", get_setting('email_pedidos'));
-            array_push($emails, auth()->user()->email_login);
-            $emails = array_diff($emails, array("", 0, null));
-
-            try {
-                Mail::mailer('smtp')->to($emails)->send(new Pedido($array));
-            } catch (\Exception $e) {
+            // Seleccionar método de envío según el tipo SMTP
+            if ($parametros->smtp_tipo == 1) {
+                // Método SMTP tradicional
+                configurar_smtp();
+                // Preparar datos del correo
+                $array = [
+                    'view' => 'emails.pedido',
+                    'subject' => "Pedido Ecommerce",
+                    'from' => Config::get('mail.from.address'),
+                    // Datos para la plantilla Blade
+                    'cliente' => auth()->user()->razonsocial,
+                    'pedido' => $pedido
+                ];
+                try {
+                    Mail::mailer('smtp')->to($emails)->send(new Pedido($array));
+                    flash('Email enviado correctamente')->success();
+                } catch (\Exception $e) {
+                    flash('Error enviando email: ' . $e->getMessage())->error();
+                }
+            } elseif ($parametros->smtp_tipo == 2) {
+                // Preparar datos del correo
+                $array = [
+                    'view' => 'emails.pedido',
+                    'subject' => "Pedido Ecommerce",
+                    'from' => Config::get('mail.from.address'),
+                    // Datos para la plantilla Blade
+                    'cliente' => auth()->user()->razonsocial,
+                    'pedido' => $pedido
+                ];
+                // Enviar por API de Gmail usando el helper
+                [$success, $message] = enviar_por_gmail_api($emails, $array, $parametros);
+                if ($success) {
+                    flash($message)->success();
+                } else {
+                    flash($message)->error();
+                }
+            } else {
+                flash('Tipo de configuración de correo no válido')->error();
             }
 
             return redirect()->route('order_confirmed', [$pedido->pedidosid, $pedido->clientesid]);
@@ -649,21 +682,55 @@ class CheckoutController extends Controller
             return 0;
         }
 
-        configurar_smtp();
+        // Preparar lista de correos
+        $emails = array_filter(
+            array_unique(
+                array_map('trim', array_merge(
+                    explode(',', get_setting('email_pedidos')),
+                    [auth()->user()->email_login]
+                ))
+            ),
+            fn($email) => filter_var($email, FILTER_VALIDATE_EMAIL)
+        );
 
-        //Enviar email
-        $array['view'] = 'emails.factura';
-        $array['from'] = Config::get('mail.from.address');
-        $array['subject'] = 'Factura Ecommerce';
-        $array['cliente'] = auth()->user()->razonsocial;
-        $array['factura'] = $factura;
-        $emails = explode(",", get_setting('email_pedidos'));
-        array_push($emails, auth()->user()->email_login);
-        $emails = array_diff($emails, array("", 0, null));
-
-        try {
-            Mail::mailer('smtp')->to($emails)->send(new Factura($array));
-        } catch (\Exception $e) {
+        // Seleccionar método de envío según el tipo SMTP
+        if ($parametros->smtp_tipo == 1) {
+            // Método SMTP tradicional
+            configurar_smtp();
+            // Preparar datos del correo
+            $array = [
+                'view' => 'emails.factura',
+                'subject' => "Factura Ecommerce",
+                'from' => Config::get('mail.from.address'),
+                // Datos para la plantilla Blade
+                'cliente' => auth()->user()->razonsocial,
+                'factura' => $factura
+            ];
+            try {
+                Mail::mailer('smtp')->to($emails)->send(new Factura($array));
+                flash('Email enviado correctamente')->success();
+            } catch (\Exception $e) {
+                flash('Error enviando email: ' . $e->getMessage())->error();
+            }
+        } elseif ($parametros->smtp_tipo == 2) {
+            // Preparar datos del correo
+            $array = [
+                'view' => 'emails.factura',
+                'subject' => "Factura Ecommerce",
+                'from' => Config::get('mail.from.address'),
+                // Datos para la plantilla Blade
+                'cliente' => auth()->user()->razonsocial,
+                'factura' => $factura
+            ];
+            // Enviar por API de Gmail usando el helper
+            [$success, $message] = enviar_por_gmail_api($emails, $array, $parametros);
+            if ($success) {
+                flash($message)->success();
+            } else {
+                flash($message)->error();
+            }
+        } else {
+            flash('Tipo de configuración de correo no válido')->error();
         }
 
         return $factura->facturasid;

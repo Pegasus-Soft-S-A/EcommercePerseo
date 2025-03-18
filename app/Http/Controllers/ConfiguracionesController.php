@@ -22,6 +22,7 @@ use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Http;
 
 class ConfiguracionesController extends Controller
 {
@@ -342,9 +343,15 @@ class ConfiguracionesController extends Controller
 
     public function testEmail(Request $request)
     {
+        // Validar la solicitud
+        $request->validate([
+            'email' => 'required|email',
+        ]);
 
-        configurar_smtp();
+        // Obtener parámetros de la empresa
+        $parametros = ParametrosEmpresa::first();
 
+        // Preparar datos del correo
         $array = [
             'view' => 'emails.test',
             'subject' => "SMTP Test",
@@ -352,14 +359,30 @@ class ConfiguracionesController extends Controller
             'content' => "Esto es un email de prueba.",
         ];
 
-        try {
-            Mail::mailer('smtp')->to($request->email)->send(new Test($array));
-        } catch (\Exception $e) {
-            flash('Error enviando email, revise los parametros')->error();
-            return back();
+        // Determinar el método de envío según el tipo SMTP
+        if ($parametros->smtp_tipo == 1) {
+            // Enviar por SMTP tradicional
+            configurar_smtp();
+
+            try {
+                Mail::mailer('smtp')->to($request->email)->send(new Test($array));
+                flash('Email enviado correctamente')->success();
+            } catch (\Exception $e) {
+                flash('Error enviando email, revise los parametros: ' . $e->getMessage())->error();
+            }
+        } elseif ($parametros->smtp_tipo == 2) {
+            // Enviar por API de Gmail usando el helper
+            [$success, $message] = enviar_por_gmail_api($request->email, $array, $parametros);
+
+            if ($success) {
+                flash($message)->success();
+            } else {
+                flash($message)->error();
+            }
+        } else {
+            flash('Tipo de configuración de correo no válido')->error();
         }
 
-        flash('Email enviado correctamente')->success();
         return back();
     }
 

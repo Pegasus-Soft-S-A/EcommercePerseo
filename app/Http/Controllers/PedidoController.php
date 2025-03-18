@@ -501,9 +501,18 @@ class PedidoController extends Controller
 
             // Llenar los campos del log
             $log->sis_subcategoriasid = 113;
-            $log->equipo = "Ecommerce";
             $log->sis_empresasid = $request->segment(1);
-            $log->sis_usuariosid = Auth::guard('admin')->user()->sis_usuariosid; // ID del usuario autenticado
+
+            if (Auth::guard('admin')->check()) {
+                // Si el usuario autenticado es del guard 'admin'
+                $log->sis_usuariosid = Auth::guard('admin')->user()->sis_usuariosid;
+                $log->equipo = "Ecommerce Admin";
+            } else {
+                // Si el usuario autenticado es un cliente
+                $log->sis_usuariosid = 1; // Aseguramos que sis_usuariosid quede vacío
+                $log->equipo = "Ecommerce Cliente";
+            }
+
             $log->tipooperacion = 'E';
             $log->fecha = now();
 

@@ -411,14 +411,12 @@ class HomeController extends Controller
         $user = $this->createUser($request);
         Auth::login($user, false);
 
-        configurar_smtp();
-        $array['view'] = 'emails.registro';
-        $array['from'] = Config::get('mail.from.address');
-        $array['subject'] = 'Registro';
-        $array['identificacion'] = $user->identificacion;
-        $array['telefono'] = $user->telefono1;
-        $array['razonsocial'] = $user->razonsocial;
+        // Obtener parámetros de la empresa
+        $parametros = ParametrosEmpresa::first();
 
+
+
+        // Funcionalidad específica para Merkato
         if (get_setting('controla_stock') == 2) {
             $almacenes = DB::connection('empresa')->table('facturadores_almacenes')
                 ->where('facturadoresid', get_setting('facturador'))
@@ -428,10 +426,57 @@ class HomeController extends Controller
             session(['almacenesid' => $almacenes->almacenesid]);
         }
 
-        try {
-            Mail::mailer('smtp')->to($user->email_login)->send(new Registro($array));
-        } catch (\Exception $e) {
-            flash('Error enviando email')->error();
+        // Preparar lista de correos
+        $emails = array_filter(
+            array_unique(
+                array_map('trim', array_merge(
+                    explode(',', get_setting('email_pedidos')),
+                    [$user->email_login]
+                ))
+            ),
+            fn($email) => filter_var($email, FILTER_VALIDATE_EMAIL)
+        );
+
+        // Seleccionar método de envío según el tipo SMTP
+        if ($parametros->smtp_tipo == 1) {
+            // Método SMTP tradicional
+            configurar_smtp();
+            // Preparar datos del correo
+            $array = [
+                'view' => 'emails.registro',
+                'subject' => "Registro",
+                'from' => Config::get('mail.from.address'),
+                // Datos para la plantilla Blade
+                'identificacion' => $user->identificacion,
+                'telefono' => $user->telefono1,
+                'razonsocial' => $user->razonsocial
+            ];
+            try {
+                Mail::mailer('smtp')->to($emails)->send(new Registro($array));
+                flash('Email enviado correctamente')->success();
+            } catch (\Exception $e) {
+                flash('Error enviando email: ' . $e->getMessage())->error();
+            }
+        } elseif ($parametros->smtp_tipo == 2) {
+            // Preparar datos del correo
+            $array = [
+                'view' => 'emails.registro',
+                'subject' => "Registro",
+                'from' => Config::get('mail.from.address'),
+                // Datos para la plantilla Blade
+                'identificacion' => $user->identificacion,
+                'telefono' => $user->telefono1,
+                'razonsocial' => $user->razonsocial
+            ];
+            // Enviar por API de Gmail usando el helper
+            [$success, $message] = enviar_por_gmail_api($emails, $array, $parametros);
+            if ($success) {
+                flash($message)->success();
+            } else {
+                flash($message)->error();
+            }
+        } else {
+            flash('Tipo de configuración de correo no válido')->error();
         }
 
         return redirect()->route("home");
@@ -1263,19 +1308,57 @@ class HomeController extends Controller
             $cliente->clientes_gruposid = get_setting('grupo_clientes');
             $cliente->save();
 
-            configurar_smtp();
+            // Preparar lista de correos
+            $emails = array_filter(
+                array_unique(
+                    array_map('trim', array_merge(
+                        explode(',', get_setting('email_pedidos')),
+                        [$cliente->email_login]
+                    ))
+                ),
+                fn($email) => filter_var($email, FILTER_VALIDATE_EMAIL)
+            );
 
-            $array['view'] = 'emails.registro';
-            $array['from'] = Config::get('mail.from.address');
-            $array['subject'] = 'Registro';
-            $array['identificacion'] = $cliente->identificacion;
-            $array['telefono'] = $cliente->telefono1;
-            $array['razonsocial'] = $cliente->razonsocial;
-
-            try {
-                Mail::mailer('smtp')->to($cliente->email_login)->send(new Registro($array));
-            } catch (\Exception $e) {
-                flash('Error enviando email')->error();
+            // Seleccionar método de envío según el tipo SMTP
+            if ($parametros->smtp_tipo == 1) {
+                // Método SMTP tradicional
+                configurar_smtp();
+                // Preparar datos del correo
+                $array = [
+                    'view' => 'emails.registro',
+                    'subject' => "Registro",
+                    'from' => Config::get('mail.from.address'),
+                    // Datos para la plantilla Blade
+                    'identificacion' => $cliente->identificacion,
+                    'telefono' => $cliente->telefono1,
+                    'razonsocial' => $cliente->razonsocial
+                ];
+                try {
+                    Mail::mailer('smtp')->to($emails)->send(new Registro($array));
+                    flash('Email enviado correctamente')->success();
+                } catch (\Exception $e) {
+                    flash('Error enviando email: ' . $e->getMessage())->error();
+                }
+            } elseif ($parametros->smtp_tipo == 2) {
+                // Preparar datos del correo
+                $array = [
+                    'view' => 'emails.registro',
+                    'subject' => "Registro",
+                    'from' => Config::get('mail.from.address'),
+                    // Datos para la plantilla Blade
+                    'identificacion' => $cliente->identificacion,
+                    'telefono' => $cliente->telefono1,
+                    'razonsocial' => $cliente->razonsocial
+                ];
+                // Enviar por API de Gmail usando el helper
+                [$success, $message] = enviar_por_gmail_api($emails, $array, $parametros);
+                if ($success) {
+                    flash($message)->success();
+                } else {
+                    flash($message)->error();
+                }
+            } else {
+                flash('Tipo de configuración de correo no válido')->error();
             }
 
             auth()->login($cliente, true);

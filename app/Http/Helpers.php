@@ -13,6 +13,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Request;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Http;
 
 if (!function_exists('static_asset')) {
     function static_asset($path, $secure = null)
@@ -429,4 +430,216 @@ function configurar_smtp()
             'name' => 'Tienda Ecommerce'
         ],
     ]);
+}
+
+function enviar_por_gmail_api($destinatario, $datos, $parametros = null)
+{
+    // Si no se proporcionan los parámetros, obtenerlos
+    if ($parametros === null) {
+        $parametros = ParametrosEmpresa::first();
+    }
+
+    try {
+        // Renderizar la vista Blade si se ha especificado
+        if (isset($datos['view'])) {
+            // Extraer datos para la vista (todos excepto 'view' y 'subject')
+            $viewData = array_diff_key($datos, array_flip(['view', 'subject']));
+
+            // Pasar el array completo para mantener retrocompatibilidad con vistas existentes
+            $viewData['array'] = $datos;
+
+            // Renderizar la vista y guardar el HTML resultante en el contenido
+            $datos['content'] = view($datos['view'], $viewData)->render();
+        } elseif (!isset($datos['content'])) {
+            // Si no hay ni vista ni contenido, retornar error
+            return [false, 'No se ha especificado ni vista ni contenido para el correo'];
+        }
+
+        // Decodificar el token JSON almacenado
+        $tokenData = json_decode($parametros->smtp_token, true);
+
+        if (!$tokenData || !isset($tokenData['access_token'])) {
+            return [false, 'Token de Gmail no válido o no encontrado'];
+        }
+
+        // Verificar y renovar el token si es necesario
+        if (function_exists('verificar_y_renovar_token')) {
+            [$tokenValid, $tokenMessage] = verificar_y_renovar_token($parametros);
+
+            if (!$tokenValid) {
+                return [false, 'Error con el token de Gmail: ' . $tokenMessage];
+            }
+
+            // Recargar los parámetros para obtener el token actualizado
+            $parametros->refresh();
+            $tokenData = json_decode($parametros->smtp_token, true);
+        }
+
+        // Construir el mensaje de correo en formato RFC822
+        $mensaje = construir_mensaje_rfc822($destinatario, $datos, $parametros);
+
+        // Si no se pudo construir el mensaje
+        if (!$mensaje) {
+            return [false, 'Error al construir el mensaje de correo'];
+        }
+
+        // Obtener el token de acceso
+        $accessToken = $tokenData['access_token'];
+
+        // Obtener la dirección de correo Gmail desde el usuario SMTP
+        $gmailAddress = $parametros->smtp_usuario;
+
+        // URL de la API de Gmail
+        $url = "https://www.googleapis.com/upload/gmail/v1/users/{$gmailAddress}/messages/send?uploadType=media";
+
+        // Realizar la petición HTTP a la API de Gmail
+        // Usar ->withBody() en lugar de pasar el contenido directamente a post()
+        $response = Http::withHeaders([
+            'Authorization' => "Bearer {$accessToken}",
+            'Content-Type' => 'message/rfc822'
+        ])->withBody($mensaje, 'message/rfc822')
+            ->withOptions(["verify" => false])
+            ->post($url);
+
+        // Verificar la respuesta
+        if ($response->successful()) {
+            return [true, 'Email enviado correctamente'];
+        } else {
+            // Manejar específicamente los errores comunes
+            $statusCode = $response->status();
+            $body = $response->body();
+
+            $errorMessage = "Error al enviar email por API de Gmail. Código: {$statusCode}";
+
+            // Manejar errores específicos
+            if ($statusCode == 401) {
+                $errorMessage .= ". Credenciales inválidas o token expirado. Necesita renovar el token de acceso.";
+            } elseif ($statusCode == 403) {
+                $errorMessage .= ". Acceso prohibido. Verifique los permisos de la API.";
+            } elseif ($statusCode == 400) {
+                $errorMessage .= ". Solicitud incorrecta. Verifique el formato del mensaje.";
+            }
+
+            // Incluir detalles de la respuesta para depuración
+            $errorMessage .= "\nDetalles: " . $body;
+
+            return [false, $errorMessage];
+        }
+    } catch (\Exception $e) {
+        return [false, 'Error al enviar email: ' . $e->getMessage()];
+    }
+}
+
+function construir_mensaje_rfc822($destinatario, $datos, $parametros)
+{
+    try {
+        // Formatear destinatarios si es un array
+        $destinatarios_formateados = is_array($destinatario)
+            ? implode(', ', $destinatario)
+            : $destinatario;
+
+        // Crear las cabeceras del mensaje
+        $headers = [
+            'From: ' . $parametros->smtp_from,
+            'To: ' . $destinatarios_formateados,
+            'Subject: ' . $datos['subject'],
+            'MIME-Version: 1.0',
+            'Content-Type: text/html; charset=utf-8',
+            'Content-Transfer-Encoding: base64',
+        ];
+
+        $rawMessage = implode("\r\n", $headers);
+        $rawMessage .= "\r\n\r\n";
+        $rawMessage .= base64_encode($datos['content']);
+
+        return $rawMessage;
+    } catch (\Exception $e) {
+        // En caso de error, devolver null
+        return null;
+    }
+}
+
+function renovar_token_gmail($parametros)
+{
+    try {
+        // Decodificar el token actual
+        $tokenData = json_decode($parametros->smtp_token, true);
+
+        if (!$tokenData || !isset($tokenData['refresh_token'])) {
+            return [false, 'No se encontró un refresh_token válido', null];
+        }
+
+        // Obtener el refresh_token
+        $refreshToken = $tokenData['refresh_token'];
+
+        // Necesitarás tu client_id y client_secret de Google Cloud Console
+        $clientId = env('GOOGLE_CLIENT_ID_EMAIL');
+        $clientSecret = env('GOOGLE_CLIENT_SECRET_EMAIL');
+
+        if (!$clientId || !$clientSecret) {
+            return [false, 'No se han configurado las credenciales de cliente de Google', null];
+        }
+
+        // Realizar la solicitud para renovar el token
+        $response = Http::asForm()->withOptions(["verify" => false])->post('https://oauth2.googleapis.com/token', [
+            'client_id' => $clientId,
+            'client_secret' => $clientSecret,
+            'refresh_token' => $refreshToken,
+            'grant_type' => 'refresh_token'
+        ]);
+
+        if ($response->successful()) {
+            $newTokenData = $response->json();
+
+            // El nuevo token no incluye el refresh_token, así que lo mantenemos
+            $newTokenData['refresh_token'] = $refreshToken;
+
+            // Añadir la fecha de expiración (ahora + expires_in segundos)
+            $expiresAt = now()->addSeconds($newTokenData['expires_in'] ?? 3600);
+            $newTokenData['DateHeureLimite'] = $expiresAt->format('Y-m-d\TH:i:s.v');
+
+            // Actualizar el token en la base de datos
+            $parametros->smtp_token = json_encode($newTokenData);
+            $parametros->save();
+
+            return [true, 'Token renovado correctamente', $newTokenData];
+        } else {
+            return [false, 'Error al renovar el token: ' . $response->body(), null];
+        }
+    } catch (\Exception $e) {
+        return [false, 'Error al renovar el token: ' . $e->getMessage(), null];
+    }
+}
+
+function verificar_y_renovar_token($parametros)
+{
+    try {
+        // Decodificar el token actual
+        $tokenData = json_decode($parametros->smtp_token, true);
+
+        if (!$tokenData) {
+            return [false, 'Token de Gmail no válido o no encontrado'];
+        }
+
+        // Verificar si hay fecha de expiración
+        if (isset($tokenData['DateHeureLimite'])) {
+            $expiresAt = new \DateTime($tokenData['DateHeureLimite']);
+            $now = new \DateTime();
+
+            // Si el token expira en menos de 5 minutos, renovarlo
+            if ($expiresAt <= $now || ($expiresAt->getTimestamp() - $now->getTimestamp()) < 300) {
+                [$success, $message, $newToken] = renovar_token_gmail($parametros);
+                return [$success, $message];
+            }
+        } elseif (isset($tokenData['expires_in'])) {
+            // Si no hay DateHeureLimite pero hay expires_in, renovar por si acaso
+            [$success, $message, $newToken] = renovar_token_gmail($parametros);
+            return [$success, $message];
+        }
+
+        // Si llegamos aquí, el token parece válido
+        return [true, 'Token válido'];
+    } catch (\Exception $e) {
+        return [false, 'Error al verificar el token: ' . $e->getMessage()];
+    }
 }
