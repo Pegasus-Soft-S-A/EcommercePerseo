@@ -295,15 +295,13 @@
                                     <table border="0" cellpadding="0" cellspacing="0" width="100%">
                                         <tbody>
                                             <tr>
-                                                <td align="center"
-                                                    style="font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;">
+                                                <td align="center" style="font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;">
                                                     @php
-                                                    $base = Request::segment(1);
+                                                        $base = Request::segment(1);
                                                     @endphp
                                                     @if ($base)
-                                                    <img src="{{ $message->embed(public_path() . '/assets/img/logo-'.$base.'.png') }}"
-                                                        alt="" width="500" height="100"
-                                                        style="display: block; margin-left: auto; margin-right: auto;">
+                                                        <img src="{{ url('/assets/img/logo-' . $base . '.png') }}" alt="Logo" width="500"
+                                                            height="100" style="display: block; margin-left: auto; margin-right: auto;">
                                                     @endif
                                                 </td>
                                             </tr>
@@ -312,7 +310,7 @@
                                                     style="font-family: 'Benton Sans', -apple-system, BlinkMacSystemFont, Roboto, 'Helvetica neue', Helvetica, Tahoma, Arial, sans-serif; padding: 32px 40px; border-radius: 6px 6px 0 0;"
                                                     align="">
                                                     <h2 style="color: #404040; font-weight: 300; margin: 0 0 12px 0; font-size: 24px; line-height: 30px; font-family: 'Benton Sans', -apple-system, BlinkMacSystemFont, Roboto, 'Helvetica neue', Helvetica, Tahoma, Arial, sans-serif;"
-                                                        class="">Hola, <strong>{{$array['cliente']}}.</strong> Su pedido
+                                                        class="">Hola, <strong>{{ $array['cliente'] }}.</strong> Su pedido
                                                         ha sido
                                                         receptado y se procederá a realizar su despacho lo más pronto
                                                         posible.</h2>
@@ -321,15 +319,14 @@
                                             <tr>
                                                 <td class="table__ridge table__ridge--top"><img
                                                         src="http://login.sendpulse.com/files/emailservice/userfiles/23ab6c2c08dcd7c46f80036f928853757242085/ridges_top_fullx2.jpg"
-                                                        alt="eventbrite" height="7"
-                                                        style="height: 7px; border: none; display: block;" border="0">
+                                                        alt="eventbrite" height="7" style="height: 7px; border: none; display: block;"
+                                                        border="0">
                                                 </td>
                                             </tr>
                                             <tr>
                                                 <td class="grid__col"
                                                     style="font-family: 'Benton Sans', -apple-system, BlinkMacSystemFont, Roboto, 'Helvetica neue', Helvetica, Tahoma, Arial, sans-serif; padding: 32px 40px; background-color: #ededed;">
-                                                    <table cellpadding="0" cellspacing="0" border="0"
-                                                        style="width: 100%; margin-bottom: 12px;"
+                                                    <table cellpadding="0" cellspacing="0" border="0" style="width: 100%; margin-bottom: 12px;"
                                                         class="no_text_resize">
                                                         <tbody>
                                                             <tr>
@@ -337,11 +334,10 @@
                                                                     <h2 style="color: #404040; font-weight: 300; margin: 0 0 12px 0; font-size: 24px; line-height: 30px; font-family: 'Benton Sans', -apple-system, BlinkMacSystemFont, Roboto, 'Helvetica neue', Helvetica, Tahoma, Arial, sans-serif;"
                                                                         class="">Resumen del pedido</h2>
                                                                 </td>
-                                                                <td colspan="2"
-                                                                    style="text-align: right; border-bottom: 1px dashed #d3d3d3;">
+                                                                <td colspan="2" style="text-align: right; border-bottom: 1px dashed #d3d3d3;">
                                                                     <div style="color: #666666; font-weight: 400; font-size: 13px; line-height: 18px; font-family: 'Benton Sans', -apple-system, BlinkMacSystemFont, Roboto, 'Helvetica neue', Helvetica, Tahoma, Arial, sans-serif;"
                                                                         class=""><span
-                                                                            style="font-size: 16px;"><strong>{{$pedido->emision}}</strong></span>
+                                                                            style="font-size: 16px;"><strong>{{ $pedido->emision }}</strong></span>
                                                                     </div>
                                                                 </td>
                                                             </tr>
@@ -350,10 +346,9 @@
                                                                     <p style="color: #666666; font-weight: 400; font-size: 15px; line-height: 21px; font-family: 'Benton Sans', -apple-system, BlinkMacSystemFont, Roboto, 'Helvetica neue', Helvetica, Tahoma, Arial, sans-serif; margin-bottom: 18px;"
                                                                         class=""><span style="font-size: 16px;">Nº de
                                                                             pedido:
-                                                                            <strong>{{$pedido->pedidos_codigo}}</strong></span>
+                                                                            <strong>{{ $pedido->pedidos_codigo }}</strong></span>
                                                                     </p>
-                                                                    <table cellpadding="0" cellspacing="0" border="0"
-                                                                        style="width: 100%;">
+                                                                    <table cellpadding="0" cellspacing="0" border="0" style="width: 100%;">
                                                                         <thead>
                                                                             <tr>
 
@@ -389,185 +384,156 @@
                                                                         </thead>
                                                                         <tbody>
                                                                             @php
-                                                                            $detallepedido=\App\Models\PedidosDetalles::where('pedidos_detalles.pedidosid',$pedido->pedidosid)->get();
+                                                                                $detallepedido = \App\Models\PedidosDetalles::where(
+                                                                                    'pedidos_detalles.pedidosid',
+                                                                                    $pedido->pedidosid,
+                                                                                )->get();
                                                                             @endphp
                                                                             @foreach ($detallepedido as $detalle)
-                                                                            @php
-                                                                            $producto =
-                                                                            \App\Models\PedidosDetalles::select('productos.descripcion
-                                                                            as producto', 'medidas.descripcion')
-                                                                            ->join('medidas', 'medidas.medidasid', '=',
-                                                                            'pedidos_detalles.medidasid')
-                                                                            ->join('productos', 'productos.productosid',
-                                                                            '=', 'pedidos_detalles.productosid')
-                                                                            ->where('pedidos_detalles.productosid',
-                                                                            $detalle->productosid)
-                                                                            ->where('pedidos_detalles.medidasid',
-                                                                            $detalle->medidasid)
-                                                                            ->where('pedidos_detalles.pedidosid',
-                                                                            $pedido->pedidosid)
-                                                                            ->first();
-                                                                            @endphp
-                                                                            <tr>
+                                                                                @php
+                                                                                    $producto = \App\Models\PedidosDetalles::select(
+                                                                                        'productos.descripcion
+                                                                            as producto',
+                                                                                        'medidas.descripcion',
+                                                                                    )
+                                                                                        ->join(
+                                                                                            'medidas',
+                                                                                            'medidas.medidasid',
+                                                                                            '=',
+                                                                                            'pedidos_detalles.medidasid',
+                                                                                        )
+                                                                                        ->join(
+                                                                                            'productos',
+                                                                                            'productos.productosid',
+                                                                                            '=',
+                                                                                            'pedidos_detalles.productosid',
+                                                                                        )
+                                                                                        ->where('pedidos_detalles.productosid', $detalle->productosid)
+                                                                                        ->where('pedidos_detalles.medidasid', $detalle->medidasid)
+                                                                                        ->where('pedidos_detalles.pedidosid', $pedido->pedidosid)
+                                                                                        ->first();
+                                                                                @endphp
+                                                                                <tr>
 
-                                                                                <td
-                                                                                    style="padding: 12px 3px 12px 0px; width: 69%;">
-                                                                                    <div style="color: #666666; font-weight: 400; font-size: 15px; line-height: 21px; font-family: 'Benton Sans', -apple-system, BlinkMacSystemFont, Roboto, 'Helvetica neue', Helvetica, Tahoma, Arial, sans-serif;"
-                                                                                        class="">{{$producto->producto}}
-                                                                                    </div>
-                                                                                </td>
-                                                                                <td
-                                                                                    style="padding: 12px 3px 12px 0px; width: 10%;">
-                                                                                    <div style="color: #666666; font-weight: 400; font-size: 15px; line-height: 21px; font-family: 'Benton Sans', -apple-system, BlinkMacSystemFont, Roboto, 'Helvetica neue', Helvetica, Tahoma, Arial, sans-serif;"
-                                                                                        class="">
-                                                                                        {{$producto->descripcion}}
-                                                                                    </div>
-                                                                                </td>
-                                                                                <td
-                                                                                    style="text-align: right; padding: 12px 0px; width: 10%;">
-                                                                                    <div style="color: #666666; font-weight: 400; font-size: 15px; line-height: 21px; font-family: 'Benton Sans', -apple-system, BlinkMacSystemFont, Roboto, 'Helvetica neue', Helvetica, Tahoma, Arial, sans-serif;"
-                                                                                        class="">
-                                                                                        {{
-                                                                                        number_format(round($detalle->cantidaddigitada,2),2)
-                                                                                        }}
-                                                                                    </div>
-                                                                                </td>
-                                                                                <td
-                                                                                    style="text-align: right; padding: 12px 0px; width: 10%;">
-                                                                                    <div style="color: #666666; font-weight: 400; font-size: 15px; line-height: 21px; font-family: 'Benton Sans', -apple-system, BlinkMacSystemFont, Roboto, 'Helvetica neue', Helvetica, Tahoma, Arial, sans-serif;"
-                                                                                        class="">
-                                                                                        {{
-                                                                                        number_format(round($detalle->preciovisible,2),2)
-                                                                                        }}
-                                                                                    </div>
-                                                                                </td>
-                                                                            </tr>
+                                                                                    <td style="padding: 12px 3px 12px 0px; width: 69%;">
+                                                                                        <div style="color: #666666; font-weight: 400; font-size: 15px; line-height: 21px; font-family: 'Benton Sans', -apple-system, BlinkMacSystemFont, Roboto, 'Helvetica neue', Helvetica, Tahoma, Arial, sans-serif;"
+                                                                                            class="">{{ $producto->producto }}
+                                                                                        </div>
+                                                                                    </td>
+                                                                                    <td style="padding: 12px 3px 12px 0px; width: 10%;">
+                                                                                        <div style="color: #666666; font-weight: 400; font-size: 15px; line-height: 21px; font-family: 'Benton Sans', -apple-system, BlinkMacSystemFont, Roboto, 'Helvetica neue', Helvetica, Tahoma, Arial, sans-serif;"
+                                                                                            class="">
+                                                                                            {{ $producto->descripcion }}
+                                                                                        </div>
+                                                                                    </td>
+                                                                                    <td style="text-align: right; padding: 12px 0px; width: 10%;">
+                                                                                        <div style="color: #666666; font-weight: 400; font-size: 15px; line-height: 21px; font-family: 'Benton Sans', -apple-system, BlinkMacSystemFont, Roboto, 'Helvetica neue', Helvetica, Tahoma, Arial, sans-serif;"
+                                                                                            class="">
+                                                                                            {{ number_format(round($detalle->cantidaddigitada, 2), 2) }}
+                                                                                        </div>
+                                                                                    </td>
+                                                                                    <td style="text-align: right; padding: 12px 0px; width: 10%;">
+                                                                                        <div style="color: #666666; font-weight: 400; font-size: 15px; line-height: 21px; font-family: 'Benton Sans', -apple-system, BlinkMacSystemFont, Roboto, 'Helvetica neue', Helvetica, Tahoma, Arial, sans-serif;"
+                                                                                            class="">
+                                                                                            {{ number_format(round($detalle->preciovisible, 2), 2) }}
+                                                                                        </div>
+                                                                                    </td>
+                                                                                </tr>
                                                                             @endforeach
                                                                             <tr>
-                                                                                <td
-                                                                                    style="padding: 12px 3px 12px 0px; width: 23%;">
+                                                                                <td style="padding: 12px 3px 12px 0px; width: 23%;">
                                                                                 </td>
 
-                                                                                <td
-                                                                                    style="padding: 12px 3px 12px 0px; width: 132.865%;">
+                                                                                <td style="padding: 12px 3px 12px 0px; width: 132.865%;">
                                                                                 </td>
-                                                                                <td
-                                                                                    style="padding: 12px 3px 12px 0px; width: 10%;">
+                                                                                <td style="padding: 12px 3px 12px 0px; width: 10%;">
                                                                                     <div style="color: #666666; font-weight: 400; font-size: 15px; line-height: 21px; font-family: 'Benton Sans', -apple-system, BlinkMacSystemFont, Roboto, 'Helvetica neue', Helvetica, Tahoma, Arial, sans-serif;"
                                                                                         class=""><span
                                                                                             style="font-size: 16px;"><strong>Subtotal
                                                                                                 Con IVA</strong></span>
                                                                                     </div>
                                                                                 </td>
-                                                                                <td
-                                                                                    style="text-align: right; padding: 12px 0px; width: 10%;">
+                                                                                <td style="text-align: right; padding: 12px 0px; width: 10%;">
                                                                                     <div style="color: #666666; font-weight: 400; font-size: 15px; line-height: 21px; font-family: 'Benton Sans', -apple-system, BlinkMacSystemFont, Roboto, 'Helvetica neue', Helvetica, Tahoma, Arial, sans-serif;"
                                                                                         class=""><span
-                                                                                            style="font-size: 16px;"><strong>{{
-                                                                                                number_format(round($pedido->subtotalconiva,2),2)
-                                                                                                }}</strong></span>
+                                                                                            style="font-size: 16px;"><strong>{{ number_format(round($pedido->subtotalconiva, 2), 2) }}</strong></span>
                                                                                     </div>
                                                                                 </td>
                                                                             </tr>
                                                                             <tr>
-                                                                                <td
-                                                                                    style="padding: 12px 3px 12px 0px; width: 23%;">
+                                                                                <td style="padding: 12px 3px 12px 0px; width: 23%;">
                                                                                 </td>
 
-                                                                                <td
-                                                                                    style="padding: 12px 3px 12px 0px; width: 132.865%;">
+                                                                                <td style="padding: 12px 3px 12px 0px; width: 132.865%;">
                                                                                 </td>
-                                                                                <td
-                                                                                    style="padding: 12px 3px 12px 0px; width: 10%;">
+                                                                                <td style="padding: 12px 3px 12px 0px; width: 10%;">
                                                                                     <div style="color: #666666; font-weight: 400; font-size: 15px; line-height: 21px; font-family: 'Benton Sans', -apple-system, BlinkMacSystemFont, Roboto, 'Helvetica neue', Helvetica, Tahoma, Arial, sans-serif;"
                                                                                         class=""><span
                                                                                             style="font-size: 16px;"><strong>Subtotal
                                                                                                 Sin IVA</strong></span>
                                                                                     </div>
                                                                                 </td>
-                                                                                <td
-                                                                                    style="text-align: right; padding: 12px 0px; width: 10%;">
+                                                                                <td style="text-align: right; padding: 12px 0px; width: 10%;">
                                                                                     <div style="color: #666666; font-weight: 400; font-size: 15px; line-height: 21px; font-family: 'Benton Sans', -apple-system, BlinkMacSystemFont, Roboto, 'Helvetica neue', Helvetica, Tahoma, Arial, sans-serif;"
                                                                                         class=""><span
-                                                                                            style="font-size: 16px;"><strong>{{
-                                                                                                number_format(round($pedido->subtotalsiniva,2),2)
-                                                                                                }}</strong></span>
+                                                                                            style="font-size: 16px;"><strong>{{ number_format(round($pedido->subtotalsiniva, 2), 2) }}</strong></span>
                                                                                     </div>
                                                                                 </td>
                                                                             </tr>
                                                                             <tr>
-                                                                                <td
-                                                                                    style="padding: 12px 3px 12px 0px; width: 23%;">
+                                                                                <td style="padding: 12px 3px 12px 0px; width: 23%;">
                                                                                 </td>
 
-                                                                                <td
-                                                                                    style="padding: 12px 3px 12px 0px; width: 132.865%;">
+                                                                                <td style="padding: 12px 3px 12px 0px; width: 132.865%;">
                                                                                 </td>
-                                                                                <td
-                                                                                    style="padding: 12px 3px 12px 0px; width: 10%;">
+                                                                                <td style="padding: 12px 3px 12px 0px; width: 10%;">
                                                                                     <div style="color: #666666; font-weight: 400; font-size: 15px; line-height: 21px; font-family: 'Benton Sans', -apple-system, BlinkMacSystemFont, Roboto, 'Helvetica neue', Helvetica, Tahoma, Arial, sans-serif;"
                                                                                         class=""><span
                                                                                             style="font-size: 16px;"><strong>Descuento</strong></span>
                                                                                     </div>
                                                                                 </td>
-                                                                                <td
-                                                                                    style="text-align: right; padding: 12px 0px; width: 10%;">
+                                                                                <td style="text-align: right; padding: 12px 0px; width: 10%;">
                                                                                     <div style="color: #666666; font-weight: 400; font-size: 15px; line-height: 21px; font-family: 'Benton Sans', -apple-system, BlinkMacSystemFont, Roboto, 'Helvetica neue', Helvetica, Tahoma, Arial, sans-serif;"
                                                                                         class=""><span
-                                                                                            style="font-size: 16px;"><strong>{{
-                                                                                                number_format(round($pedido->total_descuento,2),2)
-                                                                                                }}</strong></span>
+                                                                                            style="font-size: 16px;"><strong>{{ number_format(round($pedido->total_descuento, 2), 2) }}</strong></span>
                                                                                     </div>
                                                                                 </td>
                                                                             </tr>
                                                                             <tr>
-                                                                                <td
-                                                                                    style="padding: 12px 3px 12px 0px; width: 23%;">
+                                                                                <td style="padding: 12px 3px 12px 0px; width: 23%;">
                                                                                 </td>
 
-                                                                                <td
-                                                                                    style="padding: 12px 3px 12px 0px; width: 132.865%;">
+                                                                                <td style="padding: 12px 3px 12px 0px; width: 132.865%;">
                                                                                 </td>
-                                                                                <td
-                                                                                    style="padding: 12px 3px 12px 0px; width: 10%;">
+                                                                                <td style="padding: 12px 3px 12px 0px; width: 10%;">
                                                                                     <div style="color: #666666; font-weight: 400; font-size: 15px; line-height: 21px; font-family: 'Benton Sans', -apple-system, BlinkMacSystemFont, Roboto, 'Helvetica neue', Helvetica, Tahoma, Arial, sans-serif;"
-                                                                                        class=""><span
-                                                                                            style="font-size: 16px;"><strong>Total
+                                                                                        class=""><span style="font-size: 16px;"><strong>Total
                                                                                                 IVA</strong></span>
                                                                                     </div>
                                                                                 </td>
-                                                                                <td
-                                                                                    style="text-align: right; padding: 12px 0px; width: 10%;">
+                                                                                <td style="text-align: right; padding: 12px 0px; width: 10%;">
                                                                                     <div style="color: #666666; font-weight: 400; font-size: 15px; line-height: 21px; font-family: 'Benton Sans', -apple-system, BlinkMacSystemFont, Roboto, 'Helvetica neue', Helvetica, Tahoma, Arial, sans-serif;"
                                                                                         class=""><span
-                                                                                            style="font-size: 16px;"><strong>{{
-                                                                                                number_format(round($pedido->total_iva,2),2)
-                                                                                                }}</strong></span>
+                                                                                            style="font-size: 16px;"><strong>{{ number_format(round($pedido->total_iva, 2), 2) }}</strong></span>
                                                                                     </div>
                                                                                 </td>
                                                                             </tr>
                                                                             <tr>
-                                                                                <td
-                                                                                    style="padding: 12px 3px 12px 0px; width: 23%;">
+                                                                                <td style="padding: 12px 3px 12px 0px; width: 23%;">
                                                                                 </td>
 
-                                                                                <td
-                                                                                    style="padding: 12px 3px 12px 0px; width: 132.865%;">
+                                                                                <td style="padding: 12px 3px 12px 0px; width: 132.865%;">
                                                                                 </td>
-                                                                                <td
-                                                                                    style="padding: 12px 3px 12px 0px; width: 10%;">
+                                                                                <td style="padding: 12px 3px 12px 0px; width: 10%;">
                                                                                     <div style="color: #666666; font-weight: 400; font-size: 15px; line-height: 21px; font-family: 'Benton Sans', -apple-system, BlinkMacSystemFont, Roboto, 'Helvetica neue', Helvetica, Tahoma, Arial, sans-serif;"
                                                                                         class=""><span
                                                                                             style="font-size: 16px;"><strong>Total</strong></span>
                                                                                     </div>
                                                                                 </td>
-                                                                                <td
-                                                                                    style="text-align: right; padding: 12px 0px; width: 10%;">
+                                                                                <td style="text-align: right; padding: 12px 0px; width: 10%;">
                                                                                     <div style="color: #666666; font-weight: 400; font-size: 15px; line-height: 21px; font-family: 'Benton Sans', -apple-system, BlinkMacSystemFont, Roboto, 'Helvetica neue', Helvetica, Tahoma, Arial, sans-serif;"
                                                                                         class=""><span
-                                                                                            style="font-size: 16px;"><strong>{{
-                                                                                                number_format(round($pedido->total,2),2)
-                                                                                                }}</strong></span>
+                                                                                            style="font-size: 16px;"><strong>{{ number_format(round($pedido->total, 2), 2) }}</strong></span>
                                                                                     </div>
                                                                                 </td>
                                                                             </tr>
@@ -582,9 +548,8 @@
                                             <tr>
                                                 <td class="table__ridge table__ridge--bottom"><img
                                                         src="http://login.sendpulse.com/files/emailservice/userfiles/23ab6c2c08dcd7c46f80036f928853757242085/ridges_bottom_fullx2.jpg"
-                                                        alt="eventbrite" height="7"
-                                                        style="height: 7px; border: none; display: block;" border="0"
-                                                        width="600"></td>
+                                                        alt="eventbrite" height="7" style="height: 7px; border: none; display: block;"
+                                                        border="0" width="600"></td>
                                             </tr>
                                         </tbody>
                                     </table>
