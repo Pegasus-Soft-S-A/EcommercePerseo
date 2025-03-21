@@ -1,5 +1,4 @@
-<form class="form-default" role="form" action="{{ route('addresses.update', $address_data->clientes_sucursalesid) }}"
-    method="POST">
+<form class="form-default" role="form" action="{{ route('addresses.update', $address_data->clientes_sucursalesid) }}" method="POST">
     @csrf
     <div class="p-3">
         <div class="row">
@@ -7,8 +6,8 @@
                 <label>Descripción</label>
             </div>
             <div class="col-md-10">
-                <input type="text" class="form-control mb-3" placeholder="Casa, Trabajo, etc."
-                    value="{{ $address_data->descripcion }}" name="descripcion" value="" autocomplete="off" required>
+                <input type="text" class="form-control mb-3" placeholder="Casa, Trabajo, etc." value="{{ $address_data->descripcion }}"
+                    name="descripcion" autocomplete="off" required>
             </div>
         </div>
         <div class="row">
@@ -16,12 +15,11 @@
                 <label>Provincia</label>
             </div>
             <div class="col-md-10">
-                <select class="form-control mb-3 aiz-selectpicker" data-live-search="true" name="provinciasid"
-                    id="provinciasid" required>
+                <select class="form-control mb-3 aiz-selectpicker" data-live-search="true" name="provinciasid" id="edit_provinciasid" required>
                     <option value="">Seleccione Provincia</option>
                     @foreach ($provincias as $provincia)
-                    <option value="{{ $provincia->provinciasid }}" @if($provincia->
-                        provinciasid==$address_data->provinciasid) selected @endif>{{ $provincia->provincia }}</option>
+                        <option value="{{ $provincia->provinciasid }}" @if ($provincia->provinciasid == $address_data->provinciasid) selected @endif>{{ $provincia->provincia }}
+                        </option>
                     @endforeach
                 </select>
             </div>
@@ -32,8 +30,7 @@
                 <label>Ciudad</label>
             </div>
             <div class="col-md-10">
-                <select class="form-control mb-3 aiz-selectpicker" data-live-search="true" name="ciudadesid"
-                    id="ciudadesid" required>
+                <select class="form-control mb-3 aiz-selectpicker" data-live-search="true" name="ciudadesid" id="edit_ciudadesid" required>
                     <option value="">Seleccione Ciudad</option>
                 </select>
             </div>
@@ -44,8 +41,7 @@
                 <label>Parroquias</label>
             </div>
             <div class="col-md-10">
-                <select class="form-control mb-3 aiz-selectpicker" data-live-search="true" name="parroquiasid"
-                    id="parroquiasid" required>
+                <select class="form-control mb-3 aiz-selectpicker" data-live-search="true" name="parroquiasid" id="edit_parroquiasid" required>
                     <option value="">Seleccione Parroquia</option>
                 </select>
             </div>
@@ -56,8 +52,7 @@
                 <label>Direccion</label>
             </div>
             <div class="col-md-10">
-                <textarea class="form-control mb-3" placeholder="Su Direccion" rows="2" name="direccion"
-                    onkeydown="controlar(event)" required>{{ $address_data->direccion }} </textarea>
+                <textarea class="form-control mb-3" placeholder="Su Direccion" rows="2" name="direccion" onkeydown="controlar(event)" required>{{ $address_data->direccion }}</textarea>
             </div>
         </div>
 
@@ -66,116 +61,24 @@
                 <label>Telefono</label>
             </div>
             <div class="col-md-10">
-                <input type="text" class="form-control mb-3" placeholder="9999999999"
-                    value="{{ $address_data->telefono1 }}" name="telefono" value="" required>
+                <input type="text" class="form-control mb-3" placeholder="9999999999" value="{{ $address_data->telefono1 }}" name="telefono"
+                    required>
             </div>
         </div>
         <div class="form-group text-right">
             <button type="submit" class="btn btn-sm btn-primary">Guardar</button>
         </div>
     </div>
+
+    <input type="hidden" id="edit_provincia_inicial" value="{{ $address_data->provinciasid }}">
+    <input type="hidden" id="edit_ciudad_inicial" value="{{ $address_data->ciudadesid }}">
+    <input type="hidden" id="edit_parroquia_inicial" value="{{ $address_data->parroquiasid }}">
 </form>
-@section('script')
-<script type="text/javascript">
-    function controlar(e) {
-        if (e.which === 13 && !e.shiftKey) {
-            e.preventDefault();
-            return false;
-        }
-    }
 
+<script>
+    // Este script se ejecutará cuando el formulario se cargue en el modal
     $(document).ready(function() {
-         // Obtener los segmentos de la URL
-         var pathSegments = window.location.pathname.split('/').filter(segment => segment !== "");
-
-        // Verificar si "tienda" está en la URL
-        var tieneTienda = pathSegments.includes("tienda");
-
-        // Buscar el primer número en la URL (ID de la empresa)
-        var empresaSegment = pathSegments.find(segment => !isNaN(segment));
-
-        // Construir la URL base dinámicamente
-        var baseURL = tieneTienda ? '/tienda/' + empresaSegment : '/' + empresaSegment;
-
-        // Valores iniciales para edición
-        console.log('{{ $address_data }}');
-        var provinciaInicial = '{{ $address_data->provinciasid }}';
-        var ciudadInicial = '{{ $address_data->ciudadesid }}';
-        var parroquiaInicial = '{{ $address_data->parroquiasid }}';
-
-        // Función para cargar ciudades
-        function cargarCiudades(provinciaId, ciudadSeleccionada = null) {
-            if(provinciaId) {
-                $.ajax({
-                    url: baseUrl + '/obtener-ciudades/' + provinciaId,
-                    type: 'GET',
-                    success: function(data) {
-                        $('#ciudadesid').empty();
-                        $('#ciudadesid').append('<option value="">Seleccione Ciudad</option>');
-
-                        $.each(data, function(key, value) {
-                            var selected = (ciudadSeleccionada && ciudadSeleccionada == value.ciudadesid) ? 'selected' : '';
-                            $('#ciudadesid').append('<option value="' + value.ciudadesid + '" ' + selected + '>' + value.ciudad + '</option>');
-                        });
-
-                        $('#ciudadesid').prop('disabled', false);
-                        $('.aiz-selectpicker').selectpicker('refresh');
-
-                        // Si hay una ciudad seleccionada, cargar sus parroquias
-                        if(ciudadSeleccionada) {
-                            cargarParroquias(ciudadSeleccionada, parroquiaInicial);
-                        }
-                    }
-                });
-            }
-        }
-
-        // Función para cargar parroquias
-        function cargarParroquias(ciudadId, parroquiaSeleccionada = null) {
-            if(ciudadId) {
-                $.ajax({
-                    url: baseUrl + '/obtener-parroquias/' + ciudadId,
-                    type: 'GET',
-                    success: function(data) {
-                        $('#parroquiasid').empty();
-                        $('#parroquiasid').append('<option value="">Seleccione Parroquia</option>');
-
-                        $.each(data, function(key, value) {
-                            var selected = (parroquiaSeleccionada && parroquiaSeleccionada == value.parroquiasid) ? 'selected' : '';
-                            $('#parroquiasid').append('<option value="' + value.parroquiasid + '" ' + selected + '>' + value.parroquia + '</option>');
-                        });
-
-                        $('#parroquiasid').prop('disabled', false);
-                        $('.aiz-selectpicker').selectpicker('refresh');
-                    }
-                });
-            }
-        }
-
-        // Cargar datos iniciales si estamos en modo edición
-        if(provinciaInicial) {
-            cargarCiudades(provinciaInicial, ciudadInicial);
-        }
-
-        // Event listeners para cambios
-        $('#provinciasid').change(function() {
-            var provinciaId = $(this).val();
-            $('#ciudadesid').prop('disabled', true);
-            $('#parroquiasid').prop('disabled', true);
-
-            if(provinciaId) {
-                cargarCiudades(provinciaId);
-            }
-        });
-
-        $('#ciudadesid').change(function() {
-            var ciudadId = $(this).val();
-            $('#parroquiasid').prop('disabled', true);
-
-            if(ciudadId) {
-                cargarParroquias(ciudadId);
-            }
-        });
+        // Inicializar los selectores en el formulario de edición
+        initEditFormSelectors();
     });
 </script>
-@endsection

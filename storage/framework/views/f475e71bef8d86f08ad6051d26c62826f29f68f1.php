@@ -33,6 +33,7 @@
                         data-advanced-range="true" autocomplete="off">
                 </div>
             </div>
+            <?php if(get_setting('maneja_sucursales') == "on"): ?>
             <div class="col-lg-3 ">
                 <div class="form-group mb-0">
                     <label for="centrocosto">Centro Costo</label>
@@ -46,7 +47,6 @@
                     </select>
                 </div>
             </div>
-            <?php if(get_setting('maneja_sucursales') == "on"): ?>
             <div class="col-lg-3">
                 <div class="form-group mb-0">
                     <label for="destinatario">Destinatario</label>
@@ -245,5 +245,4 @@
     }
 </script>
 <?php $__env->stopSection(); ?>
-
 <?php echo $__env->make('frontend.layouts.user_panel', \Illuminate\Support\Arr::except(get_defined_vars(), ['__data', '__path']))->render(); ?><?php /**PATH C:\laragon\www\tienda\resources\views/frontend/cliente/purchase_history.blade.php ENDPATH**/ ?>
