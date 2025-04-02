@@ -296,6 +296,16 @@ class CartController extends Controller
         Carrito::destroy($request->id);
         $carts = $this->getCarts($request);
         $parametros = ParametrosEmpresa::first();
+        $sucursales = ClientesSucursales::where('clientesid', get_setting('cliente_pedidos'))->orderBy('descripcion')->get();
+        $centro_costos = CentroCostos::where('estado', 1)
+            // Primero ordenamos por el prefijo alfabético (antes del primer punto)
+            ->orderByRaw("SUBSTRING_INDEX(centro_costocodigo, '.', 1) ASC")
+            // Luego ordenamos por los segmentos numéricos posteriores, de forma que se interpreten como enteros
+            ->orderByRaw("CONVERT(SUBSTRING_INDEX(SUBSTRING_INDEX(centro_costocodigo, '.', 2), '.', -1), UNSIGNED) ASC")  // Segmento 1 (después del primer punto)
+            ->orderByRaw("CONVERT(SUBSTRING_INDEX(SUBSTRING_INDEX(centro_costocodigo, '.', 3), '.', -1), UNSIGNED) ASC")  // Segmento 2 (después del segundo punto)
+            ->orderByRaw("CONVERT(SUBSTRING_INDEX(SUBSTRING_INDEX(centro_costocodigo, '.', 4), '.', -1), UNSIGNED) ASC")  // Segmento 3 (después del tercer punto)
+            // Agrega más líneas si hay más segmentos que ordenar
+            ->get();
 
         foreach ($carts as &$cartItem) {
             $product = Producto::where('productosid', $cartItem['productosid'])->first();
@@ -307,7 +317,8 @@ class CartController extends Controller
         }
         // Calcula los totales
         $totales = $this->calcularTotales($carts, $parametros);
-        return view('frontend.partials.cart_details', compact('carts', 'totales'));
+
+        return view('frontend.partials.cart_details', compact('carts', 'totales', 'centro_costos', 'sucursales'));
     }
 
     public function updateNavCart(Request $request)
