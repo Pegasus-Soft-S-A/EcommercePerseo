@@ -739,6 +739,10 @@ class CheckoutController extends Controller
     public function verificar_existencias(Request $request, $cliente)
     {
         $carrito = Carrito::select(DB::raw('SUM(cantidad * cantidadfactor) as cantidad_total'), 'productosid', 'medidasid', 'almacenesid')->where('clientesid', $cliente)->groupBy('productosid')->get();
+        if (count($carrito) == 0) {
+            flash('Ingrese detalles al carrito')->warning();
+            return back();
+        }
         $productos = [];
         foreach ($carrito as $key => $carro) {
             $nombre = Producto::select('descripcion', 'existenciastotales')->where('productosid', $carro->productosid)->first();
