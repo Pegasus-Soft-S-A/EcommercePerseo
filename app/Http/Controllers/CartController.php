@@ -396,6 +396,9 @@ class CartController extends Controller
         $carrito->observacion = $request->observacion;
         $carrito->save();
 
-        return back();
+        return response()->json([
+            'success' => true,
+            'message' => 'Observación guardada correctamente'
+        ]);
     }
 }
