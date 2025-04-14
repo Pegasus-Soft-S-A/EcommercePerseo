@@ -37,6 +37,7 @@ use GuzzleHttp\Client;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Session;
+use Illuminate\Support\Facades\Validator;
 use Yajra\DataTables\DataTables as DataTables;
 use Intervention\Image\ImageManagerStatic as Image;
 
@@ -407,6 +408,31 @@ class HomeController extends Controller
 
     public function register(Request $request)
     {
+
+        // Toda la validación se realiza aquí 
+        $validator = Validator::make(
+            $request->all(),
+            [
+                'identificacion' => 'required|string|max:13',
+                'razonsocial' => 'required|string',
+                'email' => 'required|email',
+                'telefono1' => 'required|regex:/^[0-9]{7,15}$/',
+            ],
+            [
+                'identificacion.required' => 'El campo identificación es obligatorio.',
+                'razonsocial.required' => 'El campo razón social es obligatorio.',
+                'email.required' => 'El campo email es obligatorio.',
+                'email.email' => 'El campo email no es una dirección de correo válida.',
+                'telefono1.required' => 'El campo teléfono es obligatorio.',
+                'telefono1.regex' => 'El campo teléfono debe contener entre 7 y 15 dígitos.',
+            ]
+        );
+
+        if ($validator->fails()) {
+            return redirect()->back()
+                ->withErrors($validator)
+                ->withInput($request->except('password'));
+        }
 
         $user = $this->createUser($request);
         Auth::login($user, false);
