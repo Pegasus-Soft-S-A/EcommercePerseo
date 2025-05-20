@@ -28,6 +28,7 @@ use App\Models\Subgrupos;
 use App\Models\User;
 use App\Models\Usuarios;
 use App\Models\Wishlist;
+use App\Rules\ValidacionIdentificacionEcuatoriana;
 use Carbon\Carbon;
 use Illuminate\Auth\Events\PasswordReset;
 use Illuminate\Http\Request;
@@ -413,7 +414,7 @@ class HomeController extends Controller
         $validator = Validator::make(
             $request->all(),
             [
-                'identificacion' => 'required|string|max:13',
+                'identificacion' => ['required', 'string', 'max:13', new ValidacionIdentificacionEcuatoriana],
                 'razonsocial' => 'required|string',
                 'email' => 'required|email',
                 'telefono1' => 'required|regex:/^[0-9]{7,15}$/',

@@ -135,9 +135,6 @@ class CheckoutController extends Controller
         // Ahora, fuera del bucle, calculamos el total sumando el subtotal neto y el IVA acumulado
         $totales['total'] = $totales['subtotalNeto'] + $totales['totalIVA'];
 
-        // Aplicar redondeo y formateo al final
-        $totales['subtotal'] = number_format(round($totales['subtotal'], $parametros->fdv_subtotales), $parametros->fdv_subtotales);
-
         return $totales;
     }
 
@@ -334,19 +331,21 @@ class CheckoutController extends Controller
             } catch (\Exception $e) {
                 //Si ocurrio algun error mientras insertaba datos hace un rollback y no guarda ninguna ejecucion
                 DB::connection('empresa')->rollback();
-                $direccion = $request->clientes_sucursalesid;
+                // $direccion = $request->clientes_sucursalesid;
 
-                if (get_setting('maneja_sucursales') == "on") {
-                    $carts = Carrito::where('clientesid', Auth::user()->clientesid)->where('clientes_sucursalesid', session('sucursalid'))->get();
-                } else {
-                    $carts = Carrito::where('clientesid', Auth::user()->clientesid)->get();
-                }
+                // if (get_setting('maneja_sucursales') == "on") {
+                //     $carts = Carrito::where('clientesid', Auth::user()->clientesid)->where('clientes_sucursalesid', session('sucursalid'))->get();
+                // } else {
+                //     $carts = Carrito::where('clientesid', Auth::user()->clientesid)->get();
+                // }
 
-                // Calcula los totales
-                $totales = $this->calcularTotales($carts, $parametros);
+                // // Calcula los totales
+                // $totales = $this->calcularTotales($carts, $parametros);
 
                 flash('Ocurrio un error al realizar el pedido')->error();
-                return view('frontend.payment_select', compact('carts', 'direccion', 'totales', 'parametros'));
+                // dd($e->getMessage());
+                // return view('frontend.payment_select', compact('carts', 'direccion', 'totales', 'parametros'));
+                return back();
             }
 
             // Preparar lista de correos
@@ -738,7 +737,15 @@ class CheckoutController extends Controller
 
     public function verificar_existencias(Request $request, $cliente)
     {
-        $carrito = Carrito::select(DB::raw('SUM(cantidad * cantidadfactor) as cantidad_total'), 'productosid', 'medidasid', 'almacenesid')->where('clientesid', $cliente)->groupBy('productosid')->get();
+        if (get_setting('maneja_sucursales') == "on") {
+            $carrito = Carrito::select(DB::raw('SUM(cantidad * cantidadfactor) as cantidad_total'), 'productosid', 'medidasid', 'almacenesid')
+                ->where('clientes_sucursalesid', session('sucursalid'))
+                ->groupBy('productosid')->get();
+        } else {
+            $carrito = Carrito::select(DB::raw('SUM(cantidad * cantidadfactor) as cantidad_total'), 'productosid', 'medidasid', 'almacenesid')
+                ->where('clientesid', $cliente)
+                ->groupBy('productosid')->get();
+        }
         if (count($carrito) == 0) {
             flash('Ingrese detalles al carrito')->warning();
             return back();
@@ -772,7 +779,7 @@ class CheckoutController extends Controller
         }
 
         if (count($productos) > 0) {
-
+            $sucursales = ClientesSucursales::where('clientesid', get_setting('cliente_pedidos'))->orderBy('descripcion')->get();
             $carts = $this->getCarts($request);
             $parametros = ParametrosEmpresa::first();
 
@@ -784,17 +791,23 @@ class CheckoutController extends Controller
                 $cartItem['cantidad_final'] = $this->getCantidadFinal($cartItem);
                 // Agrega cualquier otro campo que necesites calcular y mostrar
             }
+            $centro_costos = CentroCostos::where('estado', 1)
+                // Primero ordenamos por el prefijo alfabético (antes del primer punto)
+                ->orderByRaw("SUBSTRING_INDEX(centro_costocodigo, '.', 1) ASC")
+                // Luego ordenamos por los segmentos numéricos posteriores, de forma que se interpreten como enteros
+                ->orderByRaw("CONVERT(SUBSTRING_INDEX(SUBSTRING_INDEX(centro_costocodigo, '.', 2), '.', -1), UNSIGNED) ASC")  // Segmento 1 (después del primer punto)
+                ->orderByRaw("CONVERT(SUBSTRING_INDEX(SUBSTRING_INDEX(centro_costocodigo, '.', 3), '.', -1), UNSIGNED) ASC")  // Segmento 2 (después del segundo punto)
+                ->orderByRaw("CONVERT(SUBSTRING_INDEX(SUBSTRING_INDEX(centro_costocodigo, '.', 4), '.', -1), UNSIGNED) ASC")  // Segmento 3 (después del tercer punto)
+                // Agrega más líneas si hay más segmentos que ordenar
+                ->get();
+            // Extrae el primer registro (si existe)
             // Calcula los totales
             $totales = $this->calcularTotales($carts, $parametros);
 
-            return view('frontend.view_cart', compact('productos', 'carts', 'totales'));
+            return view('frontend.view_cart', compact('productos', 'carts', 'totales', 'centro_costos', 'sucursales'));
         } else {
             if (get_setting('maneja_sucursales') == "on") {
-                if (get_setting('maneja_sucursales') == "on") {
-                    $carts = Carrito::where('clientesid', Auth::user()->clientesid)->where('clientes_sucursalesid', session('sucursalid'))->get();
-                } else {
-                    $carts = Carrito::where('clientesid', Auth::user()->clientesid)->get();
-                }
+                $carts = Carrito::where('clientesid', Auth::user()->clientesid)->where('clientes_sucursalesid', session('sucursalid'))->get();
 
                 $parametros = ParametrosEmpresa::first();
                 $direccion = session('sucursal_carrito');

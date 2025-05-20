@@ -24,19 +24,18 @@
             </thead>
             <tbody>
                 @foreach ($carts as $key => $cartItem)
-                <tr class="cart_item">
-                    <td class="product-name">
-                        {{$cartItem['producto_descripcion'] }}
-                        <strong class="product-quantity">
-                            × {{ round($cartItem['cantidad'],2) }}
-                        </strong>
-                    </td>
-                    <td class="product-total text-right">
-                        <span class="pl-4 pr-0">{{ number_format(round( $cartItem['precio_visible'] *
-                            $cartItem['cantidad'],2),2)
-                            }}</span>
-                    </td>
-                </tr>
+                    <tr class="cart_item">
+                        <td class="product-name">
+                            {{ $cartItem['producto_descripcion'] }}
+                            <strong class="product-quantity">
+                                × {{ round($cartItem['cantidad'], 2) }}
+                            </strong>
+                        </td>
+                        <td class="product-total text-right">
+                            <span
+                                class="pl-4 pr-0">{{ number_format(round($cartItem['precio_visible'] * $cartItem['cantidad'], 2), 2) }}</span>
+                        </td>
+                    </tr>
                 @endforeach
             </tbody>
         </table>
@@ -62,12 +61,9 @@
                     <th>Subtotal Neto</th>
                     <td class="text-right">
                         <span class="fw-600">{{ $totales['subtotalNeto'] }}</span>
-                        <input type="hidden" value="{{ $totales['subtotalNeto'] }}" name="subtotalneto"
-                            id="subtotalneto">
-                        <input type="hidden" value="{{ $totales['subtotalNetoConIva'] }}" name="subtotalnetoconiva"
-                            id="subtotalnetoconiva">
-                        <input type="hidden" value="{{ $totales['subtotalNetoSinIva'] }}" name="subtotalnetosiniva"
-                            id="subtotalnetosiniva">
+                        <input type="hidden" value="{{ $totales['subtotalNeto'] }}" name="subtotalneto" id="subtotalneto">
+                        <input type="hidden" value="{{ $totales['subtotalNetoConIva'] }}" name="subtotalnetoconiva" id="subtotalnetoconiva">
+                        <input type="hidden" value="{{ $totales['subtotalNetoSinIva'] }}" name="subtotalnetosiniva" id="subtotalnetosiniva">
                     </td>
                 </tr>
                 <tr class="cart-subtotal">
