@@ -107,6 +107,9 @@
                     <td class="strong">{{$cliente->razonsocial}}</td>
                 </tr>
                 <tr>
+                    <td class="gry-color small">Sucursal: {{$sucursal}}</td>
+                </tr>
+                <tr>
                     <td class="gry-color small">Dirección: {{$direccion}}</td>
                 </tr>
                 <tr>

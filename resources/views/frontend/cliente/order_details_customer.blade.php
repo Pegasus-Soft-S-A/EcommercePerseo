@@ -115,6 +115,13 @@
                             <td class="w-50 fw-600">Centro Costo:</td>
                             <td>{{$centrocosto->descripcion}}</td>
                         </tr>
+                            <tr>
+                                <td class="w-50 fw-600">Sucursal:</td>
+                                @php
+                                    $sucursal=\App\Models\ClientesSucursales::findOrFail($pedido->clientes_sucursalesid);
+                                @endphp
+                                <td>{{$sucursal->descripcion}}</td>
+                            </tr>
                         @endif
                     </table>
                 </div>

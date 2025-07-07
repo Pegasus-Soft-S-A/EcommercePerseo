@@ -410,7 +410,7 @@ class HomeController extends Controller
     public function register(Request $request)
     {
 
-        // Toda la validación se realiza aquí 
+        // Toda la validación se realiza aquí
         $validator = Validator::make(
             $request->all(),
             [
@@ -614,14 +614,28 @@ class HomeController extends Controller
         if (get_setting('maneja_sucursales') == "on") {
             $sucursal = ClientesSucursales::where('clientes_sucursalesid', session('sucursalid'))->first();
             $sucursal->telefono1 = $request->telefono3;
+
             if ($request->new_password != null) {
                 if ($request->new_password == $request->confirm_password) {
-                    $sucursal->clave = encrypt_openssl($request->new_password, "Perseo1232*");
+                    // Encriptar la nueva contraseña para verificar si ya existe
+                    $nueva_clave_encriptada = encrypt_openssl($request->new_password, "Perseo1232*");
+                    // Verificar si la clave ya existe en otra sucursal
+                    $clave_existente = ClientesSucursales::where('clave', $nueva_clave_encriptada)
+                        ->where('clientes_sucursalesid', '!=', session('sucursalid'))
+                        ->first();
+
+                    if ($clave_existente) {
+                        flash('Esta contraseña ya está siendo utilizada por otra sucursal')->error();
+                        return back();
+                    }
+
+                    $sucursal->clave = $nueva_clave_encriptada;
                 } else {
                     flash('Las contraseñas no coinciden')->error();
                     return back();
                 }
             }
+
             if ($sucursal->save()) {
                 flash('Perfil Actualizado Correctamente')->success();
                 return back();
@@ -648,6 +662,7 @@ class HomeController extends Controller
                     return back();
                 }
             }
+
             if ($cliente->save()) {
                 flash('Perfil Actualizado Correctamente')->success();
                 return back();

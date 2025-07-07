@@ -32,6 +32,11 @@ class ForgotPasswordController extends Controller
         $identificacionIngresada = substr($request->identificacion, 0, 10);
         $cliente = User::where(DB::raw('substr(identificacion, 1, 10)'), $identificacionIngresada)->first();
         if ($cliente != null) {
+            // Verificar si el usuario está activo
+            if ($cliente->estado == 0) {
+                flash('El usuario se encuentra inactivo')->error();
+                return back();
+            }
             if (filter_var($request->email, FILTER_VALIDATE_EMAIL)) {
                 $user = User::where('email_login', $request->email)->where(DB::raw('substr(identificacion, 1, 10)'), $identificacionIngresada)->first();
                 if ($user != null) {

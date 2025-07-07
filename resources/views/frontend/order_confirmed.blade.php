@@ -113,12 +113,23 @@
                                             <td>{{ number_format(round($pedido->total,2),2) }}
                                             </td>
                                         </tr>
+                                        @if(get_setting('maneja_sucursales') == "on")
                                         <tr>
                                             <td>Centro Costos:</td>
                                             <td>
                                                 {{$centro_costos->descripcion}}
                                             </td>
                                         </tr>
+                                        <tr>
+                                            <td>Sucursal:</td>
+                                            <td>
+                                                @php
+                                                    $sucursal=\App\Models\ClientesSucursales::findOrFail($pedido->clientes_sucursalesid);
+                                                @endphp
+                                                {{$sucursal->descripcion}}
+                                            </td>
+                                        </tr>
+                                        @endif
                                     </table>
                                 </div>
                             </div>

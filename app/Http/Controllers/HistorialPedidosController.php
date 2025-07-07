@@ -120,6 +120,7 @@ class HistorialPedidosController extends Controller
             'cliente' => $cliente,
             'direccion' => $sucursal->direccion,
             'telefono' => $sucursal->telefono1,
+            'sucursal' => $sucursal->descripcion,
             'datosEmpresa' => $datosEmpresa,
             'font_family' => $font_family,
             'direction' => $direction,
