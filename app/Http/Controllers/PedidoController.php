@@ -79,7 +79,7 @@ class PedidoController extends Controller
         // Obtener los pedidos con paginación
         $pedidos = $pedidos->orderBy('pedidos.emision', 'desc')
             ->orderBy('pedidos.pedidos_codigo', 'desc')
-            ->paginate(15);
+            ->paginate(50);
 
         // Recorrer los pedidos y extraer el "Urbano" y "Destinatario" de la observación
         foreach ($pedidos as $pedido) {
@@ -671,6 +671,9 @@ class PedidoController extends Controller
         $spreadsheet = IOFactory::load($file->getRealPath());
         $sheet = $spreadsheet->getSheet(0); // Seleccionar la primera hoja
 
+        // Contar filas totales
+        $highestRow = $sheet->getHighestRow();
+
         // Leer la primera fila (encabezados) para mapear las columnas
         $headerRow = $sheet->getRowIterator(1)->current();
         $headers = [];
@@ -681,26 +684,40 @@ class PedidoController extends Controller
 
         // Verificar que los encabezados necesarios existen
         $requiredHeaders = ['Destinatario', 'Cod Agencia', 'Cod Centro', 'Cod Producto', 'Unidad', 'Cantidad Proveeduría'];
+        $missingHeaders = [];
         foreach ($requiredHeaders as $requiredHeader) {
             if (!isset($headers[$requiredHeader])) {
-                return response()->json(['success' => false, 'message' => "Falta la columna requerida: $requiredHeader"]);
+                $missingHeaders[] = $requiredHeader;
             }
+        }
+
+        if (!empty($missingHeaders)) {
+            return response()->json([
+                'success' => false,
+                'message' => "Faltan las siguientes columnas requeridas: " . implode(', ', $missingHeaders)
+            ]);
         }
 
         $lastKey = null; // Variable para rastrear cambios en las columnas A, B y D
         $hojaData = [];
         $pedidoItems = []; // Lista de ítems temporal para el pedido actual
 
+        // Contadores básicos
+        $filasVacias = 0;
+
         foreach ($sheet->getRowIterator(2) as $row) {
-            $destinatario = $sheet->getCell($headers['Destinatario'] . $row->getRowIndex())->getValue();
-            $codAgenc = $sheet->getCell($headers['Cod Agencia'] . $row->getRowIndex())->getValue();
-            $codCent = $sheet->getCell($headers['Cod Centro'] . $row->getRowIndex())->getValue();
-            $codigoProducto = $sheet->getCell($headers['Cod Producto'] . $row->getRowIndex())->getValue();
-            $codMedida = $sheet->getCell($headers['Unidad'] . $row->getRowIndex())->getValue();
-            $cantidad = $sheet->getCell($headers['Cantidad Proveeduría'] . $row->getRowIndex())->getValue();
+            $rowIndex = $row->getRowIndex();
+
+            $destinatario = $sheet->getCell($headers['Destinatario'] . $rowIndex)->getValue();
+            $codAgenc = $sheet->getCell($headers['Cod Agencia'] . $rowIndex)->getValue();
+            $codCent = $sheet->getCell($headers['Cod Centro'] . $rowIndex)->getValue();
+            $codigoProducto = $sheet->getCell($headers['Cod Producto'] . $rowIndex)->getValue();
+            $codMedida = $sheet->getCell($headers['Unidad'] . $rowIndex)->getValue();
+            $cantidad = $sheet->getCell($headers['Cantidad Proveeduría'] . $rowIndex)->getValue();
 
             // Saltar filas vacías
             if (empty($destinatario) && empty($codAgenc) && empty($codCent) && empty($codigoProducto) && empty($codMedida) && empty($cantidad)) {
+                $filasVacias++;
                 continue; // Salta a la siguiente fila
             }
 
@@ -709,14 +726,33 @@ class PedidoController extends Controller
 
             // Si hay un cambio en la clave, procesamos el pedido anterior y reiniciamos
             if ($lastKey !== null && $currentKey !== $lastKey) {
-                $hojaData[] = $pedidoItems; // Guardar los ítems del pedido anterior
+                if (!empty($pedidoItems)) {
+                    $hojaData[] = $pedidoItems; // Guardar los ítems del pedido anterior
+                }
                 $pedidoItems = []; // Reiniciar la lista de ítems
             }
 
             // Validar si la medida existe
             $medida = Medidas::where('descripcioncorta', $codMedida)->first();
-            if (!$medida) {
-                continue; // Saltar si no existe la medida
+
+            // Validar si la sucursal existe
+            $sucursal = ClientesSucursales::where('clientes_sucursalesid', $codAgenc)->first();
+
+            // Si hay errores de validación, detener el proceso inmediatamente
+            if (!$medida || !$sucursal) {
+                $mensajeError = "❌ Error de validación - El proceso se ha detenido:\n\n";
+
+                if (!$medida) {
+                    $mensajeError .= "• Medida no encontrada en fila {$rowIndex}: '{$codMedida}'\n";
+                }
+
+                if (!$sucursal) {
+                    $mensajeError .= "• Sucursal no encontrada en fila {$rowIndex}: '{$codAgenc}'\n";
+                }
+
+                $mensajeError .= "\nPor favor, verifique antes de importar.";
+
+                return response()->json(['success' => false, 'message' => $mensajeError]);
             }
 
             // Buscar producto en la base de datos
@@ -729,16 +765,23 @@ class PedidoController extends Controller
                 ->where('productos.productocodigo', $codigoProducto)
                 ->first();
 
-            if ($producto) {
-                $pedidoItems[] = [
-                    'destinatario' => $destinatario,
-                    'codAgenc' => $codAgenc,
-                    'codCent' => $codCent,
-                    'producto' => $producto,
-                    'cantidad' => $cantidad,
-                    'descuento' => 0,
-                ];
+            // Si no se encuentra el producto, detener el proceso inmediatamente
+            if (!$producto) {
+                $mensajeError = "❌ Error de validación - El proceso se ha detenido:\n\n";
+                $mensajeError .= "• Producto no encontrado en fila {$rowIndex}: '{$codigoProducto}' con medida '{$codMedida}'\n";
+                $mensajeError .= "\nPor favor, verifique que el producto exista en el sistema con la medida especificada antes de importar.";
+
+                return response()->json(['success' => false, 'message' => $mensajeError]);
             }
+
+            $pedidoItems[] = [
+                'destinatario' => $destinatario,
+                'codAgenc' => $codAgenc,
+                'codCent' => $codCent,
+                'producto' => $producto,
+                'cantidad' => $cantidad,
+                'descuento' => 0,
+            ];
 
             $lastKey = $currentKey;
         }
@@ -748,28 +791,49 @@ class PedidoController extends Controller
             $hojaData[] = $pedidoItems;
         }
 
+        // Verificar si hay datos para procesar
+        if (empty($hojaData)) {
+            return response()->json([
+                'success' => false,
+                'message' => "No se encontraron datos válidos para procesar."
+            ]);
+        }
+
         // Comenzar a crear pedidos por cada grupo de datos
         DB::connection('empresa')->beginTransaction();
         try {
+            $pedidosCreados = 0;
             foreach ($hojaData as $pedidoItems) {
                 $this->crearPedido($pedidoItems);
+                $pedidosCreados++;
             }
 
             DB::connection('empresa')->commit();
-            return response()->json(['success' => true, 'message' => 'Pedidos importados correctamente']);
+
+            // Mensaje de éxito simple y directo
+            $mensajeExito = "✅ Importación completada exitosamente!\n\n";
+            $mensajeExito .= "• Pedidos creados: {$pedidosCreados}";
+
+            return response()->json(['success' => true, 'message' => $mensajeExito]);
+
         } catch (\Exception $e) {
             DB::connection('empresa')->rollback();
-            return response()->json(['success' => false, 'message' => 'Ocurrió un error al importar los pedidos: ' . $e->getMessage()]);
+            return response()->json(['success' => false, 'message' => 'Error al crear los pedidos: ' . $e->getMessage()]);
         }
     }
 
     private function crearPedido($items)
     {
         $primerItem = $items[0];
+
         // Calcular los totales usando la función calcularTotales para la hoja actual
         $totales = $this->calcularTotales($items);
 
         $secuencial = Secuenciales::where('secuencial', 'PEDIDOS')->first();
+        if (!$secuencial) {
+            throw new \Exception("No se encontró secuencial PEDIDOS");
+        }
+
         Secuenciales::where('secuenciales.secuencial', 'PEDIDOS')
             ->update(['valor' => $secuencial->valor + 1]);
 
@@ -778,13 +842,23 @@ class PedidoController extends Controller
             ->where('principal', '1')
             ->first();
 
+        if (!$almacenes) {
+            throw new \Exception("No se encontró almacén principal para facturador: " . get_setting('facturador'));
+        }
+
+        // Validar centro de costos
+        $centroCosto = CentroCostos::where('centro_costocodigo', $primerItem['codCent'])->first();
+        if (!$centroCosto) {
+            throw new \Exception("No se encontró centro de costos: " . $primerItem['codCent']);
+        }
+
         $pedido = new Pedidos;
         $pedido->emision = now()->format('Y-m-d');
         $pedido->pedidos_codigo = $secuencial->prefijo . str_pad($secuencial->valor, $secuencial->numeroceros, "0", STR_PAD_LEFT);
         $pedido->clientesid = get_setting('cliente_pedidos');
         $pedido->clientes_sucursalesid = $primerItem['codAgenc'];
         $pedido->forma_pago_empresaid = 1;
-        $pedido->centros_costosid = CentroCostos::where('centro_costocodigo', $primerItem['codCent'])->first()->centros_costosid;
+        $pedido->centros_costosid = $centroCosto->centros_costosid;
         $pedido->almacenesid = $almacenes->almacenesid;
         $pedido->concepto = "Pedido Ecommerce";
         $pedido->observacion = 'Destinatario: ' . $primerItem['destinatario'];
@@ -803,24 +877,32 @@ class PedidoController extends Controller
         $pedido->total_iva = $totales['totalIVA'];
         $pedido->total_iva2 = $totales['totalIva5'];
         $pedido->total = $totales['total'];
+
         $pedido->save();
 
         foreach ($items as $item) {
-
             $detallepedido = new PedidosDetalles;
             $detallepedido->pedidosid = $pedido->pedidosid;
-            $detallepedido->centros_costosid = CentroCostos::where('centro_costocodigo', $primerItem['codCent'])->first()->centros_costosid;
+            $detallepedido->centros_costosid = $centroCosto->centros_costosid;
             $detallepedido->productosid = $item['producto']->productosid;
-            $detallepedido->medidasid =  $item['producto']->medidasid;
+            $detallepedido->medidasid = $item['producto']->medidasid;
             $detallepedido->almacenesid = $almacenes->almacenesid;
             $detallepedido->cantidaddigitada = $item['cantidad'];
             $detallepedido->cantidadfactor = $item['producto']->factor;
             $detallepedido->cantidad = $item['cantidad'] * $item['producto']->factor;
-            $detallepedido->precio = $item['producto']->precio /  $item['producto']->factor;
+            $detallepedido->precio = $item['producto']->precio / $item['producto']->factor;
             $detallepedido->iva = $item['producto']->valoriva;
             $detallepedido->precioiva = $item['producto']->precioiva;
-            $detallepedido->descuento = isset($item['producto']->descuento) ? $item['producto']->descuento : 0;
-            $detallepedido->preciovisible = isset($parametros->tipopresentacionprecios) && $parametros->tipopresentacionprecios == 1 ? $item['producto']->precioiva : $item['producto']->precio;
+            $detallepedido->descuento = isset($item['descuento']) ? $item['descuento'] : 0;
+
+            // Verificar si existe $parametros antes de usarlo
+            try {
+                $parametros = null; // Define esta variable según tu lógica de negocio
+                $detallepedido->preciovisible = isset($parametros->tipopresentacionprecios) && $parametros->tipopresentacionprecios == 1 ? $item['producto']->precioiva : $item['producto']->precio;
+            } catch (\Exception $e) {
+                $detallepedido->preciovisible = $item['producto']->precio;
+            }
+
             $detallepedido->save();
         }
     }

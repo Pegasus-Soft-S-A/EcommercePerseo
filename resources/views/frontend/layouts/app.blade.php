@@ -13,7 +13,6 @@
     <meta property="fb:app_id" content="{{ get_setting('FACEBOOK_PIXEL_ID') }}">
     @yield('meta')
 
-
     <!-- Favicon -->
     <link rel="icon" type="image/png" sizes="32x32" href="data:image/jpg;base64,{{ get_setting('icono_sitio') }}">
 
@@ -21,11 +20,6 @@
         href="https://fonts.googleapis.com/css?family=Open+Sans:300,300i,400,400i,600,600i,700,700i,800,800i&display=swap"
         rel="stylesheet">
 
-    <!-- CSS Files -->
-    {{--
-    <link rel="stylesheet" href="{{ static_asset('assets/css/vendors.css') }}">
-    <link rel="stylesheet" href="{{ static_asset('assets/css/aiz-core.css') }}">
-    <link rel="stylesheet" href="{{ static_asset('assets/css/custom-style.css') }}"> --}}
     <link href="{{ static_asset('css/plugins.css') }}" rel="stylesheet" type="text/css" />
     <script>
         var AIZ = AIZ || {};
@@ -184,27 +178,18 @@
     </div>
     @endif
 
-    {{-- @if (get_setting('controla_stock') == 2 && Auth::check())
-    <style>
-        .modal:nth-of-type(even) {
-            z-index: 1052 !important;
-        }
-
-        .modal-backdrop.show:nth-of-type(even) {
-            z-index: 1051 !important;
-        }
-    </style>
-    @endif --}}
-
     @yield('modal')
 
-    {{-- <script src="{{ static_asset('assets/js/vendors.js') }}"></script> --}}
-    {{-- <script src="{{ static_asset('assets/js/aiz-core.js') }}"></script> --}}
     <script src="{{ static_asset('js/plugins.js') }}"></script>
 
     @if (get_setting('pago_plux') == 'on')
-    <script src="https://paybox.pagoplux.com/paybox/index.js"></script>
+        @if (get_setting('pago_plux_pruebas') == 'on')
+             <script src="https://sandbox-paybox.pagoplux.com/paybox/index.js"></script>
+        @else
+             <script src="https://paybox.pagoplux.com/paybox/index.js"></script>
+        @endif
     @endif
+
     <script>
         @foreach (session('flash_notification', collect())->toArray() as $message)
             AIZ.plugins.notify('{{ $message['level'] }}', '{{ $message['message'] }}');

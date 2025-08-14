@@ -324,6 +324,16 @@
                             </div>
                         </div>
 
+                        <div class="form-group row">
+                            <label class="col-md-3 col-from-label">Pruebas</label>
+                            <div class="col-md-8">
+                                <label class="aiz-switch aiz-switch-success mb-0">
+                                    <input id="pago_plux_pruebas" type="checkbox" name="pago_plux_pruebas" @if (get_setting('pago_plux_pruebas') == 'on') checked @endif">
+                                    <span></span>
+                                </label>
+                            </div>
+                        </div>
+
                         <div class="form-group row" id="email_pago_plux">
                             <label class="col-md-3 col-from-label">Email Pago Plux</label>
                             <div class="col-md-8">

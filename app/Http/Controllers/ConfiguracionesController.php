@@ -89,6 +89,7 @@ class ConfiguracionesController extends Controller
             'cupo_sucursal' => $request->cupo_sucursal,
             'cliente_pedidos' => $request->cliente_pedidos,
             'maneja_sucursales' => $request->maneja_sucursales,
+            'pago_plux_pruebas' => $request->pago_plux_pruebas,
         ];
 
         if ($request->file('imagen_defecto')) {

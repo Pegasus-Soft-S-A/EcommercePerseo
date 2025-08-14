@@ -302,6 +302,7 @@ class HomeController extends Controller
             "cupo_sucursal" => 0,
             "cliente_pedidos" => null,
             "maneja_sucursales" => null,
+            "pago_plux_pruebas" => '0',
         ];
     }
 
@@ -410,7 +411,7 @@ class HomeController extends Controller
     public function register(Request $request)
     {
 
-        // Toda la validación se realiza aquí 
+        // Toda la validación se realiza aquí
         $validator = Validator::make(
             $request->all(),
             [

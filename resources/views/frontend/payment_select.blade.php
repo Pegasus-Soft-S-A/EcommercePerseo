@@ -225,72 +225,42 @@
         if ("{{ get_setting('pago_plux') }}" == "on") {
 
             var data = {
-
                 /* Requerido. Email de la cuenta PagoPlux del Establecimiento o Id/Class del elemento html que posee el valor */
-
                 PayboxRemail: "{{ get_setting('email_pago_plux') }}",
 
                 /* Requerido. Email del usuario que realiza el pago o Id/Class del elemento html que posee el valor */
-
                 PayboxSendmail: "{{ auth()->user()->email_login }}",
 
                 /* Requerido. Nombre del establecimiento en PagoPlux o Id/Class del elemento html que posee el valor */
-
                 PayboxRename: "{{ $parametros->nombrecomercial }}",
 
                 /* Requerido. Nombre del usuario que realiza el pago o Id/Class del elemento html que posee el valor */
-
                 PayboxSendname: "{{ auth()->user()->razonsocial }}",
 
                 /* Requerido. Ejemplo: 100.00, 10.00, 1.00 o Id/Class del elemento html que posee el valor de los productos sin impuestos */
-
                 PayboxBase0: $('#inputCero').val(),
 
                 /* Requerido. Ejemplo: 100.00, 10.00, 1.00 o Id/Class del elemento html que posee el valor de los productos con su impuesto incluido */
-
                 PayboxBase12: $('#total').val(),
 
                 /* Requerido. Descripción del pago o Id/Class del elemento html que posee el valor */
-
                 PayboxDescription: "Pago Ecommerce",
 
-                /* Requerido Tipo de Ejecución
-                * Production: true (Modo Producción, Se procesarán cobros y se
-                cargarán al sistema, afectará a la tdc)
-                * Production: false (Modo Prueba, se realizarán cobros de prueba y no
-                se guardará ni afectará al sistema)
-                */
-                PayboxProduction: true,
+                /* Configuración según el modo (producción o pruebas) */
+                PayboxProduction: "{{ get_setting('pago_plux_pruebas') }}" !== "on", // false para pruebas, true para producción
+                PayboxEnvironment: "{{ get_setting('pago_plux_pruebas') }}" === "on" ? "sandbox" : "prod",
 
-
-                PayboxEnvironment: "prod",
-                /* Requerido. Lenguaje del Paybox
-                 * Español: es | (string) (Paybox en español)
-                 * Ingles:  us | (string) (Paybox en Ingles)
-                 */
+                /* Requerido. Lenguaje del Paybox */
                 PayboxLanguage: "es",
 
-                /* Opcional Valores HTML que son requeridos por la web que implementa
-                el botón de pago.
-                * Se permiten utilizar los identificadores de # y . que describen los
-                Id y Class de los Elementos HTML
-                * Array de identificadores de elementos HTML |
-                Ejemplo: PayboxRequired: ["#nombre", "#correo", "#monto"]
-                */
+                /* Opcional Valores HTML que son requeridos por la web */
                 PayboxRequired: [],
 
-                /*
-                 * Requerido. dirección del tarjetahabiente o Id/Class del elemento
-                 * html que posee el valor
-                 */
+                /* Requerido. dirección del tarjetahabiente */
                 PayboxDirection: "{{ preg_replace('/[\r\n]+/', '', $direccioncliente->direccion) }}",
 
-                /*
-                 * Requerido. Teléfono del tarjetahabiente o Id/Class del elemento
-                 * html que posee el valor
-                 */
-                PayBoxClientPhone: "{{ auth()->user()->telefono1 }}",
-
+                /* Requerido. Teléfono del tarjetahabiente */
+                PayBoxClientPhone: "{{ auth()->user()->telefono1 }}"
 
             }
 

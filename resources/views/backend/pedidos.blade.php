@@ -320,6 +320,8 @@
 @endsection
 
 @section('script')
+<!-- Solo SweetAlert2 JS (incluye CSS) -->
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
     $(document).ready(function() {
         // Botón para mostrar/ocultar los filtros con animación
@@ -354,7 +356,56 @@
             return params;
         }
 
-        // Manejo del formulario de Excel
+        // Función para forzar el cierre del modal de carga
+        function forceCloseLoadingModal() {
+            $('.c-preloader').hide();
+            $('.c-preloader').css('display', 'none');
+
+            // Paso 2: Cerrar el modal #carga de manera agresiva
+            $('#carga').modal('hide');
+            $('#carga').removeClass('show in fade');
+            $('#carga').css('display', 'none');
+            $('#carga').attr('aria-hidden', 'true');
+
+            // Paso 3: Limpiar body inmediatamente
+            $('body').removeClass('modal-open');
+            $('body').css('padding-right', '');
+            $('body').css('overflow', '');
+
+            // Paso 4: Remover backdrop inmediatamente
+            $('.modal-backdrop').remove();
+
+            // Paso 5: Forzar limpieza después de un breve delay
+            setTimeout(function() {
+                console.log('Limpieza adicional del modal...');
+
+                // Forzar ocultación del modal #carga
+                $('#carga').hide();
+                $('#carga').removeClass('show in fade modal-open');
+                $('#carga').css({
+                    'display': 'none !important',
+                    'z-index': '',
+                    'opacity': '0'
+                });
+
+                // Limpiar completamente el body
+                $('body').removeClass('modal-open');
+                $('body').css({
+                    'padding-right': '',
+                    'overflow': '',
+                    'position': '',
+                    'top': ''
+                });
+                $('body').removeAttr('style');
+
+                // Remover todos los backdrops posibles
+                $('.modal-backdrop').remove();
+                $('.fade').removeClass('in');
+
+            }, 50);
+        }
+
+// Manejo del formulario de Excel con AIZ.plugins.notify
         $('#formExcel').submit(function(event) {
             event.preventDefault();
             var formData = new FormData(this);
@@ -368,17 +419,60 @@
                 processData: false,
                 contentType: false,
                 success: function(response) {
-                    $('#carga').modal('hide'); // Ocultar el modal de carga
-                    //$('#modalExcel').modal('hide'); // Ocultar el modal de carga
+                    forceCloseLoadingModal();
+
                     if (response.success) {
-                        window.location.reload();
+                        // Mensaje de éxito con SweetAlert
+                        Swal.fire({
+                            icon: 'success',
+                            title: '¡Importación Exitosa!',
+                            html: response.message.replace(/\n/g, '<br>'),
+                            width: '600px',
+                            confirmButtonText: 'Recargar Página',
+                            confirmButtonColor: '#28a745',
+                            allowOutsideClick: false
+                        }).then((result) => {
+                            if (result.isConfirmed) {
+                                $('#modalExcel').modal('hide');
+                                window.location.reload();
+                            }
+                        });
                     } else {
-                        AIZ.plugins.notify('error', response.message);
+                        // Mensaje de error con SweetAlert
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Error en Importación',
+                            html: response.message.replace(/\n/g, '<br>'),
+                            width: '700px',
+                            confirmButtonText: 'Cerrar',
+                            confirmButtonColor: '#dc3545',
+                            allowOutsideClick: false
+                        }).then((result) => {
+                            if (result.isConfirmed) {
+                                $('#modalExcel').modal('hide');
+                            }
+                        });
                     }
                 },
-                error: function() {
-                    $('#carga').modal('hide'); // Asegurarse de ocultar el modal si hay un error
-                    AIZ.plugins.notify('error', 'Error en la solicitud');
+                error: function(xhr) {
+                    forceCloseLoadingModal();
+
+                    let errorMessage = 'Error en la solicitud';
+                    if (xhr.responseJSON && xhr.responseJSON.message) {
+                        errorMessage = xhr.responseJSON.message;
+                    }
+
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error del Servidor',
+                        text: errorMessage,
+                        confirmButtonText: 'Cerrar',
+                        confirmButtonColor: '#dc3545'
+                    });
+                },
+                complete: function() {
+                    // Doble seguridad para cerrar el modal
+                    forceCloseLoadingModal();
                 }
             });
         });
