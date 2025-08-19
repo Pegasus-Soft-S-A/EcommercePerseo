@@ -283,14 +283,11 @@
                             data: $('#checkout-form').serializeArray(),
                             success: function(data) {
                                 if (data > 0) {
-                                    if ('{{ Request::segment(1) }}' == 'checkout') {
-                                        location.href = "{{ env('APP_URL') }}/checkout/order-confirmed/" +
-                                            data + "/{{ auth()->user()->clientesid }}";
-                                    } else {
-                                        location.href =
-                                            "{{ env('APP_URL') }}/{{ Request::segment(1) }}/checkout/order-confirmed/" +
-                                            data + "/{{ auth()->user()->clientesid }}";
-                                    }
+                                    // Generar URL usando la ruta con placeholders
+                                    let orderConfirmedUrl = '{{ route('order_confirmed', ['PEDIDO_ID', 'CLIENTE_ID']) }}';
+                                    orderConfirmedUrl = orderConfirmedUrl.replace('PEDIDO_ID', data);
+                                    orderConfirmedUrl = orderConfirmedUrl.replace('CLIENTE_ID', '{{ auth()->user()->clientesid }}');
+                                    location.href = orderConfirmedUrl;
                                 } else {
                                     $('#carga').modal('hide')
                                     AIZ.plugins.notify('danger', 'Ocurrio un error al guardar la factura');

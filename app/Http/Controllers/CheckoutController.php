@@ -465,6 +465,7 @@ class CheckoutController extends Controller
             ->where('facturadoresid', get_setting('facturador'))
             ->where('principal', '1')
             ->first();
+
         $almacenes = DB::connection('empresa')->table('facturadores_almacenes')
             ->where('facturadoresid', get_setting('facturador'))
             ->where('principal', '1')
@@ -676,7 +677,7 @@ class CheckoutController extends Controller
             $request->session()->put('forma_pago', 'factura');
         } catch (\Exception $e) {
             //Si ocurrio algun error mientras insertaba datos hace un rollback y no guarda ninguna ejecucion
-
+            \Log::error($e);
             DB::connection('empresa')->rollback();
             return 0;
         }
