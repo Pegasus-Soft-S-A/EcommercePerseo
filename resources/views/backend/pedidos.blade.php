@@ -17,13 +17,11 @@
             <div class="col-auto">
                 <a href="{{route('pedidos.crear')}}" class="btn btn-primary">Nuevo</a>
             </div>
-            @endif
-            {{-- <div class="col-auto">
-                <a href="{{route('pedidos.crear')}}" class="btn btn-success">Plantilla</a>
-            </div> --}}
+
             <div class="col-auto">
                 <a onclick="showExcel()" class="btn btn-success text-white">Importar</a>
             </div>
+            @endif
         </div>
 
         <!-- Sección de filtros, inicialmente oculta -->
