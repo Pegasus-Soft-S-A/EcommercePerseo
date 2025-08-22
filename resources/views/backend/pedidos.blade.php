@@ -13,9 +13,11 @@
                 <!-- Botón para mostrar/ocultar los filtros -->
                 <button type="button" class="btn btn-secondary" id="toggleFilterButton">Filtrar</button>
             </div>
+            @if (get_setting('maneja_sucursales') == "on")
             <div class="col-auto">
                 <a href="{{route('pedidos.crear')}}" class="btn btn-primary">Nuevo</a>
             </div>
+            @endif
             {{-- <div class="col-auto">
                 <a href="{{route('pedidos.crear')}}" class="btn btn-success">Plantilla</a>
             </div> --}}
