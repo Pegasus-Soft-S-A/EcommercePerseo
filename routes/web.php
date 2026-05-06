@@ -108,7 +108,7 @@ if ($base) {
             //Checkout Routes
             Route::get('/checkout', [CheckoutController::class, 'get_shipping_info'])->name('checkout.shipping_info');
             Route::get('/checkout/existencias/{cliente}', [CheckoutController::class, 'verificar_existencias'])->name('verificarexistencias.shipping_info');
-            Route::any('/checkout/delivery_info', [CheckoutController::class, 'store_shipping_info'])->name('checkout.store_shipping_infostore');
+            Route::post('/checkout/delivery_info', [CheckoutController::class, 'store_shipping_info'])->name('checkout.store_shipping_infostore');
             Route::post('/checkout/payment_select', [CheckoutController::class, 'store_delivery_info'])->name('checkout.store_delivery_info');
             Route::post('/checkout/payment', [CheckoutController::class, 'checkout'])->name('payment.checkout');
             Route::get('/checkout/order-confirmed/{ordenid}/{clientesid}', [CheckoutController::class, 'order_confirmed'])->name('order_confirmed');

@@ -50,18 +50,21 @@ class CheckoutController extends Controller
             return view('frontend.shipping_info', ['sucursales' => $sucursales, 'provincias' => $provincias]);
         }
         flash('El carrito esta vacio')->warning();
-        return back();
+        return redirect()->route('home');
     }
 
     public function store_shipping_info(Request $request)
     {
-
-        $cupo = ClientesSucursales::where('clientes_sucursalesid', $request->clientes_sucursalesid)->first();
+        if (!$request->isMethod('post')) {
+            return redirect()->route('checkout.shipping_info');
+        }
 
         if ($request->clientes_sucursalesid == null) {
             flash('Agregue una direccion')->warning();
-            return back();
+            return redirect()->route('checkout.shipping_info');
         }
+
+        $cupo = ClientesSucursales::where('clientes_sucursalesid', $request->clientes_sucursalesid)->first();
         $direccion = $request->clientes_sucursalesid;
 
         if (get_setting('maneja_sucursales') == "on") {
@@ -72,19 +75,18 @@ class CheckoutController extends Controller
 
         $parametros = ParametrosEmpresa::first();
 
-        foreach ($carts as &$cartItem) {
-            $product = Producto::where('productosid', $cartItem['productosid'])->first();
-            $cartItem['producto_descripcion'] = $product->descripcion;
-            $cartItem['precio_visible'] = $this->getPrecioVisible($cartItem, $parametros);
+        foreach ($carts as $cartItem) {
+            $product = Producto::where('productosid', $cartItem->productosid)->first();
+            $cartItem->producto_descripcion = $product->descripcion ?? '';
+            $cartItem->precio_visible = $this->getPrecioVisible($cartItem, $parametros);
         }
-        // Calcula los totales
+
         $totales = $this->calcularTotales($carts, $parametros);
 
-        if (get_setting('cupo_sucursal') == "on" && $totales['total'] > $cupo->cupocredito) {
+        if (get_setting('cupo_sucursal') == "on" && $totales['total'] > ($cupo->cupocredito ?? 0)) {
             flash('El monto total supera el cupo de crédito')->warning();
-            return back();
+            return redirect()->route('checkout.shipping_info');
         }
-
 
         return view('frontend.payment_select', compact('carts', 'direccion', 'totales', 'parametros'));
     }
@@ -220,6 +222,7 @@ class CheckoutController extends Controller
                 $pedido->subtotal = $request->subtotal;
                 $pedido->total_iva = $request->totalIVA;
                 $pedido->total = $request->total;
+                $pedido->observacion = '';
                 if ($request->token) {
                     $pedido->observacion = "Tarjeta: " . $request->nombre_tarjeta . "\nNumero Voucher: " . $request->token;
                 }
@@ -331,16 +334,6 @@ class CheckoutController extends Controller
             } catch (\Exception $e) {
                 //Si ocurrio algun error mientras insertaba datos hace un rollback y no guarda ninguna ejecucion
                 DB::connection('empresa')->rollback();
-                // $direccion = $request->clientes_sucursalesid;
-
-                // if (get_setting('maneja_sucursales') == "on") {
-                //     $carts = Carrito::where('clientesid', Auth::user()->clientesid)->where('clientes_sucursalesid', session('sucursalid'))->get();
-                // } else {
-                //     $carts = Carrito::where('clientesid', Auth::user()->clientesid)->get();
-                // }
-
-                // // Calcula los totales
-                // $totales = $this->calcularTotales($carts, $parametros);
 
                 flash('Ocurrio un error al realizar el pedido')->error();
                 // dd($e->getMessage());
